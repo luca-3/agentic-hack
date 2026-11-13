@@ -14,14 +14,22 @@
     "db:env": "node scripts/supabase-env.mjs",
     "db:reset": "supabase db reset",
     "db:migration": "supabase migration new",
-    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
+    "ai:check": "node --env-file=.env.local scripts/ai-check.mjs",
+    "doctor": "node scripts/doctor.mjs"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.120",
+    "@ai-sdk/react": "^4.0.176",
+    "@google/genai": "^3.3.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
+    "ai": "^7.0.172",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
@@ -32,5 +40,8 @@
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

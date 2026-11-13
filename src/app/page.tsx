@@ -6,7 +6,10 @@ export default function Home() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-20 font-sans">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-tight">Agentic Hack</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">Next.js + local Supabase — ready for the hackathon.</p>
+        <p className="text-zinc-600 dark:text-zinc-400">Next.js + local Supabase + Gemini — ready for the hackathon.</p>
+        <a href="/chat" className="w-fit rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900">
+          Open agent chat →
+        </a>
       </header>
 
       <section className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
