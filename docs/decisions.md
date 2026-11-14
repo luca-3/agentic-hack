@@ -148,13 +148,18 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** the user handed over a high-fidelity design for the admin dashboard ("Setze dieses Design schema um für das Dashboard") and doesn't like the working name "Lotse".
 - **Consequence:** server, extension and package names still say Lotse; renaming them is a separate step for their owners. Only layout A of the insights page (cards per app) is built; layouts B/C of the handoff were alternatives.
 
+### D-32 · Product name is Valo everywhere users see it; internal names keep "lotse" (2026-11-14) — completes D-31
+- **Decision:** every user-, admin- and juror-facing text says **Valo**: extension manifest (name, description, action title, command descriptions), side panel, status orb, overlay, offer/status/error and voice texts, mic-permission page, toolbar icons (16/32/48/128 px rendered from the dashboard's lighthouse logo into `apps/extension/public/icon/`), the agent persona and all stage prompts (ask/decide/state/intent/explore), server status page, live-transcription vocabulary ("Valo", "Hey Valo"), and the prose of README, SETUP, AGENTS, `docs/`, RUNTIME/VOICE docs and demo-CRM docs. Extension commands also get macOS keys: `lotse-ask` ⌘⇧L, `lotse-listen` ⌘⇧K (Alt+L / Alt+Shift+L elsewhere; UI hints pick the label per platform).
+- **Why:** "Ändere das komplette Branding auf Valo." (user, 2026-11-14) — the dashboard already said Valo (D-31) while extension and runtime still said Lotse. Shift on macOS because plain ⌘+letter is taken by Chrome or by web apps (⌘K = the demo CRM's command palette).
+- **Consequence:** internal identifiers intentionally keep "lotse" — renaming them would break the running system and teammates' code: npm packages `@lotse/*` and workspace scripts, env vars `LOTSE_*`, headers `x-lotse-*`, API paths `/api/lotse/*`, tables/columns `lotse_*` and migrations, `chrome.storage` keys and message types `lotse:*`, file/folder names, code identifiers (`LotseEvent`, …). Older decisions above keep the old name. The wake word stays "Hey Jarvis": no pre-trained "Hey Valo" openWakeWord model exists, a custom model would have to be trained (the transcript strip already accepts "Valo"). Chrome applies new suggested shortcuts only on a fresh install — existing installs keep their binding until the extension is removed and loaded again or rebound at `chrome://extensions/shortcuts`.
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?
 - Second demo app: EBV-Portal (local, test data)? Fuller's OK to show CORPUS publicly?
 - EU data residency: Gemini Live via Vertex AI in an EU region — availability not verified.
 - Production runtime: stay on Next.js or move agents to Google Agent Runtime (ADK)?
-- **Name:** Ismail doesn't like "Lotse" — new name to be decided later (keep "Lotse" until then).
+- ~~**Name:** Ismail doesn't like "Lotse" — new name to be decided later (keep "Lotse" until then).~~ Decided: **Valo** (D-31, D-32).
 - **Promote to Demo?** Fading per person/task (R-INS-4, local learning state) and a "still stuck after the hint" metric (hints + later events) — the two features no competitor has.
 - **Second app:** is the EBV-Portal the same as the Erasmus funding helper Ismail mentioned, or two apps?
 - **Schedule:** submission deadline 19:10, opt-in 19:00 → "no building from 19:00" is too late; proposal: feature freeze 16:30, code freeze 17:30, submit by 18:45.
