@@ -60,6 +60,8 @@
         </section>
       </div>
 
+      <div id="approval-hint" class="alert alert-warning" role="status" hidden></div>
+
       <section class="card" aria-labelledby="open-offers-title">
         <div class="card-header">
           <h2 id="open-offers-title">Offene Angebote</h2>
@@ -103,7 +105,14 @@
           document.getElementById("kpi-tasks").textContent = open.length;
           document.getElementById("kpi-tasks-sub").textContent = overdue.length + " überfällig";
 
-          var openOffers = d.offers.filter(function (o) { return o.status === "Entwurf" || o.status === "Versendet"; });
+          var openOffers = d.offers.filter(function (o) {
+            return o.status === "Entwurf" || o.status === "Zur Freigabe" || o.status === "Freigegeben" || o.status === "Versendet";
+          });
+          var waiting = d.offers.filter(function (o) { return o.status === "Zur Freigabe"; }).length;
+          var hint = document.getElementById("approval-hint");
+          hint.hidden = !(CRM.can("approveOffer") && waiting > 0);
+          hint.innerHTML = waiting + (waiting === 1 ? " Angebot wartet" : " Angebote warten") +
+            ' auf Ihre Freigabe. <a href="angebote.html?status=Zur%20Freigabe">Angebote zur Freigabe öffnen</a>';
           var sum = openOffers.reduce(function (s, o) { return s + o.amount; }, 0);
           document.getElementById("kpi-offers").textContent = openOffers.length;
           document.getElementById("kpi-offers-sub").textContent = CRM.formatEuro(sum) + " Volumen";
@@ -146,7 +155,7 @@
           document.getElementById("open-offers").innerHTML = openOffers
             .map(function (o) {
               return (
-                "<tr><td>" + esc(o.number) + "</td><td>" + esc(o.title) + "</td>" +
+                '<tr><td><a href="angebot.html?id=' + encodeURIComponent(o.id) + '">' + esc(o.number) + "</a></td><td>" + esc(o.title) + "</td>" +
                 '<td><a href="kunde.html?id=' + o.customerId + '">' + esc(CRM.customerName(o.customerId)) + "</a></td>" +
                 "<td>" + ui.statusBadge(o.status) + '</td><td class="num">' + CRM.formatEuro(o.amount) + "</td></tr>"
               );
@@ -158,10 +167,9 @@
           var id = e.target.getAttribute("data-id");
           if (!id) return;
           var task = CRM.db().tasks.filter(function (t) { return t.id === id; })[0];
-          task.done = true;
-          CRM.logActivity("Aufgabe „" + task.title + "“ erledigt", task.customerId);
+          var next = CRM.completeTask(task);
           CRM.save();
-          ui.toast("Aufgabe „" + task.title + "“ als erledigt markiert.");
+          ui.toast("Aufgabe „" + task.title + "“ als erledigt markiert." + (next ? " Nächste Wiederholung am " + CRM.formatDate(next.due) + " angelegt." : ""));
           render();
         });
 

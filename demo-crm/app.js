@@ -33,6 +33,12 @@
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>',
     chevron:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>',
+    kebab:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a2 2 0 100-4 2 2 0 000 4zm0 2a2 2 0 100 4 2 2 0 000-4zm0 6a2 2 0 100 4 2 2 0 000-4z"/></svg>',
+    command:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zM6.7 15.3l-1.4-1.4L7.2 12 5.3 10.1l1.4-1.4L10 12l-3.3 3.3zM18 16h-6v-2h6v2z"/></svg>',
+    verwaltung:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
   };
 
   var NAV = [
@@ -40,8 +46,18 @@
     { href: "kunden.html", label: "Kunden", page: "kunden", icon: "kunden" },
     { href: "aufgaben.html", label: "Aufgaben", page: "aufgaben", icon: "aufgaben" },
     { href: "angebote.html", label: "Angebote", page: "angebote", icon: "angebote" },
-    { href: "einstellungen.html", label: "Einstellungen", page: "einstellungen", icon: "einstellungen", permission: "viewSettings" },
+    {
+      group: "Verwaltung",
+      id: "nav-group-verwaltung",
+      icon: "verwaltung",
+      children: [
+        { href: "einstellungen.html", label: "Einstellungen", page: "einstellungen", icon: "einstellungen", permission: "viewSettings" },
+        { href: "einstellungen.html#benutzer", label: "Benutzer", page: "", icon: "kunden", permission: "viewSettings" },
+        { href: "import-export.html", label: "Import/Export", page: "import-export", icon: "angebote", permission: "dataExchange" },
+      ],
+    },
   ];
+  var NAV_GROUP_KEY = "kundenwerk-crm:nav-verwaltung-collapsed";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -116,6 +132,9 @@
       '<div class="role-switch"><label for="role-switcher">Rolle</label><select id="role-switcher">' +
       roleOptions +
       "</select></div>" +
+      '<button type="button" class="icon-btn" id="palette-button" aria-label="Befehlspalette öffnen" aria-keyshortcuts="Control+K Meta+K" title="Befehlspalette (Strg+K / ⌘K)">' +
+      ICONS.command +
+      "</button>" +
       '<button type="button" class="icon-btn" id="help-button" aria-label="Hilfe">' +
       ICONS.help +
       "</button>" +
@@ -131,7 +150,7 @@
       "<li><strong>Hinweis:</strong> Weber Elektrotechnik KG hat eine neue Bankverbindung angekündigt.</li>" +
       "</ul></div></div>" +
       '<div class="dropdown">' +
-      '<button type="button" class="user-menu-btn" id="user-menu-button" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu">' +
+      '<button type="button" class="user-menu-btn" id="user-menu-button" aria-label="Benutzermenü" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu">' +
       '<span class="avatar" aria-hidden="true">' +
       user.initials +
       "</span>" +
@@ -148,7 +167,8 @@
       "</strong><br />Rolle: " +
       escapeHtml(role) +
       "</li>" +
-      '<li role="none"><button type="button" role="menuitem" data-action="profile">Mein Profil</button></li>' +
+      '<li role="none"><a role="menuitem" href="konto.html">Mein Konto</a></li>' +
+      '<li role="none"><a role="menuitem" href="konto.html#abwesenheit">Abwesenheit</a></li>' +
       '<li role="none"><button type="button" role="menuitem" data-action="shortcuts">Tastenkürzel</button></li>' +
       '<li role="none"><button type="button" role="menuitem" data-action="logout">Abmelden</button></li>' +
       "</ul></div>" +
@@ -156,25 +176,45 @@
     );
   }
 
+  function navLink(item, page) {
+    var active = item.page && item.page === page;
+    return (
+      '<li><a href="' +
+      item.href +
+      '"' +
+      (active ? ' class="active" aria-current="page"' : "") +
+      ">" +
+      ICONS[item.icon] +
+      "<span>" +
+      item.label +
+      "</span></a></li>"
+    );
+  }
+
+  function readGroupCollapsed() {
+    try {
+      return localStorage.getItem(NAV_GROUP_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
   function renderSidebar(page) {
-    var items = NAV.filter(function (item) {
-      return !item.permission || CRM.can(item.permission);
-    })
-      .map(function (item) {
-        var active = item.page === page;
-        return (
-          '<li><a href="' +
-          item.href +
-          '"' +
-          (active ? ' class="active" aria-current="page"' : "") +
-          ">" +
-          ICONS[item.icon] +
-          "<span>" +
-          item.label +
-          "</span></a></li>"
-        );
-      })
-      .join("");
+    var items = NAV.map(function (item) {
+      if (!item.group) return !item.permission || CRM.can(item.permission) ? navLink(item, page) : "";
+      var children = item.children.filter(function (c) {
+        return !c.permission || CRM.can(c.permission);
+      });
+      if (children.length === 0) return "";
+      var collapsed = readGroupCollapsed();
+      return (
+        '<li class="nav-group"><button type="button" class="nav-group-btn" id="' + item.id + '-button" aria-expanded="' + String(!collapsed) +
+        '" aria-controls="' + item.id + '">' + ICONS[item.icon] + "<span>" + item.group + "</span>" + ICONS.chevron + "</button>" +
+        '<ul class="nav-sublist" id="' + item.id + '"' + (collapsed ? " hidden" : "") + ">" +
+        children.map(function (c) { return navLink(c, page); }).join("") +
+        "</ul></li>"
+      );
+    }).join("");
     return (
       '<ul class="nav-list">' +
       items +
@@ -275,6 +315,32 @@
     });
   }
 
+  // ---------- Generische Menüs (Overflow/Kebab, Aktionen, Untermenüs) ----------
+  // Button: class "js-menu-btn", aria-haspopup="menu", aria-controls=<Panel-ID>; Panel: class "js-menu-panel".
+  function closeMenus(keep) {
+    Array.prototype.forEach.call(document.querySelectorAll(".js-menu-panel"), function (panel) {
+      if (keep && panel.contains(keep)) return;
+      panel.hidden = true;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".js-menu-btn"), function (btn) {
+      var panel = document.getElementById(btn.getAttribute("aria-controls"));
+      if (!panel || panel.hidden) btn.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  function toggleMenu(btn) {
+    var panel = document.getElementById(btn.getAttribute("aria-controls"));
+    if (!panel) return;
+    var open = panel.hidden;
+    closeMenus(btn);
+    panel.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
+    if (open) {
+      var first = panel.querySelector('[role="menuitem"]');
+      if (first && btn.classList.contains("js-submenu-btn") === false) first.focus();
+    }
+  }
+
   function closeAllDropdowns() {
     ["notifications-panel", "user-menu"].forEach(function (id) {
       var p = document.getElementById(id);
@@ -283,6 +349,124 @@
     ["notifications-button", "user-menu-button"].forEach(function (id) {
       var b = document.getElementById(id);
       if (b) b.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  // ---------- Befehlspalette (Strg/⌘ + K) ----------
+  var COMMANDS = [
+    { group: "Navigation", label: "Gehe zu Dashboard", href: "index.html" },
+    { group: "Navigation", label: "Gehe zu Kunden", href: "kunden.html" },
+    { group: "Navigation", label: "Gehe zu Aufgaben", href: "aufgaben.html" },
+    { group: "Navigation", label: "Gehe zu Angebote", href: "angebote.html" },
+    { group: "Aktionen", label: "Neue Aufgabe anlegen", href: "aufgaben.html#neu", keywords: "task todo rückruf" },
+    { group: "Aktionen", label: "Neues Angebot erstellen", href: "angebote.html#neu", permission: "createOffer" },
+    { group: "Aktionen", label: "Angebote zur Freigabe anzeigen", href: "angebote.html?status=Zur%20Freigabe", permission: "approveOffer", keywords: "freigabe genehmigen" },
+    { group: "Konto", label: "Mein Konto öffnen", href: "konto.html", keywords: "profil account" },
+    { group: "Konto", label: "Passwort ändern", href: "konto.html#sicherheit", keywords: "sicherheit kennwort" },
+    { group: "Konto", label: "Zwei-Faktor-Authentifizierung einrichten", href: "konto.html#sicherheit", keywords: "2fa sicherheit" },
+    { group: "Konto", label: "Abwesenheit & Vertretung einrichten", href: "konto.html#abwesenheit", keywords: "urlaub vertretung abwesend" },
+    { group: "Konto", label: "E-Mail-Signatur bearbeiten", href: "konto.html#signatur" },
+    { group: "Konto", label: "Benachrichtigungen anpassen", href: "konto.html#benachrichtigungen" },
+    { group: "Konto", label: "API-Token verwalten", href: "konto.html#api-zugang", permission: "manageApi", keywords: "api schnittstelle" },
+    { group: "Verwaltung", label: "Einstellungen öffnen", href: "einstellungen.html", permission: "viewSettings" },
+    { group: "Verwaltung", label: "Benutzer verwalten", href: "einstellungen.html#benutzer", permission: "viewSettings" },
+    { group: "Verwaltung", label: "Daten importieren oder exportieren", href: "import-export.html", permission: "dataExchange", keywords: "csv excel datev" },
+  ];
+
+  function initPalette() {
+    var dlg = document.createElement("dialog");
+    dlg.id = "command-palette";
+    dlg.className = "palette";
+    dlg.setAttribute("aria-labelledby", "palette-title");
+    dlg.innerHTML =
+      '<h2 id="palette-title" class="sr-only">Befehlspalette</h2>' +
+      '<div class="palette-search"><label for="palette-input" class="sr-only">Befehl suchen</label>' +
+      ICONS.search +
+      '<input type="search" id="palette-input" placeholder="Befehl oder Seite suchen …" autocomplete="off" aria-controls="palette-list" />' +
+      '<kbd>Esc</kbd></div>' +
+      '<div id="palette-list" class="palette-list" role="region" aria-label="Befehle"></div>';
+    document.body.appendChild(dlg);
+    var input = dlg.querySelector("#palette-input");
+    var list = dlg.querySelector("#palette-list");
+    var active = 0;
+
+    function visible() {
+      var q = CRM.normalizeText(input.value.trim());
+      return COMMANDS.filter(function (c) {
+        if (c.permission && !CRM.can(c.permission)) return false;
+        if (!q) return true;
+        return CRM.normalizeText(c.label + " " + c.group + " " + (c.keywords || "")).indexOf(q) >= 0;
+      });
+    }
+
+    function render() {
+      var cmds = visible();
+      if (active >= cmds.length) active = 0;
+      if (cmds.length === 0) {
+        list.innerHTML = '<p class="search-empty">Kein Befehl gefunden für „' + escapeHtml(input.value.trim()) + "“</p>";
+        return;
+      }
+      var html = "";
+      var lastGroup = "";
+      cmds.forEach(function (c, i) {
+        if (c.group !== lastGroup) {
+          html += '<p class="palette-group">' + c.group + "</p>";
+          lastGroup = c.group;
+        }
+        html += '<button type="button" class="palette-item' + (i === active ? " active" : "") + '" data-index="' + i + '">' + escapeHtml(c.label) + "</button>";
+      });
+      list.innerHTML = html;
+    }
+
+    function run(cmd) {
+      if (!cmd) return;
+      dlg.close();
+      var target = new URL(cmd.href, location.href);
+      var samePage = target.pathname === location.pathname && target.search === location.search;
+      location.href = cmd.href;
+      if (samePage && target.hash) location.reload();
+    }
+
+    input.addEventListener("input", function () {
+      active = 0;
+      render();
+    });
+    input.addEventListener("keydown", function (e) {
+      var cmds = visible();
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        active = (active + (e.key === "ArrowDown" ? 1 : -1) + cmds.length) % Math.max(cmds.length, 1);
+        render();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        run(cmds[active]);
+      }
+    });
+    list.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-index]");
+      if (btn) run(visible()[Number(btn.getAttribute("data-index"))]);
+    });
+    dlg.addEventListener("click", function (e) {
+      if (e.target === dlg) dlg.close();
+    });
+
+    function open() {
+      if (dlg.open) return;
+      closeAllDropdowns();
+      closeMenus();
+      input.value = "";
+      active = 0;
+      render();
+      dlg.showModal();
+      input.focus();
+    }
+    document.getElementById("palette-button").addEventListener("click", open);
+    document.addEventListener("keydown", function (e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        if (dlg.open) dlg.close();
+        else open();
+      }
     });
   }
 
@@ -311,6 +495,9 @@
     wireDropdown("user-menu-button", "user-menu");
 
     document.addEventListener("click", function (e) {
+      var menuBtn = e.target.closest && e.target.closest(".js-menu-btn");
+      if (menuBtn) toggleMenu(menuBtn);
+      else if (!(e.target.closest && e.target.closest('[role="menuitem"][aria-disabled="true"]'))) closeMenus();
       closeAllDropdowns();
       var panel = document.getElementById("search-results");
       var form = document.getElementById("global-search-form");
@@ -319,6 +506,7 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
         closeAllDropdowns();
+        closeMenus();
         var panel = document.getElementById("search-results");
         if (panel) panel.hidden = true;
       }
@@ -328,8 +516,7 @@
       var action = e.target.getAttribute && e.target.getAttribute("data-action");
       if (!action) return;
       closeAllDropdowns();
-      if (action === "profile") toast("Profilseite ist in der Demo nicht verfügbar.", "info");
-      if (action === "shortcuts") toast("Tastenkürzel: / fokussiert die Suche, Esc schließt Menüs.", "info");
+      if (action === "shortcuts") toast("Tastenkürzel: / fokussiert die Suche, Strg+K (⌘K) öffnet die Befehlspalette, Esc schließt Menüs.", "info");
       if (action === "logout") toast("Abmelden ist in der Demo deaktiviert.", "info");
     });
 
@@ -349,6 +536,23 @@
       e.currentTarget.setAttribute("aria-expanded", String(!collapsed));
       e.currentTarget.setAttribute("aria-label", collapsed ? "Navigation ausklappen" : "Navigation einklappen");
     });
+
+    var groupBtn = document.getElementById("nav-group-verwaltung-button");
+    if (groupBtn) {
+      groupBtn.addEventListener("click", function () {
+        var list = document.getElementById("nav-group-verwaltung");
+        var collapse = !list.hidden;
+        list.hidden = collapse;
+        groupBtn.setAttribute("aria-expanded", String(!collapse));
+        try {
+          localStorage.setItem(NAV_GROUP_KEY, collapse ? "1" : "0");
+        } catch (err) {
+          /* ignorieren */
+        }
+      });
+    }
+
+    initPalette();
 
     document.getElementById("reset-demo").addEventListener("click", function (e) {
       e.preventDefault();
@@ -383,13 +587,18 @@
       Versendet: "badge-blue",
       Angenommen: "badge-green",
       Abgelehnt: "badge-red",
+      "Zur Freigabe": "badge-amber",
+      Freigegeben: "badge-green",
+      Gekündigt: "badge-red",
     };
     return '<span class="badge ' + (map[s] || "badge-gray") + '">' + escapeHtml(s) + "</span>";
   }
 
   // Einfache Tabs nach WAI-ARIA (role=tablist/tab/tabpanel); Hash in der URL hält den Tab.
   function initTabs(tablist, onChange) {
-    var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"]'));
+    var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"]')).filter(function (t) {
+      return !t.hidden;
+    });
     function select(tab, updateHash) {
       tabs.forEach(function (t) {
         var selected = t === tab;
@@ -450,7 +659,38 @@
       .join("");
   }
 
+  // Prüft eine Berechtigung; zeigt sonst Fehlermeldung (alert + Toast). Gibt true zurück, wenn erlaubt.
+  function requirePermission(permission, alertEl, message) {
+    if (CRM.can(permission)) return true;
+    var text = "Keine Berechtigung: " + message + " Ihre Rolle: " + CRM.getRole() + ".";
+    if (alertEl) {
+      alertEl.textContent = text;
+      alertEl.hidden = false;
+    }
+    toast(text, "error");
+    return false;
+  }
+
+  function rolesFor(permission) {
+    return (CRM.PERMISSIONS[permission] || []).join(", ").replace(/, ([^,]*)$/, " oder $1");
+  }
+
+  function userOptions(selectedName, includeMe) {
+    return CRM.db()
+      .users.filter(function (u) {
+        return includeMe || u.name !== CRM.CURRENT_USER.name;
+      })
+      .map(function (u) {
+        return '<option value="' + escapeHtml(u.name) + '"' + (u.name === selectedName ? " selected" : "") + ">" + escapeHtml(u.name) + " (" + escapeHtml(u.role) + ")</option>";
+      })
+      .join("");
+  }
+
   CRM.ui = {
+    requirePermission: requirePermission,
+    rolesFor: rolesFor,
+    userOptions: userOptions,
+    closeMenus: closeMenus,
     ICONS: ICONS,
     escapeHtml: escapeHtml,
     toast: toast,

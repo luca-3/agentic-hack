@@ -34,6 +34,8 @@
           <button type="button" role="tab" id="tab-contacts" aria-controls="panel-contacts" data-hash="ansprechpartner">Ansprechpartner</button>
           <button type="button" role="tab" id="tab-payment" aria-controls="panel-payment" data-hash="zahlungsdaten">Zahlungsdaten</button>
           <button type="button" role="tab" id="tab-history" aria-controls="panel-history" data-hash="verlauf">Verlauf</button>
+          <button type="button" role="tab" id="tab-contracts" aria-controls="panel-contracts" data-hash="vertraege">Verträge</button>
+          <button type="button" role="tab" id="tab-documents" aria-controls="panel-documents" data-hash="dokumente">Dokumente</button>
         </div>
 
         <!-- Übersicht -->
@@ -54,7 +56,7 @@
         <section role="tabpanel" id="panel-contacts" aria-labelledby="tab-contacts" class="card" hidden>
           <h2>Ansprechpartner</h2>
           <table>
-            <thead><tr><th>Name</th><th>Position</th><th>E-Mail</th><th>Telefon</th></tr></thead>
+            <thead><tr><th>Name</th><th>Position</th><th>E-Mail</th><th>Telefon</th><th class="num"><span class="sr-only">Aktionen</span></th></tr></thead>
             <tbody id="contact-rows"></tbody>
           </table>
         </section>
@@ -114,8 +116,121 @@
           </form>
           <ul class="list timeline" id="history-list"></ul>
         </section>
+
+        <!-- Verträge -->
+        <section role="tabpanel" id="panel-contracts" aria-labelledby="tab-contracts" class="card" hidden>
+          <h2>Verträge</h2>
+          <div id="contract-permission-error" class="alert alert-error" role="alert" hidden></div>
+          <table>
+            <thead><tr><th>Vertrag</th><th>Nr.</th><th>Beginn</th><th>Kündigungsfrist</th><th class="num">Monatlich</th><th>Status</th><th class="num">Aktion</th></tr></thead>
+            <tbody id="contract-rows"></tbody>
+          </table>
+        </section>
+
+        <!-- Dokumente -->
+        <section role="tabpanel" id="panel-documents" aria-labelledby="tab-documents" class="card" hidden>
+          <div class="card-header">
+            <h2>Dokumente</h2>
+            <button type="button" class="btn btn-primary" id="upload-button">Dokument hochladen</button>
+          </div>
+          <table>
+            <thead><tr><th>Datei</th><th>Kategorie</th><th>Größe</th><th>Hochgeladen</th><th>Von</th><th>Kundenportal</th><th class="num"><span class="sr-only">Aktionen</span></th></tr></thead>
+            <tbody id="document-rows"></tbody>
+          </table>
+        </section>
       </div>
     </main>
+
+    <!-- Dialog: Vertrag kündigen (Schritt 1) -->
+    <dialog id="cancel-dialog" aria-labelledby="cancel-title">
+      <form id="cancel-form" novalidate>
+        <div class="dialog-header">
+          <h2 id="cancel-title">Vertrag kündigen</h2>
+          <button type="button" class="icon-btn js-close" aria-label="Dialog schließen"></button>
+        </div>
+        <div class="dialog-body">
+          <p id="cancel-contract-info"></p>
+          <div class="alert alert-warning" id="cancel-notice" role="note"></div>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="cancel-reason">Kündigungsgrund</label>
+              <select id="cancel-reason" aria-describedby="cancel-reason-error">
+                <option value="">Bitte wählen …</option>
+                <option>Preis zu hoch</option>
+                <option>Wechsel zu Wettbewerber</option>
+                <option>Bedarf entfällt</option>
+                <option>Unzufrieden mit Service</option>
+                <option>Sonstiges</option>
+              </select>
+              <p class="field-error" id="cancel-reason-error" role="alert" hidden></p>
+            </div>
+            <div class="field full" id="cancel-other-wrap" hidden>
+              <label for="cancel-other">Begründung</label>
+              <textarea id="cancel-other" aria-describedby="cancel-other-error"></textarea>
+              <p class="field-error" id="cancel-other-error" role="alert" hidden></p>
+            </div>
+            <div class="field full">
+              <label for="cancel-date">Gewünschtes Vertragsende</label>
+              <input type="date" id="cancel-date" aria-describedby="cancel-date-error" />
+              <p class="field-error" id="cancel-date-error" role="alert" hidden></p>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button type="button" class="btn js-close">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Weiter</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Bestätigung (verschachtelt) -->
+    <dialog id="cancel-confirm" aria-labelledby="cancel-confirm-title" aria-describedby="cancel-confirm-text">
+      <div class="dialog-header"><h2 id="cancel-confirm-title">Kündigung bestätigen</h2></div>
+      <div class="dialog-body"><p id="cancel-confirm-text"></p></div>
+      <div class="dialog-footer">
+        <button type="button" class="btn" id="cancel-confirm-back">Zurück</button>
+        <button type="button" class="btn btn-primary" id="cancel-confirm-yes">Endgültig kündigen</button>
+      </div>
+    </dialog>
+
+    <!-- Dialog: Dokument hochladen -->
+    <dialog id="upload-dialog" aria-labelledby="upload-title">
+      <form id="upload-form" novalidate>
+        <div class="dialog-header">
+          <h2 id="upload-title">Dokument hochladen</h2>
+          <button type="button" class="icon-btn js-close" aria-label="Dialog schließen"></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="upload-name">Dateiname</label>
+              <input type="text" id="upload-name" placeholder="z. B. Rahmenvertrag_2027.pdf" aria-describedby="upload-name-hint upload-name-error" />
+              <p class="field-hint" id="upload-name-hint">Demo: Es wird keine echte Datei übertragen. Erlaubt: PDF, DOCX, XLSX, PNG, JPG.</p>
+              <p class="field-error" id="upload-name-error" role="alert" hidden></p>
+            </div>
+            <div class="field">
+              <label for="upload-category">Kategorie</label>
+              <select id="upload-category" aria-describedby="upload-category-error">
+                <option value="">Bitte wählen …</option>
+                <option>Vertrag</option>
+                <option>Angebot</option>
+                <option>Rechnung</option>
+                <option>Korrespondenz</option>
+                <option>Sonstiges</option>
+              </select>
+              <p class="field-error" id="upload-category-error" role="alert" hidden></p>
+            </div>
+            <div class="field" style="justify-content: flex-end">
+              <label class="checkbox" for="upload-portal"><input type="checkbox" id="upload-portal" /> Im Kundenportal sichtbar</label>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button type="button" class="btn js-close">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Hochladen</button>
+        </div>
+      </form>
+    </dialog>
 
     <script src="data.js"></script>
     <script src="app.js"></script>
@@ -151,7 +266,7 @@
           var d = CRM.db();
           var openTasks = d.tasks.filter(function (t) { return t.customerId === customer.id && !t.done; }).length;
           var openOffers = d.offers.filter(function (o) {
-            return o.customerId === customer.id && (o.status === "Entwurf" || o.status === "Versendet");
+            return o.customerId === customer.id && ["Entwurf", "Zur Freigabe", "Freigegeben", "Versendet"].indexOf(o.status) >= 0;
           }).length;
           document.getElementById("overview-details").innerHTML = dl([
             ["Firma", esc(customer.name)],
@@ -165,18 +280,57 @@
             ["Umsatz (12 Monate)", CRM.formatEuro(customer.revenue)],
             ["Offene Aufgaben", String(openTasks)],
             ["Offene Angebote", String(openOffers)],
-            ["Hauptkontakt", customer.contacts[0] ? esc(customer.contacts[0].name) : "–"],
+            ["Hauptkontakt", (function () {
+              var pc = customer.contacts.filter(function (c) { return c.email === customer.primaryContact; })[0] || customer.contacts[0];
+              return pc ? esc(pc.name) : "–";
+            })()],
+            ["Aktive Verträge", String((customer.contracts || []).filter(function (c) { return c.status === "Aktiv"; }).length)],
           ]);
         }
 
         // ---------- Ansprechpartner ----------
         function renderContacts() {
           document.getElementById("contact-rows").innerHTML = customer.contacts
-            .map(function (p) {
-              return "<tr><td>" + esc(p.name) + "</td><td>" + esc(p.position) + "</td><td>" + esc(p.email) + "</td><td>" + esc(p.phone) + "</td></tr>";
+            .map(function (p, i) {
+              var primary = customer.primaryContact === p.email;
+              return (
+                "<tr><td>" + esc(p.name) + (primary ? ' <span class="badge badge-blue">Hauptansprechpartner</span>' : "") + "</td><td>" + esc(p.position) +
+                "</td><td>" + esc(p.email) + "</td><td>" + esc(p.phone) + "</td>" +
+                '<td class="num"><div class="menu-wrap">' +
+                '<button type="button" class="icon-btn js-menu-btn" id="contact-menu-btn-' + i + '" aria-label="Weitere Aktionen" aria-haspopup="menu" aria-expanded="false" aria-controls="contact-menu-' + i + '">' + ui.ICONS.kebab + "</button>" +
+                '<ul class="menu-popup js-menu-panel" id="contact-menu-' + i + '" role="menu" aria-label="Aktionen für ' + esc(p.name) + '" hidden>' +
+                '<li role="none"><button type="button" role="menuitem" data-contact-action="primary" data-index="' + i + '"' + (primary ? ' aria-disabled="true"' : "") + ">Hauptansprechpartner festlegen</button></li>" +
+                '<li role="none"><button type="button" role="menuitem" data-contact-action="mail" data-index="' + i + '">E-Mail schreiben</button></li>' +
+                '<li role="none"><button type="button" role="menuitem" data-contact-action="edit" data-index="' + i + '">Ansprechpartner bearbeiten</button></li>' +
+                "</ul></div></td></tr>"
+              );
             })
             .join("");
         }
+
+        document.getElementById("contact-rows").addEventListener("click", function (e) {
+          var item = e.target.closest("[data-contact-action]");
+          if (!item) return;
+          var p = customer.contacts[Number(item.getAttribute("data-index"))];
+          var action = item.getAttribute("data-contact-action");
+          if (action === "primary") {
+            if (item.getAttribute("aria-disabled") === "true") {
+              ui.closeMenus();
+              ui.toast(p.name + " ist bereits Hauptansprechpartner.", "info");
+              return;
+            }
+            customer.primaryContact = p.email;
+            customer.history.unshift({ date: CRM.today(), type: "Änderung", text: "Hauptansprechpartner: " + p.name + ".", author: CRM.CURRENT_USER.name });
+            CRM.logActivity("Hauptansprechpartner geändert: " + p.name, customer.id);
+            CRM.save();
+            renderContacts();
+            renderOverview();
+            renderHistory();
+            ui.toast(p.name + " ist jetzt Hauptansprechpartner für " + customer.name + ".");
+          }
+          if (action === "mail") ui.toast("E-Mail an " + p.email + " wird im Mailprogramm geöffnet (Demo).", "info");
+          if (action === "edit") ui.toast("Ansprechpartner bearbeiten ist in der Demo nicht verfügbar.", "info");
+        });
 
         // ---------- Zahlungsdaten ----------
         var editBtn = document.getElementById("edit-bank-button");
@@ -309,12 +463,151 @@
           ui.toast("Notiz gespeichert.");
         });
 
+        Array.prototype.forEach.call(document.querySelectorAll("dialog .js-close"), function (b) {
+          if (b.classList.contains("icon-btn")) b.innerHTML = ui.ICONS.close;
+          b.addEventListener("click", function () { b.closest("dialog").close(); });
+        });
+
+        // ---------- Verträge ----------
+        var contractErr = document.getElementById("contract-permission-error");
+        var canCancel = CRM.can("cancelContract");
+        var activeContract = null;
+        function renderContracts() {
+          var list = customer.contracts || [];
+          document.getElementById("contract-rows").innerHTML = list.length
+            ? list.map(function (c) {
+                var status = c.status === "Gekündigt"
+                  ? ui.statusBadge("Gekündigt") + ' <span class="meta">zum ' + CRM.formatDate(c.cancelledTo) + "</span>"
+                  : ui.statusBadge("Aktiv");
+                var action = c.status === "Gekündigt" ? ""
+                  : '<button type="button" class="btn" data-cancel="' + c.id + '" aria-label="Vertrag kündigen: ' + esc(c.name) + '"' +
+                    (canCancel ? "" : ' aria-disabled="true" title="Nur ' + ui.rolesFor("cancelContract") + '"') + ">Kündigen</button>";
+                return "<tr><td>" + esc(c.name) + '</td><td class="mono">' + esc(c.number) + "</td><td>" + CRM.formatDate(c.start) + "</td><td>" +
+                  c.noticeMonths + (c.noticeMonths === 1 ? " Monat" : " Monate") + " zum Monatsende</td>" +
+                  '<td class="num">' + CRM.formatEuro(c.monthlyFee) + "</td><td>" + status + '</td><td class="num">' + action + "</td></tr>";
+              }).join("")
+            : '<tr class="empty-row"><td colspan="7">Keine Verträge vorhanden.</td></tr>';
+        }
+        var cancelDialog = document.getElementById("cancel-dialog");
+        var cancelConfirm = document.getElementById("cancel-confirm");
+        var reasonSel = document.getElementById("cancel-reason");
+        var otherText = document.getElementById("cancel-other");
+        var dateInput = document.getElementById("cancel-date");
+        reasonSel.addEventListener("change", function () {
+          document.getElementById("cancel-other-wrap").hidden = reasonSel.value !== "Sonstiges";
+        });
+        document.getElementById("contract-rows").addEventListener("click", function (e) {
+          var b = e.target.closest("[data-cancel]");
+          if (!b) return;
+          if (!ui.requirePermission("cancelContract", contractErr, "Verträge können nur von den Rollen " + ui.rolesFor("cancelContract") + " gekündigt werden.")) return;
+          contractErr.hidden = true;
+          activeContract = customer.contracts.filter(function (c) { return c.id === b.getAttribute("data-cancel"); })[0];
+          var earliest = CRM.earliestTermination(activeContract.noticeMonths);
+          document.getElementById("cancel-form").reset();
+          document.getElementById("cancel-other-wrap").hidden = true;
+          [[reasonSel, "cancel-reason-error"], [otherText, "cancel-other-error"], [dateInput, "cancel-date-error"]].forEach(function (x) {
+            ui.setFieldError(x[0], document.getElementById(x[1]), null);
+          });
+          document.getElementById("cancel-contract-info").innerHTML = "<strong>" + esc(activeContract.name) + "</strong> (" + esc(activeContract.number) + ") · " + esc(customer.name);
+          document.getElementById("cancel-notice").textContent =
+            "Achtung: Kündigungsfrist " + activeContract.noticeMonths + (activeContract.noticeMonths === 1 ? " Monat" : " Monate") +
+            " zum Monatsende. Frühestmögliches Vertragsende: " + CRM.formatDate(earliest) + ".";
+          dateInput.value = earliest;
+          cancelDialog.showModal();
+          reasonSel.focus();
+        });
+        document.getElementById("cancel-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var earliest = CRM.earliestTermination(activeContract.noticeMonths);
+          var rMsg = reasonSel.value ? null : "Bitte wählen Sie einen Kündigungsgrund.";
+          var oMsg = reasonSel.value === "Sonstiges" && !otherText.value.trim() ? "Bitte begründen Sie die Kündigung kurz." : null;
+          var dMsg = !dateInput.value ? "Bitte wählen Sie das gewünschte Vertragsende."
+            : dateInput.value < earliest ? "Das gewünschte Vertragsende liegt innerhalb der Kündigungsfrist. Frühestmöglich: " + CRM.formatDate(earliest) + "." : null;
+          ui.setFieldError(reasonSel, document.getElementById("cancel-reason-error"), rMsg);
+          ui.setFieldError(otherText, document.getElementById("cancel-other-error"), oMsg);
+          ui.setFieldError(dateInput, document.getElementById("cancel-date-error"), dMsg);
+          if (rMsg || oMsg || dMsg) return;
+          document.getElementById("cancel-confirm-text").textContent =
+            "Der Vertrag „" + activeContract.name + "“ von " + customer.name + " wird zum " + CRM.formatDate(dateInput.value) +
+            " gekündigt (Grund: " + reasonSel.value + "). Die Kündigungsbestätigung geht an den Hauptansprechpartner. Dies kann nicht rückgängig gemacht werden.";
+          cancelConfirm.showModal();
+        });
+        document.getElementById("cancel-confirm-back").addEventListener("click", function () { cancelConfirm.close(); });
+        document.getElementById("cancel-confirm-yes").addEventListener("click", function () {
+          activeContract.status = "Gekündigt";
+          activeContract.cancelledTo = dateInput.value;
+          activeContract.cancelReason = reasonSel.value === "Sonstiges" ? "Sonstiges: " + otherText.value.trim() : reasonSel.value;
+          customer.history.unshift({ date: CRM.today(), type: "Vertrag", text: "Vertrag „" + activeContract.name + "“ gekündigt zum " + CRM.formatDate(dateInput.value) + " (" + activeContract.cancelReason + ").", author: CRM.CURRENT_USER.name });
+          CRM.logActivity("Vertrag „" + activeContract.name + "“ gekündigt", customer.id);
+          CRM.save();
+          cancelConfirm.close();
+          cancelDialog.close();
+          renderContracts();
+          renderOverview();
+          renderHistory();
+          ui.toast("Vertrag „" + activeContract.name + "“ zum " + CRM.formatDate(activeContract.cancelledTo) + " gekündigt.");
+        });
+
+        // ---------- Dokumente ----------
+        function renderDocuments() {
+          var docs = (customer.documents || []).slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+          document.getElementById("document-rows").innerHTML = docs.length
+            ? docs.map(function (d) {
+                return "<tr><td>" + esc(d.name) + "</td><td>" + esc(d.category) + "</td><td>" + esc(d.size) + "</td><td>" + CRM.formatDate(d.date) + "</td><td>" + esc(d.author) +
+                  "</td><td>" + (d.portal ? "sichtbar" : "–") + '</td><td class="num"><button type="button" class="icon-btn danger" data-doc-delete="' + d.id + '" aria-label="Dokument löschen: ' + esc(d.name) + '">' + ui.ICONS.trash + "</button></td></tr>";
+              }).join("")
+            : '<tr class="empty-row"><td colspan="7">Noch keine Dokumente.</td></tr>';
+        }
+        var uploadDialog = document.getElementById("upload-dialog");
+        var upName = document.getElementById("upload-name");
+        var upCat = document.getElementById("upload-category");
+        document.getElementById("upload-button").addEventListener("click", function () {
+          document.getElementById("upload-form").reset();
+          ui.setFieldError(upName, document.getElementById("upload-name-error"), null);
+          ui.setFieldError(upCat, document.getElementById("upload-category-error"), null);
+          uploadDialog.showModal();
+          upName.focus();
+        });
+        document.getElementById("upload-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var name = upName.value.trim();
+          var nMsg = !name ? "Bitte geben Sie einen Dateinamen ein."
+            : !/\.(pdf|docx|xlsx|png|jpe?g)$/i.test(name) ? "Nicht unterstütztes Dateiformat. Erlaubt: PDF, DOCX, XLSX, PNG, JPG." : null;
+          var cMsg = upCat.value ? null : "Bitte wählen Sie eine Kategorie.";
+          ui.setFieldError(upName, document.getElementById("upload-name-error"), nMsg);
+          ui.setFieldError(upCat, document.getElementById("upload-category-error"), cMsg);
+          if (nMsg || cMsg) return;
+          customer.documents = customer.documents || [];
+          customer.documents.push({
+            id: "doc-" + Date.now(), name: name, category: upCat.value, size: (20 + Math.floor(Math.random() * 400)) + " KB",
+            date: CRM.today(), author: CRM.CURRENT_USER.name, portal: document.getElementById("upload-portal").checked,
+          });
+          CRM.logActivity("Dokument „" + name + "“ hochgeladen", customer.id);
+          CRM.save();
+          uploadDialog.close();
+          renderDocuments();
+          ui.toast("Dokument „" + name + "“ wurde hochgeladen.");
+        });
+        document.getElementById("document-rows").addEventListener("click", function (e) {
+          var b = e.target.closest("[data-doc-delete]");
+          if (!b) return;
+          var id = b.getAttribute("data-doc-delete");
+          var doc = customer.documents.filter(function (d) { return d.id === id; })[0];
+          customer.documents = customer.documents.filter(function (d) { return d.id !== id; });
+          CRM.save();
+          renderDocuments();
+          ui.toast("Dokument „" + doc.name + "“ gelöscht.", "info");
+        });
+
         renderOverview();
         renderContacts();
         renderPayment();
         renderHistory();
+        renderContracts();
+        renderDocuments();
         ui.initTabs(document.getElementById("customer-tabs"), function () {
           permError.hidden = true;
+          contractErr.hidden = true;
         });
       })();
     </script>
