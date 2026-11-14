@@ -64,7 +64,9 @@ type Checked = { ok: true; event: GuidanceEvent } | { ok: false; error: string }
 
 const PointInput = z.object({
   elementNumber: z.number().int().describe("Number of the element in <page_elements> (current page only)."),
-  hint: z.string().optional().describe("Optional very short on-screen text (≤ 120 chars), e.g. 'Enter the IBAN here'."),
+  hint: z
+    .string()
+    .describe("Short, helpful 1-sentence instruction shown next to the cursor (≤ 120 chars, in the user's language), e.g. 'Click here to open payment details' or 'Hier die neue IBAN eintragen'."),
 });
 const PlanInput = z.object({
   steps: z
@@ -73,7 +75,9 @@ const PlanInput = z.object({
         label: z.string().describe("Exact label of the element to use (from the page elements or the feature click path)."),
         route: z.string().optional().describe("Page route of this step if known, e.g. /kunde.html."),
         elementNumber: z.number().int().optional().describe("Only for steps on the CURRENT page."),
-        hint: z.string().optional().describe("Optional very short text (≤ 120 chars)."),
+        hint: z
+          .string()
+          .describe("Short 1-sentence instruction shown next to the cursor for this step (≤ 120 chars, in the user's language)."),
       }),
     )
     .min(1)
@@ -107,7 +111,8 @@ function makeValidators(snapshot: PageSnapshot) {
 
   const check = (name: UiTool, raw: unknown): Checked => {
     if (name === "pointTo") {
-      const p = PointInput.safeParse(raw);
+      const obj = raw && typeof raw === "object" ? { hint: "", ...(raw as Record<string, unknown>) } : raw;
+      const p = PointInput.safeParse(obj);
       if (!p.success) return { ok: false, error: "Error: invalid input for pointTo." };
       const el = byNumber.get(p.data.elementNumber);
       if (!el) return { ok: false, error: unknown(p.data.elementNumber) };
@@ -115,7 +120,10 @@ function makeValidators(snapshot: PageSnapshot) {
       return { ok: true, event: { type: "point", elementNumber: el.number, label: el.label, ...(hint ? { hint } : {}) } };
     }
     if (name === "showPlan") {
-      const p = PlanInput.safeParse(raw);
+      const rawSteps = raw && typeof raw === "object" && Array.isArray((raw as { steps?: unknown }).steps)
+        ? { ...(raw as Record<string, unknown>), steps: ((raw as { steps: unknown[] }).steps).map((st) => (st && typeof st === "object" ? { hint: "", ...(st as Record<string, unknown>) } : st)) }
+        : raw;
+      const p = PlanInput.safeParse(rawSteps);
       if (!p.success) return { ok: false, error: "Error: showPlan needs 1–10 steps with a label each." };
       const steps = [];
       for (const [i, s] of p.data.steps.entries()) {

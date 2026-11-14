@@ -841,8 +841,10 @@ async function explicitQuestion(question: string, source: Source = "text", optio
   const chatId = appendChat({ role: "assistant", source, text: CHAT_PENDING_TEXT, pending: true });
   busy = true; busyMode = "question"; const owner = ++busyOwner;
   const epoch = generation;
+  let targetTabId: number | null = null;
   try {
     const tab = await activeAppTab();
+    targetTabId = tab.id;
     if (epoch !== generation) throw new Error("The request was cancelled.");
     lastAppHost = new URL(tab.url!).host;
     const snapshot = await snapshotOf(tab.id);
@@ -866,7 +868,10 @@ async function explicitQuestion(question: string, source: Source = "text", optio
   } catch (error) {
     const errMsg = errorText(error);
     updateChat(chatId, { text: errMsg, pending: false, error: true });
-    if (epoch === generation) message = errMsg;
+    if (epoch === generation) {
+      message = errMsg;
+      if (targetTabId !== null) void sendTab(targetTabId, { type: "lotse:say", text: errMsg.slice(0, 200) });
+    }
     throw error;
   }
   finally { if (owner === busyOwner) { busy = false; busyMode = null; if (inferencePending) queueInference(); } schedulePersistence(); }

@@ -721,6 +721,22 @@ function usable(element: HTMLElement | undefined): element is HTMLElement {
   return Boolean(element && element.isConnected && isVisible(element) && !element.matches(":disabled") && element.getAttribute("aria-disabled") !== "true");
 }
 
+function pointable(element: HTMLElement | undefined): element is HTMLElement {
+  return Boolean(element && element.isConnected && isVisible(element));
+}
+
+function formatActionHint(element: HTMLElement | undefined, label: string, hint?: string): string {
+  const cleanHint = hint?.trim();
+  if (cleanHint && cleanHint.toLocaleLowerCase() !== label.trim().toLocaleLowerCase()) return cleanHint;
+  const cleanLabel = label.trim() || "this control";
+  if (element && isControlDisabled(element)) {
+    const reason = disabledReason(element);
+    return reason ? `“${cleanLabel}” is locked: ${reason}` : `“${cleanLabel}” is currently locked.`;
+  }
+  if (element && isEntry(element)) return `Fill in “${cleanLabel}”.`;
+  return `Click “${cleanLabel}”.`;
+}
+
 /** Text entry targets advance on `change` (value committed), everything else on click. */
 function isEntry(element: HTMLElement) {
   if (element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement || element.isContentEditable) return true;
@@ -767,7 +783,14 @@ function resetGuidance() {
 }
 
 function pointView(): OverlayView {
-  return { text: pointText, detail: answerSay || undefined, note: feedbackNote(), buttons: [...thumbs(), { action: "close", label: "✕", title: "Close hint (Esc)" }] };
+  const showBoth = Boolean(answerSay && answerSay.trim() && answerSay.trim() !== pointText.trim());
+  return {
+    title: "Valo",
+    text: pointText || answerSay,
+    detail: showBoth ? answerSay : undefined,
+    note: feedbackNote(),
+    buttons: [...thumbs(), { action: "close", label: "✕", title: "Close hint (Esc)" }],
+  };
 }
 
 function sayView(): OverlayView {
@@ -787,19 +810,28 @@ function legacyHighlight(elementNumber: number, sentence: string, snapshotId?: s
   return { ok: true };
 }
 
-/** `point` numbers refer to the request snapshot; if the page changed meanwhile, fall back to the label. */
+/** `point` numbers refer to the request snapshot; if the page changed meanwhile, fall back to the label (or floating cursor bubble). */
 function showPoint(elementNumber: number, label: string, hint: string | undefined, snapshotId: string, offerId?: string) {
-  if (plan) return { ok: true }; // the plan of the same answer already marks this step
+  if (plan) {
+    // If plan arrived first without a hint on step 1, enrich step 1 with the point hint and refresh the bubble.
+    if (hint?.trim() && plan.steps[0] && !plan.steps[0].hint) {
+      plan.steps[0] = { ...plan.steps[0], hint: hint.trim() };
+      if (planShown) overlay.update(planView(Boolean(planShown.element)));
+    }
+    return { ok: true };
+  }
   const snapshot = buildSnapshot();
-  let element: HTMLElement | undefined = snapshot.id === snapshotId ? numbered[elementNumber] : undefined;
-  if (!usable(element)) element = byLabel(label, snapshot);
-  if (!usable(element)) return { ok: false, error: "The target is no longer available on the page." };
+  const direct = snapshot.id === snapshotId ? numbered[elementNumber] : undefined;
+  let element: HTMLElement | undefined = usable(direct) ? direct : byLabel(label, snapshot);
+  // Allow pointing at a visible disabled element if the model specifically targeted it (e.g. explaining why it is locked).
+  if (!element && pointable(direct)) element = direct;
   clearTimeout(hideTimer);
   if (offerId) guidanceOfferId = offerId;
   offer = null;
   mode = "point";
-  pointText = (hint || label).slice(0, 600);
-  overlay.show(pointView(), element);
+  pointText = formatActionHint(element, label, hint).slice(0, 600);
+  overlay.show(pointView(), element ?? null);
+  if (!element) autoHide(20_000);
   return { ok: true };
 }
 
@@ -848,8 +880,9 @@ function startPlan(view: PlanView, resume: boolean) {
   clearTimeout(hideTimer);
   clearTimeout(planTimer);
   offer = null;
+  const steps = view.steps.map((s, idx) => (idx === 0 && !s.hint && pointText ? { ...s, hint: pointText } : s));
   pointText = "";
-  plan = { ...view, index: Math.min(Math.max(view.index, 0), view.steps.length - 1) };
+  plan = { ...view, steps, index: Math.min(Math.max(view.index, 0), steps.length - 1) };
   planShown = null;
   if (view.offerId) guidanceOfferId = view.offerId;
   mode = "plan";
@@ -905,19 +938,22 @@ function planView(found: boolean): OverlayView {
   const position = current.index + 1;
   const total = current.steps.length;
   const here = route();
-  let detail: string | undefined;
+  const details: string[] = [];
+  if (position === 1 && answerSay) details.push(answerSay);
   if (!found) {
-    if (step.route && !routeMatches(step.route, here)) detail = `This step is on the “${prettyRoute(step.route)}” page.`;
-    else if (hasPlaceholder(step.label)) detail = "Pick the matching entry – then we'll continue.";
-    else detail = `“${step.label}” is not visible here right now.`;
-  } else if (position === 1 && answerSay) detail = answerSay;
+    if (step.route && !routeMatches(step.route, here)) details.push(`This step is on the “${prettyRoute(step.route)}” page.`);
+    else if (hasPlaceholder(step.label)) details.push("Pick the matching entry – then we'll continue.");
+    else details.push(`“${step.label}” is not visible here right now.`);
+  }
+  const detail = details.length ? details.join("\n") : undefined;
   const buttons: OverlayButton[] = [];
   if (position > 1) buttons.push({ action: "back", label: "Back" });
   buttons.push({ action: "next", label: position === total ? "Done" : "Next", primary: !found });
   buttons.push(...thumbs(), { action: "end", label: "✕", title: "End guide (Esc)" });
+  const mainText = step.hint?.trim() || (found ? formatActionHint(planShown?.element ?? undefined, step.label) : `Next step: “${step.label}”`);
   return {
     title: `Step ${position}/${total}`,
-    text: (step.hint?.trim() || (found ? step.label : `Next step: “${step.label}”`)).slice(0, 300),
+    text: mainText.slice(0, 300),
     detail, note: feedbackNote(), buttons,
   };
 }

@@ -18,7 +18,7 @@ type OverlayOptions = {
 };
 type Point = { x: number; y: number };
 
-const GLIDE_MS = 600;
+const GLIDE_MS = 450;
 const VOICE_TEXT: Partial<Record<VoiceState, string>> = { listening: "🎙 Valo is listening …", thinking: "… Valo is thinking", speaking: "🔊 Valo is speaking" };
 const STYLE = `
 :host { all: initial; }
@@ -318,6 +318,10 @@ export class LotseOverlay {
       return { x: clamp(x, 4, innerWidth - 80), y: clamp(y, 4, innerHeight - 30) };
     }
     const bubble = this.bubble.getBoundingClientRect();
+    const leftOfBubble = bubble.left - 58;
+    if (leftOfBubble >= 8) {
+      return { x: leftOfBubble, y: clamp(bubble.top + 8, 8, innerHeight - 34) };
+    }
     return { x: clamp(bubble.left + 12, 4, innerWidth - 80), y: clamp(bubble.top - 34, 4, innerHeight - 30) };
   }
 
