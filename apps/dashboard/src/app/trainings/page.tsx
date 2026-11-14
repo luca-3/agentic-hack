@@ -1,6 +1,6 @@
 import { schulungAnlegen } from "@/app/actions";
 import { Shell } from "@/components/Shell";
-import { EmptyState, Field, Footnote, FormActions, IconExternal, Notice, PRODUCT_NAME, cx } from "@/components/ui";
+import { EmptyState, Field, Footnote, FormActions, IconChevron, IconExternal, Notice, PRODUCT_NAME } from "@/components/ui";
 import { getOrgContext } from "@/lib/org";
 
 /** Question-based trainings need at least this many distinct people before they show up (D-12, D-28). */
@@ -21,7 +21,6 @@ type Training = {
   bundle_of: string[];
 };
 
-const chip = "rounded-sm border border-line-strong px-2 py-0.5 text-xs font-medium text-text";
 const byBacking = (a: Training, b: Training) => (b.asked_by ?? 0) - (a.asked_by ?? 0) || (b.asked_count ?? 0) - (a.asked_count ?? 0);
 
 export default function SchulungenPage({ searchParams }: PageProps<"/trainings">) {
@@ -29,7 +28,7 @@ export default function SchulungenPage({ searchParams }: PageProps<"/trainings">
     <Shell
       href="/trainings"
       title="Trainings"
-      intro={`Trainings come from your employees' questions: when many people ask ${PRODUCT_NAME} about the same spot, it becomes a training – backed by how many asked.`}
+      intro={`Built from what your employees ask ${PRODUCT_NAME}.`}
       meta="Last 30 days"
     >
       <Inhalt searchParams={searchParams} />
@@ -50,40 +49,59 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/trainings">[
   // Aggregates only; anything asked by fewer than MIN_PEOPLE stays hidden.
   const fromQuestions = all.filter((t) => t.source === "questions" && (t.asked_by ?? 0) >= MIN_PEOPLE).sort(byBacking);
   const manual = all.filter((t) => t.source !== "questions");
-  const singles = new Map(fromQuestions.filter((t) => !t.bundle_of.length).map((t) => [t.title, t]));
   const appNames = new Map((apps ?? []).map((a) => [a.id as string, a.name as string]));
+
+  const [suggested, ...more] = fromQuestions;
 
   return (
     <>
       {typeof sp.ok === "string" && <Notice tone="success" title="Training created." />}
       <div className={isAdmin ? "grid grid-cols-[1.6fr_1fr] items-start gap-6" : "grid"}>
-        <div className="grid gap-8">
+        <div className="grid gap-6">
           <section className="grid gap-3">
-            <div className="grid gap-1">
-              <h2 className="m-0 text-xl font-semibold">From employee questions</h2>
-              <p className="m-0 text-muted">
-                Sorted by how many people asked. Bundles combine related topics into one session, e.g. a whole workflow.
-              </p>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="m-0 text-xl font-semibold">Suggested training</h2>
+              {suggested && (
+                <span className="text-sm text-muted">
+                  {suggested.app_id ? appNames.get(suggested.app_id) : "All apps"}
+                  {suggested.period_days ? ` · last ${suggested.period_days} days` : ""}
+                </span>
+              )}
             </div>
-            <Footnote>Aggregates only – questions and distinct people, never who asked. Fewer than {MIN_PEOPLE} people: hidden.</Footnote>
-            {fromQuestions.length ? (
-              fromQuestions.map((t) => <QuestionTraining key={t.id} t={t} singles={singles} appName={t.app_id ? appNames.get(t.app_id) : undefined} />)
+            {suggested ? (
+              <Suggested t={suggested} />
             ) : (
               <EmptyState title="No trainings from questions yet." text={`They appear once at least ${MIN_PEOPLE} people asked ${PRODUCT_NAME} about the same topic.`} />
             )}
+            {more.length > 0 && (
+              <details className="rounded-lg border border-line bg-surface">
+                <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 font-semibold">
+                  <span data-chev><IconChevron /></span>
+                  {more.length} more from questions
+                </summary>
+                <ul className="m-0 grid list-none p-0">
+                  {more.map((t) => <Row key={t.id} t={t} />)}
+                </ul>
+              </details>
+            )}
+            <Footnote>Counts only, never who asked · shown from {MIN_PEOPLE} people.</Footnote>
           </section>
 
-          <section className="grid gap-3">
-            <h2 className="m-0 text-xl font-semibold">Catalog</h2>
-            {!manual.length && <EmptyState title="No trainings added manually yet." text={isAdmin ? "Create one on the right." : undefined} />}
-            {manual.map((t) => (
-              <article key={t.id} className="grid gap-1.5 rounded-lg border border-line bg-surface px-5 py-[18px]">
-                <h3 className="m-0 text-lg font-semibold">{t.title}</h3>
-                {t.url && <a href={t.url} className="inline-flex items-center gap-1.5 justify-self-start font-mono">{t.url.replace(/^https?:\/\//, "")}<IconExternal /></a>}
-                <p className="m-0 text-muted">Topics: {t.topics.join(", ") || "–"}</p>
-              </article>
-            ))}
-          </section>
+          <details className="rounded-lg border border-line bg-surface" open={typeof sp.ok === "string"}>
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-4 font-semibold">
+              <span data-chev><IconChevron /></span>
+              Catalog <span className="font-normal text-muted">· {manual.length} added manually</span>
+            </summary>
+            <ul className="m-0 grid list-none p-0">
+              {!manual.length && <li className="border-t border-line px-4 py-3 text-muted">None yet.{isAdmin ? " Create one on the right." : ""}</li>}
+              {manual.map((t) => (
+                <li key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line px-4 py-3">
+                  <span className="font-semibold">{t.title}</span>
+                  {t.url && <a href={t.url} className="inline-flex items-center gap-1.5 text-sm">Open<IconExternal /></a>}
+                </li>
+              ))}
+            </ul>
+          </details>
         </div>
         {isAdmin && (
           <form action={schulungAnlegen} className="grid gap-4 rounded-lg border border-line bg-surface p-6">
@@ -99,51 +117,51 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/trainings">[
   );
 }
 
-function QuestionTraining({ t, singles, appName }: { t: Training; singles: Map<string, Training>; appName?: string }) {
-  const bundle = t.bundle_of.length > 0;
+/** "Payment flow: bank details → …" → ["Payment flow", "bank details → …"]; the part after the colon is the short outline. */
+const splitTitle = (title: string): [string, string] => {
+  const i = title.indexOf(": ");
+  return i > 0 ? [title.slice(0, i), title.slice(i + 2)] : [title, ""];
+};
+
+const BundleTag = ({ parts }: { parts: number }) => (
+  <span className="inline-flex h-6 items-center rounded-full bg-info-soft px-2 text-xs font-semibold whitespace-nowrap text-info-text">Bundle · {parts} parts</span>
+);
+
+/** The one training worth doing next: the backing is the headline, everything else is one line. */
+function Suggested({ t }: { t: Training }) {
+  const [name, outline] = splitTitle(t.title);
   return (
-    <article id={`training-${t.id}`} className={cx("grid scroll-mt-6 gap-3 rounded-lg border bg-surface px-6 py-5", bundle ? "border-primary-line" : "border-line")}>
-      <div className="flex flex-wrap items-center gap-2">
-        {bundle && (
-          <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-info-soft px-2.5 text-sm font-semibold text-info-text">
-            <span className="size-2 rounded-[2px] bg-current" />Bundle · {t.bundle_of.length} parts
-          </span>
-        )}
-        <span className="inline-flex h-7 items-center rounded-full bg-primary-soft px-2.5 text-sm font-semibold whitespace-nowrap text-primary-text tabular-nums">
-          Asked by {t.asked_by} people · {t.asked_count} questions
-        </span>
+    <article title={t.description ?? undefined} className="grid grid-cols-[auto_1fr] items-center gap-6 rounded-lg border border-primary-line bg-primary-soft px-6 py-5">
+      <div className="grid justify-items-center text-primary-text tabular-nums">
+        <span className="text-5xl leading-none font-bold">{t.asked_by}</span>
+        <span className="mt-1 text-sm font-medium whitespace-nowrap">people asked</span>
       </div>
-      <h3 className="m-0 text-lg leading-snug font-semibold">{t.title}</h3>
-      {t.description && <p className="m-0 text-pretty">{t.description}</p>}
-      {bundle && (
-        <div className="grid gap-1.5 rounded-md bg-surface-2 px-4 py-3">
-          <p className="m-0 text-sm font-semibold">Included trainings</p>
-          <ol className="m-0 grid gap-1 pl-5">
-            {t.bundle_of.map((part) => {
-              const single = singles.get(part);
-              return (
-                <li key={part}>
-                  {single ? <a href={`#training-${single.id}`}>{part}</a> : part}
-                  {single && <span className="text-sm text-muted tabular-nums"> · {single.asked_by} people</span>}
-                </li>
-              );
-            })}
-          </ol>
+      <div className="grid gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="m-0 text-xl leading-snug font-semibold">{name}</h3>
+          {t.bundle_of.length > 0 && <BundleTag parts={t.bundle_of.length} />}
         </div>
-      )}
-      <dl className="m-0 grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-sm">
-        <dt className="text-muted">Roles</dt>
-        <dd className="m-0 flex flex-wrap gap-1.5">
-          {t.roles.length ? t.roles.map((r) => <span key={r} className={chip}>{r}</span>) : <span>Everyone</span>}
-        </dd>
-        <dt className="text-muted">Features</dt>
-        <dd className="m-0 flex flex-wrap gap-1.5">
-          {t.topics.map((f) => <span key={f} className={chip}>{f}</span>)}
-        </dd>
-      </dl>
-      <p className="m-0 text-sm text-muted">
-        From employee questions{appName ? ` in ${appName}` : ""}{t.period_days ? `, last ${t.period_days} days` : ""}
-      </p>
+        {outline && <p className="m-0">{outline}</p>}
+        <p className="m-0 text-sm text-muted tabular-nums">
+          {t.asked_count} questions · {t.roles.length ? t.roles.join(", ") : "Everyone"}
+        </p>
+      </div>
     </article>
+  );
+}
+
+function Row({ t }: { t: Training }) {
+  const [name] = splitTitle(t.title);
+  return (
+    <li title={t.description ?? undefined} className="grid grid-cols-[6.5rem_1fr_auto] items-center gap-4 border-t border-line px-4 py-2.5">
+      <span className="font-semibold tabular-nums">
+        {t.asked_by} <span className="text-sm font-normal text-muted">people</span>
+      </span>
+      <span className="flex min-w-0 flex-wrap items-center gap-2">
+        <span>{name}</span>
+        {t.bundle_of.length > 0 && <BundleTag parts={t.bundle_of.length} />}
+      </span>
+      <span className="text-sm whitespace-nowrap text-muted tabular-nums">{t.asked_count} questions</span>
+    </li>
   );
 }
