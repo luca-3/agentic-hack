@@ -74,15 +74,37 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** avoid merge conflicts; one place for keys and LLM spend.
 - **Consequence:** don't edit another area's folder without telling its owner; contract changes go into `packages/shared` first; schema only via new migrations, never edit merged ones; no Gemini key outside the server.
 
+### D-16 · One brain on the server; voice is only input/output (2026-11-14) — refines D-10
+- **Decision:** wake word (openWakeWord) or hotkey Alt+L → offscreen document transcribes (Gemini Live transcription via ephemeral token from `POST /api/lotse/live-token`; fallback Web Speech API) → text goes to the central agent `/api/lotse/ask` (`source: "voice"`) → only a `say` event is spoken (`chrome.tts`). No conversational Live agent.
+- **Why:** the user wants the agent centrally on our server, and **no talking when a marker answers the question** — only controllable if our runtime decides what is said.
+- **Consequence:** audio still goes browser → Gemini directly (never through our server); same tiers, limits and tracking for voice and text.
+
+### D-17 · Show only, never act (2026-11-14) — supersedes D-09 and R-ACT-1/2
+- **Decision:** Lotse marks fields/elements (agent cursor + highlight + short hint) and lays out multi-step plans; it never clicks or fills anything. No `clickElement` tool.
+- **Why:** goal is to train employees; differentiator vs. acting browser agents (see research → Competitors).
+
+### D-18 · Model tiers chosen by an orchestrator in the runtime (2026-11-14)
+- **Decision:** `point` (target on current page, one marker, fast model, minimal thinking) · `guide` (multi-step/off-page, tools: feature list + knowledge search, `showPlan`) · `reason` (ambiguous/analysis, smart model). Heuristic routing first, lite-model classification only when unsure. Proactive "intervene?" via a lite model on `/api/lotse/decide`.
+- **Why:** most questions are simple "where do I click" → fast and cheap; hard ones get more steps/thinking.
+
+### D-19 · Guidance as an NDJSON event stream (2026-11-14)
+- **Decision:** `POST /api/lotse/ask` streams `GuidanceEvent`s (`tier`, `point`, `plan`, `say`, `done`, `error`; schema in `@lotse/shared`). UI tools emit their event the moment the tool call arrives. Multi-step plans advance **locally** in the extension (label match in a fresh snapshot after each click/navigation) — no server call per step.
+- **Why:** first highlight on screen before the agent finishes; framework-agnostic for a service-worker client.
+
+### D-20 · Local prefilter + rules; server only on demand (2026-11-14)
+- **Decision:** the extension keeps only semantic events (no values, no mousemove/scroll), runs the stuck rules locally and calls `/decide` only when a rule fires; analytics go in batches (≤ 100, ~30 s) to `/api/lotse/events`. Proactive help is a user setting (`proactive`, default on) with cooldown (1 offer / 2 min, "Nein" → 10 min snooze).
+- **Why:** data volume, cost, privacy; proactive offers can be annoying.
+
+### D-21 · Runtime safety: auth, limits, tracking (2026-11-14)
+- **Decision:** Supabase access token (dev: anonymous per session id); per-session rate limits and daily token budget; per-tier timeouts and max output tokens; kill switch `LOTSE_DISABLED`; every LLM call logged to `agent_usage`; page labels treated as untrusted data (prompt-injection).
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?
 - Second demo app: EBV-Portal (local, test data)? Fuller's OK to show CORPUS publicly?
 - EU data residency: Gemini Live via Vertex AI in an EU region — availability not verified.
 - Production runtime: stay on Next.js or move agents to Google Agent Runtime (ADK)?
-- Foundation agent (`apps/server/src/lib/lotse/`, `DataSource` interface, mock data) — planned, not built yet.
 - **Name:** Ismail doesn't like "Lotse" — new name to be decided later (keep "Lotse" until then).
-- **Execution (R-ACT-1/2):** Ismail chose "show only, never execute" (also a differentiator vs. browser agents, see research → Competitors). Keep R-ACT as Demo or drop it?
 - **Promote to Demo?** Fading per person/task (R-INS-4, local learning state) and a "still stuck after the hint" metric (hints + later events) — the two features no competitor has.
 - **Second app:** is the EBV-Portal the same as the Erasmus funding helper Ismail mentioned, or two apps?
 - **Schedule:** submission deadline 19:10, opt-in 19:00 → "no building from 19:00" is too late; proposal: feature freeze 16:30, code freeze 17:30, submit by 18:45.

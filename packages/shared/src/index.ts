@@ -131,3 +131,17 @@ export type ExtensionMessage =
   | { type: "lotse:observe"; event?: LotseEvent; snapshot?: ObservationSnapshot }
   | { type: "lotse:settings"; settings: { screenshots: boolean; role: string; appKnowledge: string } }
   | { type: "lotse:wake-question"; question: string }; // voice adapter uses the same explicit-question path
+
+/**
+ * One function of an app, as maintained in the dashboard (table app_features) and in
+ * demo-crm/lotse-features.json. The server gives the relevant ones to the model.
+ */
+export const FeatureSchema = z.object({
+  name: z.string().min(1), // "Bankverbindung (IBAN) eines Kunden ändern"
+  description: z.string().default(""),
+  route: z.string().min(1), // "/kunde.html"
+  clickPath: z.array(z.string().min(1)).min(1), // UI labels in click order
+  requiredRole: z.array(z.string()).nullish(), // null/absent = everyone
+});
+export type Feature = z.infer<typeof FeatureSchema>;
+export const FeatureListSchema = z.array(FeatureSchema);
