@@ -9,6 +9,7 @@ import {
 import { ObservationBuffer, findStuckSignal } from "../utils/observation";
 import { DEFAULT_SETTINGS, DEMO_CONTEXT_KEY, type ExtensionSettings, type LotseMessage, type PagePolicy, type PlanView } from "../utils/messages";
 import * as auth from "../utils/auth";
+import { explorationRunning, setupExplorer } from "../utils/explore/runner";
 import { PAUSED_TEXT, clearPolicies, hostOf, pageVerdict, policyFor } from "../utils/policy";
 import * as pseudo from "../utils/pseudonymize";
 import { noteError, setupActivation } from "../utils/activation";
@@ -124,6 +125,8 @@ export default defineBackground(() => {
     }),
   });
   browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => undefined);
+  // D-25 admin exploration (utils/explore): own message listener for `lotse:explore-*`; stops the observation first.
+  setupExplorer({ pagePolicy, stopObservation: stop });
   browser.runtime.onMessage.addListener((incoming: LotseMessage, sender, respond) => {
     // Leave messages of other modules (the voice offscreen document uses `target`) to their own listeners.
     if (!incoming || typeof incoming !== "object" || "target" in incoming || !HANDLED.has(incoming.type)) return false;
@@ -397,6 +400,8 @@ async function sendTab(tabId: number, command: LotseMessage): Promise<{ ok?: boo
 }
 
 async function start() {
+  // While the admin exploration drives a tab, nothing is observed (also blocks auto-activation).
+  if (explorationRunning()) throw new Error("Lotse erkundet gerade die App. Die Beobachtung startet danach wieder.");
   const tab = await activeAppTab();
   if (recording && recordingTab === tab.id) return;
   await stop();

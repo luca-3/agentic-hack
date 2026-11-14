@@ -3,6 +3,7 @@ import { routeBlocked } from "@lotse/shared/route"; // zod-free: keeps the schem
 import { findElementByLabel, hasPlaceholder, labelScore, prettyRoute, routeMatches } from "../utils/match";
 import type { LotseMessage, PagePolicy, PlanCommand, PlanView } from "../utils/messages";
 import { LotseOverlay, type OverlayAction, type OverlayButton, type OverlayView } from "../utils/overlay";
+import { setupExploreScanner } from "../utils/explore/scan";
 import { ORB_HOST_ID, setupOrb } from "../utils/orb";
 import { collectPagePrivacy, type WithPrivacy } from "../utils/pseudonymize";
 
@@ -103,6 +104,8 @@ export default defineContentScript({
       }
     };
     browser.runtime.onMessage.addListener(onMessage);
+    // D-25: admin exploration — answers only `lotse:explore-*` messages from the service worker.
+    setupExploreScanner();
 
     const listeners: Array<[EventTarget, string, EventListener, boolean]> = [];
     const listen = (target: EventTarget, type: string, listener: EventListener, capture = true) => {

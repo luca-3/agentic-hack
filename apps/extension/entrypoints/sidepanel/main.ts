@@ -1,6 +1,7 @@
 import type { VoiceState } from "@lotse/shared";
 import type { LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
+import "./explore"; // D-25 "App erkunden" (org admins)
 import "./presence"; // D-29 switches: "Automatisch aktiv", "Status-Kreis anzeigen"
 
 const get = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;

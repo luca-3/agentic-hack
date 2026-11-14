@@ -47,6 +47,11 @@
       .paused h2 { color: #92400e; }
       #org-line:empty, #paused-reason:empty, #role-note:empty, #auto-line:empty { display: none; }
       :focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+      #explore-box summary .muted { font-weight: 400; }
+      #explore-box .stats strong { font-size: 15px; }
+      #explore-app:empty, #explore-reason:empty, #explore-route:empty, #explore-message:empty, #explore-notice:empty { display: none; }
+      #explore-notice { color: #9a3412; }
+      #explore-result { margin-top: 10px; }
     </style>
   </head>
   <body>
@@ -70,6 +75,29 @@
       <div id="signed-in" class="row" hidden><p id="account-line" style="flex: 1"></p><button id="logout" class="secondary small" type="button">Abmelden</button></div>
       <p id="org-line" class="muted"></p>
     </section>
+    <details id="explore-box">
+      <summary>App erkunden <span class="muted">(nur Org-Admins, einmal pro App)</span></summary>
+      <p class="muted">Lotse klickt sich einmal durch die App – Seiten, Reiter, Menüs, Dialoge – und schlägt daraus Funktionen und Design-Hinweise vor. Nur Navigation: nichts wird ausgefüllt, gespeichert, gesendet oder gelöscht; geschützte Seiten bleiben außen vor.</p>
+      <p id="explore-app" class="muted"></p>
+      <p id="explore-reason" class="muted"></p>
+      <div class="actions"><button id="explore-start" type="button" disabled>App erkunden</button><button id="explore-stop" class="secondary" type="button" hidden>Stopp</button></div>
+      <div id="explore-progress" hidden>
+        <div class="stats" aria-label="Fortschritt der Erkundung">
+          <div><strong id="explore-pages">0</strong>Einträge</div>
+          <div><strong id="explore-elements">0</strong>Elemente</div>
+          <div><strong id="explore-queued">0</strong>offen</div>
+          <div><strong id="explore-time">0:00</strong>Zeit</div>
+        </div>
+        <p id="explore-route" class="muted"></p>
+        <p id="explore-message" role="status"></p>
+      </div>
+      <div id="explore-result" class="callout" hidden>
+        <p><strong id="explore-features">0</strong> Funktionen und <strong id="explore-findings">0</strong> Design-Hinweise vorgeschlagen.</p>
+        <button id="explore-dashboard" type="button">Ergebnisse im Dashboard unter „Lernen“ prüfen</button>
+      </div>
+      <div id="explore-after" class="actions" style="margin-top: 8px" hidden><button id="explore-send" type="button">Bisheriges auswerten</button><button id="explore-discard" class="secondary" type="button">Verwerfen</button></div>
+      <p id="explore-notice" role="alert"></p>
+    </details>
     <section id="offer-box" class="callout" aria-labelledby="offer-title" hidden>
       <h2 id="offer-title">Lotse bietet Hilfe an</h2>
       <p id="offer-text"></p>
