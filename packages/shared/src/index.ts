@@ -370,3 +370,96 @@ export const KnowledgeHitSchema = z.object({
 export type KnowledgeHit = z.infer<typeof KnowledgeHitSchema>;
 export const KnowledgeSearchResponseSchema = z.object({ hits: z.array(KnowledgeHitSchema) });
 export type KnowledgeSearchResponse = z.infer<typeof KnowledgeSearchResponseSchema>;
+
+/* ── Pseudonymization (D-26) ────────────────────────────────────────────────────────────────────
+ * The extension replaces personal data with stable per-session placeholders before anything leaves the browser.
+ * Server and model treat them as opaque ids. Mapping placeholder ↔ real value stays in the browser.
+ */
+export const PSEUDONYM_KINDS = ["Kunde", "Person", "Firma", "Adresse", "IBAN", "E-Mail", "Telefon", "Wert"] as const;
+export type PseudonymKind = (typeof PSEUDONYM_KINDS)[number];
+/** e.g. "[Kunde-1]", "[IBAN-2]" */
+export const PSEUDONYM_TOKEN = /\[(Kunde|Person|Firma|Adresse|IBAN|E-Mail|Telefon|Wert)-\d{1,4}\]/g;
+export const pseudonym = (kind: PseudonymKind, n: number) => `[${kind}-${n}]`;
+
+/* ── Exploration (D-25): admin-started crawl of an app → page map → suggestions ────────────────── */
+export const EXPLORE_LIMITS = { maxPages: 60, maxElementsPerPage: 150, maxDurationMs: 180_000 } as const;
+/** Labels the explorer must never click (case-insensitive substring). Also never click danger-styled buttons or submit forms. */
+export const EXPLORE_NEVER_CLICK = [
+  "löschen", "entfernen", "delete", "remove", "senden", "send", "speichern", "save", "abgeben", "submit",
+  "bestätigen", "confirm", "bezahlen", "zahlen", "pay", "abmelden", "logout", "archivieren", "freigeben", "übernehmen",
+] as const;
+
+/** Style metrics the extension measures per element (computed style) — input for the design rules. */
+export const ElementStyleSchema = z.object({
+  contrast: z.number().optional(), // WCAG contrast ratio text vs. background
+  fontSize: z.number().optional(), // px
+  width: z.number().optional(), // px (hit area)
+  height: z.number().optional(),
+  iconOnly: z.boolean().optional(), // no visible text, label only from aria/title (or none)
+});
+export type ElementStyle = z.infer<typeof ElementStyleSchema>;
+
+export const ExploredElementSchema = InteractiveElementSchema.extend({ style: ElementStyleSchema.optional() });
+export type ExploredElement = z.infer<typeof ExploredElementSchema>;
+
+export const ExploredPageSchema = z.object({
+  route: z.string(), // pathname (+ hash route), never the query string
+  title: z.string(),
+  reachedVia: z.array(z.string()), // UI labels clicked from the start page, in order (= click path)
+  kind: z.enum(["page", "dialog", "menu", "tab"]).default("page"),
+  elements: z.array(ExploredElementSchema).max(EXPLORE_LIMITS.maxElementsPerPage),
+  headings: z.array(z.string()).max(30).default([]), // pseudonymized
+});
+export type ExploredPage = z.infer<typeof ExploredPageSchema>;
+
+/** POST /api/lotse/explore — caller must be org admin of the app. Auth: Bearer Supabase access token. */
+export const ExploreRequestSchema = z.object({
+  appHost: z.string().min(1).max(200), // e.g. "localhost:4000" (matches apps.domains)
+  pages: z.array(ExploredPageSchema).min(1).max(EXPLORE_LIMITS.maxPages),
+  durationMs: z.number().int().nonnegative().optional(),
+});
+export type ExploreRequest = z.infer<typeof ExploreRequestSchema>;
+export const ExploreResponseSchema = z.object({
+  features: z.number().int(), // feature suggestions created/updated
+  findings: z.number().int(), // design findings created/updated
+});
+export type ExploreResponse = z.infer<typeof ExploreResponseSchema>;
+
+/* ── Suggestions (D-25): what exploration and continuous learning propose; admin accepts or dismisses ── */
+export const SUGGESTION_KINDS = ["feature", "design", "stale_feature", "agent_error", "knowledge_gap"] as const;
+export type SuggestionKind = (typeof SUGGESTION_KINDS)[number];
+
+export const DesignFindingSchema = z.object({
+  rule: z.enum(["contrast", "target_size", "unlabeled_icon", "duplicate_label", "deep_path", "overloaded", "dead_end", "other"]),
+  route: z.string(),
+  elementLabel: z.string().optional(),
+  severity: z.enum(["low", "medium", "high"]),
+  measured: z.string().optional(), // e.g. "2,1:1", "28 × 28 px", "6 Klicks"
+});
+export type DesignFinding = z.infer<typeof DesignFindingSchema>;
+
+/** payload by kind: feature → Feature · design → DesignFinding · stale_feature → { feature: string, missingLabel: string }
+ *  agent_error → { route?: string, status: string, lastError?: string } · knowledge_gap → { topic: string, draft?: string } */
+export const SuggestionSchema = z.object({
+  id: z.number().int(),
+  kind: z.enum(SUGGESTION_KINDS),
+  source: z.enum(["explore", "learn"]),
+  appId: z.string().nullable(),
+  title: z.string(),
+  detail: z.string(),
+  payload: z.record(z.string(), z.unknown()),
+  occurrences: z.number().int(),
+  persons: z.number().int(),
+  status: z.enum(["open", "accepted", "dismissed"]),
+});
+export type Suggestion = z.infer<typeof SuggestionSchema>;
+
+/** POST /api/lotse/learn — run the detectors for the caller's org (admin). Auth: Bearer Supabase access token. */
+export const LearnRequestSchema = z.object({ appId: z.string().uuid().optional() });
+export type LearnRequest = z.infer<typeof LearnRequestSchema>;
+export const LearnResponseSchema = z.object({
+  suggestions: z.number().int(), // created or updated
+  insights: z.number().int(), // insight rows written
+  drafts: z.number().int(), // Gemini drafts generated (≤ 10 per run)
+});
+export type LearnResponse = z.infer<typeof LearnResponseSchema>;

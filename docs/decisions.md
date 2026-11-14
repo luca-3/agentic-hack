@@ -114,6 +114,16 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** explicit standing user instruction.
 - **Consequence:** overrides D-15's PR workflow and older validation guidance. Existing teammate smoke scripts are preserved but not run. No claim of 20/20 demo reliability; the handoff records remaining runtime/voice/plan integration.
 
+### D-25 · One-time exploration by an admin, then continuous learning with approval (2026-11-14)
+- **Decision:** an org admin starts an **exploration** once per app (test account + test data): the extension visits every page of the app, opens menus/tabs/dialogs and records a page map (routes, elements, click paths, per-element style metrics). `POST /api/lotse/explore` turns it into feature suggestions (`FeatureSchema`) and design findings (rules: contrast, target size, unlabeled icon buttons, duplicate labels, click depth > 4, overloaded pages, dead ends; Gemini only summarizes). After that, `POST /api/lotse/learn` (button "Jetzt auswerten" + every 10 min while the server runs) finds unknown features, stale click paths, agent errors (agent_usage errors/timeouts, 👎) and knowledge gaps, and refreshes `insights`. Everything lands in `lotse_suggestions`; nothing changes app knowledge without an admin clicking "Übernehmen".
+- **Why:** "Einrichtung in 60 Sekunden statt Touren in Wochen", and the system keeps improving (user, 2026-11-14).
+- **Consequence:** the exploration is the only place where Lotse clicks — refines D-17 for setup mode only: admins only, navigation only (links, tabs, menus, open dialogs; close via Escape/"Abbrechen"), never submits forms, never clicks delete/remove/send/save/submit/confirm/pay/logout or red/danger buttons, same origin, page and time limits, visible progress + stop. Employees never trigger it.
+
+### D-26 · Pseudonymize in the browser before anything leaves it (2026-11-14)
+- **Decision:** the extension replaces personal data with stable per-session placeholders before sending events, questions, snapshots or frames: content strings of the page (table cells, record headings, card titles — not UI labels) and patterns (IBAN, e-mail, phone, "Herr/Frau <Name>", street + number) become `[Kunde-1]`, `[Person-2]`, `[IBAN-1]`, `[E-Mail-1]` … (`PSEUDONYM_TOKEN` in `@lotse/shared`). The mapping stays in the browser; answers are shown with the real names again. Frames: content regions are painted over before upload.
+- **Why:** "nicht mehr Herr Müller sondern Herr A1" (user, 2026-11-14) — server and Gemini only ever see placeholders.
+- **Consequence:** pseudonymized, not anonymous (a freely typed name not on the page is only caught by patterns). Server prompts treat `[…-n]` tokens as opaque ids and never ask for the real value.
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?

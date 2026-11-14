@@ -6,6 +6,7 @@ import { getOrgContext } from "@/lib/org";
 const NAV = [
   { href: "/", label: "Übersicht" },
   { href: "/insights", label: "Erkenntnisse" },
+  { href: "/lernen", label: "Lernen" },
   { href: "/apps", label: "Apps & Funktionen" },
   { href: "/wissen", label: "Wissen" },
   { href: "/trainings", label: "Schulungen" },
