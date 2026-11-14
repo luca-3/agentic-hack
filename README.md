@@ -62,13 +62,31 @@ We use the Vercel AI SDK only as the thin model-call layer. **Everything that ma
 | **Calibrated "should I interrupt?"** | `gemini-decision-1` answers "needs help?" with calibrated confidence + "which feature?" in one call; **per-user threshold learns from 👍/👎**; explicit triggers (e.g. ≥ 5 clicks on a disabled button). | [`decide.ts`](apps/server/src/lib/lotse/decide.ts) · [`prefs.ts`](apps/server/src/lib/lotse/prefs.ts) |
 | **Context assembly** | Page host → org → **role-filtered feature graph**, org knowledge base (pgvector), **agent memory**, observation history, screenshots as real multimodal parts — delimited as untrusted data. | [`context.ts`](apps/server/src/lib/lotse/context.ts) · [`prompt.ts`](apps/server/src/lib/lotse/prompt.ts) · [`images.ts`](apps/server/src/lib/lotse/images.ts) |
 | **Streaming UI tools** | `pointTo`, `showPlan`, `say` reach the browser **the moment the model calls them** (NDJSON); multi-step plans then advance locally after each click — no extra round trip. | [`agent.ts`](apps/server/src/lib/lotse/agent.ts) · [`content.ts`](apps/extension/entrypoints/content.ts) |
-| **Voice around one brain** | Local wake word → Gemini Live transcription (single-use, transcription-locked token) → same guidance path → Gemini TTS **only** for `say`, max. 2 sentences, silent when a marker answers it. | [`live-token`](apps/server/src/app/api/lotse/live-token) · [`tts`](apps/server/src/app/api/lotse/tts) · [`utils/voice`](apps/extension/utils/voice) |
+| **Voice around one brain** | Local wake word ([own trained model](#our-own-wake-word--trained-during-the-hackathon)) → Gemini Live transcription (single-use, transcription-locked token) → same guidance path → Gemini TTS **only** for `say`, max. 2 sentences, silent when a marker answers it. | [`live-token`](apps/server/src/app/api/lotse/live-token) · [`tts`](apps/server/src/app/api/lotse/tts) · [`utils/voice`](apps/extension/utils/voice) |
 | **Guardrails** | Pseudonymization **in the browser** before anything leaves it, prompt-injection delimiting, org policy with blocked routes (fleet pages never observed), rate limits, token budgets, timeouts, kill switch, **every model call traced**. | [`pseudonymize.ts`](apps/extension/utils/pseudonymize.ts) · [`guard.ts`](apps/server/src/lib/lotse/guard.ts) · [`policy.ts`](apps/server/src/lib/lotse/policy.ts) · [`usage.ts`](apps/server/src/lib/lotse/usage.ts) |
 | **Learning over weeks** | Admin-started **exploration** maps the app once; a learning loop every 10 min finds stale click paths, agent errors and knowledge gaps; **agent memory** is promoted only with evidence from ≥ 5 people; insights → training & UX suggestions (aggregates only). | [`learn.ts`](apps/server/src/lib/lotse/learn.ts) · [`memory.ts`](apps/server/src/lib/lotse/memory.ts) · [`gaps.ts`](apps/server/src/lib/lotse/gaps.ts) · [`lib/insights`](apps/server/src/lib/insights) |
 
 **Measured locally (2026-11-14):** first highlight **≈ 0.9 s** · 7-step plan ≈ 1.1 s · interrupt decision 0.2–0.5 s · voice token 0.3–0.6 s.
 
 **Why not an off-the-shelf harness?** We need sub-second, real-time guidance with tools that run **in the user's browser**, Gemini-only with our own key, and strict privacy (works council, GDPR) — generic agent frameworks optimize for long-running chat agents instead.
+
+## Our own wake word — trained during the hackathon
+
+We started with openWakeWord's pre-trained **"Hey Jarvis"** (open weights, ONNX). It runs fully in the browser (ONNX Runtime Web in the extension's offscreen document), so no audio leaves the device before the trigger. There is no model for our own name, so we **trained our own keyword head for "Hey Valo" and "Hey Daddy"** — in about 30 minutes on a laptop, without a single recorded human voice:
+
+```mermaid
+flowchart LR
+  TTS["Synthetic speech<br/>30 Gemini TTS voices + 33 macOS voices, de/en"] --> AUG["Augmentation<br/>speed · reverb · band-limit · noise · babble"]
+  NEG["Hard negatives<br/>pitch sentences with 'Valo' but no 'hey',<br/>'Hey Danny', 'Daddy' alone"] --> AUG
+  AUG --> FEAT["Same streaming features as the browser<br/>mel → openWakeWord embedding, 16 × 96"]
+  FEAT --> MLP["Tiny MLP head<br/>~100 k parameters, PyTorch"]
+  MLP --> ONNX["ONNX, 400 KB<br/>hey_valo_daddy_v1.onnx"]
+  ONNX --> EXT["Extension runs it next to 'Hey Jarvis'<br/>highest score wins"]
+```
+
+![Wake word score over 16 s of speech: our model fires only on “Hey Valo” and “Hey Daddy”, the pre-trained model only on “Hey Jarvis”; pitch sentences that mention Valo stay near 0](docs/img/wakeword-scores.png)
+
+On voices the model never heard, it catches ~97 % of "Hey Valo" / "Hey Daddy" clips, while pitch sentences that only mention "Valo" stay near 0 (chart above: real scores from the shipped model). Known weak spot: near-homophones like "Hey Danny". Model: [`public/wakeword/hey_valo_daddy_v1.onnx`](apps/extension/public/wakeword/hey_valo_daddy_v1.onnx) · detector: [`wakeword.ts`](apps/extension/utils/voice/wakeword.ts) · decision: [D-38](docs/decisions.md).
 
 ## Why Valo
 
