@@ -46,7 +46,7 @@ let again = false;
 const isLocalApp = (url: string | undefined) => {
   try {
     const u = new URL(url ?? "");
-    return (u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname)) || (u.protocol === "https:" && u.hostname === "dev.fuller.de");
+    return (u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname)) || (u.protocol === "https:" && ["dev.fuller.de", "ebv-portal.vercel.app"].includes(u.hostname));
   } catch { return false; }
 };
 /** Older servers have no `autoStart`: a known, allowed app counts. */

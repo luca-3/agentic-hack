@@ -149,8 +149,8 @@ const localUrl = (url?: string): boolean => {
   if (!url) return false;
   try {
     const u = new URL(url);
-    // Same hosts as host_permissions in wxt.config.ts: local apps + CORPUS dev (example data).
-    return (u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname)) || (u.protocol === "https:" && u.hostname === "dev.fuller.de");
+    // Same hosts as host_permissions in wxt.config.ts: local apps + CORPUS dev (example data) + EBV-Portal test system.
+    return (u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname)) || (u.protocol === "https:" && ["dev.fuller.de", "ebv-portal.vercel.app"].includes(u.hostname));
   }
   catch { return false; }
 };

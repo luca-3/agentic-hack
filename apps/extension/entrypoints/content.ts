@@ -63,7 +63,8 @@ const overlay = new LotseOverlay({
 
 export default defineContentScript({
   // dev.fuller.de = CORPUS dev environment (example data only). Vehicles pages hold the real fleet → never read.
-  matches: ["http://localhost/*", "http://127.0.0.1/*", "https://dev.fuller.de/*"],
+  // ebv-portal.vercel.app = EBV-Portal test system (test data).
+  matches: ["http://localhost/*", "http://127.0.0.1/*", "https://dev.fuller.de/*", "https://ebv-portal.vercel.app/*"],
   excludeMatches: ["https://dev.fuller.de/fahrzeuge*"],
   main(ctx) {
     const onMessage = (message: LotseMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {

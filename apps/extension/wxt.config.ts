@@ -16,8 +16,8 @@ export default defineConfig({
     description: "Valo shows you where to click in web apps.",
     // offscreen: microphone (wake word + transcription) and spoken answers live in an offscreen document.
     permissions: ["sidePanel", "storage", "tabs", "activeTab", "offscreen"],
-    // Local dev only: our server (3001), dashboard (3000), demo CRM (4000), local CORPUS instance.
-    host_permissions: ["http://localhost/*", "http://127.0.0.1/*", "https://dev.fuller.de/*"],
+    // Local dev: our server (3001), dashboard (3000), demo CRM (4000), local CORPUS instance; CORPUS dev; EBV-Portal test system.
+    host_permissions: ["http://localhost/*", "http://127.0.0.1/*", "https://dev.fuller.de/*", "https://ebv-portal.vercel.app/*"],
     action: { default_title: "Open Valo" },
     commands: {
       "lotse-ask": {
