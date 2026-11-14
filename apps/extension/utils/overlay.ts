@@ -43,6 +43,7 @@ const STYLE = `
 .chips { position: fixed; right: 12px; bottom: 12px; display: flex; gap: 6px; pointer-events: none; }
 .chip { padding: 6px 10px; border-radius: 20px; background: #1e3a8a; color: #fff; font: 12px/1.3 system-ui, sans-serif; }
 .chip.voice { background: #0f766e; }
+.chip.explore { background: #4338ca; }
 @media (prefers-reduced-motion: reduce) { .cursor, .frame { transition: none !important; } }
 `;
 
@@ -58,6 +59,7 @@ export class LotseOverlay {
   private cursor!: HTMLDivElement;
   private recordingChip!: HTMLDivElement;
   private voiceChip!: HTMLDivElement;
+  private exploreChip!: HTMLDivElement;
   private target: HTMLElement | null = null;
   private view: OverlayView | null = null;
   private cursorAt: Point | null = null;
@@ -70,6 +72,7 @@ export class LotseOverlay {
   private pausedVisible = false;
   private voiceText = "";
   private chipsHidden = false;
+  private exploreText = "";
 
   constructor(private readonly options: OverlayOptions) {}
 
@@ -157,6 +160,15 @@ export class LotseOverlay {
     this.syncHost();
   }
 
+  setExploreText(text: string) {
+    this.exploreText = text;
+    if (!this.host && !this.exploreText) return;
+    this.ensure();
+    this.exploreChip.textContent = this.exploreText;
+    this.exploreChip.hidden = !this.exploreText;
+    this.syncHost();
+  }
+
   /** Follow scrolling/resizing/DOM changes. Reports a vanished target through `onTargetLost`. */
   render() {
     if (!this.host) return;
@@ -202,10 +214,13 @@ export class LotseOverlay {
     this.cursor.setAttribute("aria-hidden", "true");
     this.cursor.innerHTML = '<svg width="24" height="26" viewBox="0 0 24 26"><path d="M3 2 L3 21 L8.2 16.2 L11.6 23.6 L15 22 L11.6 14.8 L18.6 14.8 Z" fill="#2563eb" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="tag">Lotse</span>';
     const chips = div("chips");
+    this.exploreChip = div("chip explore");
+    this.exploreChip.hidden = !this.exploreText;
+    this.exploreChip.textContent = this.exploreText;
     this.voiceChip = div("chip voice");
     this.voiceChip.hidden = true;
     this.recordingChip = div("chip");
-    chips.append(this.voiceChip, this.recordingChip);
+    chips.append(this.exploreChip, this.voiceChip, this.recordingChip);
     shadow.append(style, this.frame, this.bubble, this.cursor, chips);
     this.host = host;
     this.syncChip();
@@ -259,7 +274,7 @@ export class LotseOverlay {
   }
 
   private syncHost() {
-    if (this.host) this.host.style.display = this.recording || this.pausedVisible || this.view || this.voiceText || this.holdCursor ? "block" : "none";
+    if (this.host) this.host.style.display = this.recording || this.pausedVisible || this.view || this.voiceText || this.exploreText || this.holdCursor ? "block" : "none";
   }
 
   private layout() {

@@ -22,6 +22,7 @@
       .actions { display: flex; flex-wrap: wrap; gap: 8px; }
       button { padding: 9px 12px; border: 0; border-radius: 9px; background: #1e3a8a; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
       button.secondary { background: #e2e8f0; color: #334155; }
+      button.danger { background: #fee2e2; color: #991b1b; }
       button.small { padding: 5px 9px; font-size: 12px; }
       button:disabled { opacity: .45; cursor: default; }
       label { display: block; margin: 10px 0 5px; font-weight: 500; }
@@ -45,7 +46,10 @@
       .callout p { margin: 0 0 8px; }
       .paused { border-color: #fcd34d; background: #fffbeb; }
       .paused h2 { color: #92400e; }
-      #org-line:empty, #paused-reason:empty, #role-note:empty, #auto-line:empty { display: none; }
+      .admin-card { border-color: #c7d2fe; background: #eef2ff; }
+      .badge-admin { display: inline-block; padding: 2px 7px; border-radius: 999px; background: #dbeafe; color: #1e40af; font-size: 11px; font-weight: 600; margin-left: 4px; }
+      .link-btn { display: inline-block; margin-top: 6px; color: #1e3a8a; font-weight: 600; font-size: 13px; text-decoration: underline; }
+      #org-line:empty, #paused-reason:empty, #role-note:empty, #auto-line:empty, #explore-progress:empty, #explore-result:empty { display: none; }
       :focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
     </style>
   </head>
@@ -62,13 +66,24 @@
     <section aria-labelledby="account-title">
       <h2 id="account-title">Konto</h2>
       <form id="login">
-        <label for="email">E-Mail</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="vertrieb@demo.test" />
-        <label for="password">Passwort</label><input id="password" type="password" autocomplete="current-password" maxlength="200" />
+        <label for="email">E-Mail</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="admin@demo.test" />
+        <label for="password">Passwort</label><input id="password" type="password" autocomplete="current-password" maxlength="200" placeholder="demo1234" />
         <div class="row" style="margin-top: 8px"><button id="login-button" type="submit">Anmelden</button></div>
-        <p class="muted">Ohne Anmeldung arbeitet Lotse im Dev-Modus mit der Demo-Rolle aus „Demo-Kontext“.</p>
+        <p class="muted">Ohne Anmeldung arbeitet Lotse im Dev-Modus mit der Demo-Rolle aus „Demo-Kontext“. Demo-Admin: admin@demo.test / demo1234</p>
       </form>
-      <div id="signed-in" class="row" hidden><p id="account-line" style="flex: 1"></p><button id="logout" class="secondary small" type="button">Abmelden</button></div>
+      <div id="signed-in" class="row" hidden><p id="account-line" style="flex: 1"></p><span id="admin-badge" class="badge-admin" hidden>Admin</span><button id="logout" class="secondary small" type="button">Abmelden</button></div>
       <p id="org-line" class="muted"></p>
+    </section>
+    <section id="explore-box" class="admin-card" aria-labelledby="explore-title" hidden>
+      <h2 id="explore-title">Einrichtung (Admin)</h2>
+      <p class="muted">Erkundet einmalig Seiten, Reiter, Menüs und Dialoge dieser App-Domain ohne Formulare abzusenden.</p>
+      <div class="actions">
+        <button id="explore-start" type="button">App erkunden</button>
+        <button id="explore-stop" class="danger" type="button" disabled>Stopp</button>
+      </div>
+      <p id="explore-progress" class="muted" role="status"></p>
+      <p id="explore-result" role="status"></p>
+      <a id="explore-dashboard-link" class="link-btn" href="http://localhost:3000/lernen" target="_blank" rel="noreferrer" hidden>Im Dashboard unter „Lernen“ öffnen ↗</a>
     </section>
     <section id="offer-box" class="callout" aria-labelledby="offer-title" hidden>
       <h2 id="offer-title">Lotse bietet Hilfe an</h2>

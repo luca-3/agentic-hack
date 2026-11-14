@@ -1,15 +1,18 @@
 import {
-  AskRequestSchema, AskResponseSchema, DecideRequestSchema, DecideResponseSchema, EventBatchSchema, GuidanceEventSchema,
+  AskRequestSchema, AskResponseSchema, DecideRequestSchema, DecideResponseSchema, EventBatchSchema,
+  EXPLORE_LIMITS, ExploreRequestSchema, ExploreResponseSchema, GuidanceEventSchema,
   IntentRequestSchema, LOTSE_DEFAULTS, LOTSE_HEADERS, LOTSE_SETTINGS_KEY, LotseEventSchema, LotseSettingsSchema,
   ObservationSnapshotSchema, OfferFeedbackRequestSchema, PROACTIVE_THRESHOLD, PolicyResponseSchema, ProactivePrefsSchema, ScreenshotFrameSchema,
   UIStateInferenceSchema, UIStateRequestSchema, WorkflowIntentSchema,
-  type AskResponse, type DecideResponse, type GuidanceEvent, type InferredIntent, type LotseEvent, type ObservationContext,
-  type ObservationSnapshot, type PolicyResponse, type VoiceState, type WorkflowIntent,
+  type AskResponse, type DecideResponse, type ExploredPage, type ExploreResponse, type GuidanceEvent, type InferredIntent,
+  type LotseEvent, type ObservationContext, type ObservationSnapshot, type PolicyResponse, type VoiceState, type WorkflowIntent,
 } from "@lotse/shared";
+import { routeBlocked } from "@lotse/shared/route";
+import type { ExploreStepResult } from "../utils/explore-dom";
 import { ObservationBuffer, findStuckSignal } from "../utils/observation";
 import { DEFAULT_SETTINGS, DEMO_CONTEXT_KEY, type ExtensionSettings, type LotseMessage, type PagePolicy, type PlanView } from "../utils/messages";
 import * as auth from "../utils/auth";
-import { PAUSED_TEXT, clearPolicies, hostOf, pageVerdict, policyFor } from "../utils/policy";
+import { PAUSED_TEXT, clearPolicies, hostOf, locationOf, pageVerdict, policyFor } from "../utils/policy";
 import * as pseudo from "../utils/pseudonymize";
 import { noteError, setupActivation } from "../utils/activation";
 import * as voice from "../utils/voice";
@@ -28,6 +31,15 @@ type SavedSession = {
   recording: boolean; recordingTab: number | null; buffer: unknown; decision: unknown; inference: unknown; sessionId: string;
   plan: unknown; snoozeUntil: number; lastDecisionAt: number; threshold: number | null; analytics: unknown;
 };
+export type ExploreStatus = {
+  running: boolean;
+  phase: "idle" | "crawling" | "analyzing" | "done" | "stopped" | "error";
+  pageCount: number;
+  maxPages: number;
+  currentRoute: string;
+  summary: string;
+  result: ExploreResponse | null;
+};
 export type LotseStatus = {
   recording: boolean; tabId: number | null; busy: boolean; settings: ExtensionSettings;
   busyMode: "proactive" | "question" | null;
@@ -38,7 +50,8 @@ export type LotseStatus = {
   plan: { index: number; total: number; label: string; hint?: string } | null;
   threshold: number | null; prefsMessage: string; snoozedUntil: number | null;
   voiceState: VoiceState; lastQuestion: { text: string; source: Source } | null; analyticsQueued: number;
-  account: { email: string } | null; page: PageStatus | null;
+  account: { email: string; isAdmin: boolean } | null; page: PageStatus | null;
+  explore: ExploreStatus;
 };
 /** Active tab as the side panel shows it: app/org/role from GET /api/lotse/policy and whether Lotse is paused there. */
 export type PageStatus = {
@@ -53,6 +66,7 @@ const HANDLED = new Set<string>([
   "lotse:start", "lotse:stop", "lotse:status", "lotse:settings", "lotse:update-settings", "lotse:observe", "lotse:ask", "lotse:wake-question",
   "lotse:plan-resume", "lotse:plan-update", "lotse:plan-end", "lotse:plan-command", "lotse:offer-accept", "lotse:offer-feedback",
   "lotse:prefs", "lotse:snooze", "lotse:listen", "lotse:get-policy", "lotse:paused", "lotse:login", "lotse:logout",
+  "lotse:explore-start", "lotse:explore-stop",
 ]);
 const ANALYTICS_TYPES = new Set<LotseEvent["type"]>(["click", "route", "search", "error", "idle", "submit", "empty_results", "rage_click"]);
 const OFFER_COOLDOWN_MS = 120_000; // D-20: at most one proactive offer per two minutes
@@ -93,8 +107,15 @@ let analytics: LotseEvent[] = [];
 let lastFlushAt = Date.now();
 let flushing = false;
 let lastAppHost = "";
-let account: { email: string } | null = null;
+let account: { email: string; isAdmin: boolean } | null = null;
 let page: PageStatus | null = null;
+let exploreRunning = false;
+let exploreAborted = false;
+let exploreTabId: number | null = null;
+let exploreController: AbortController | null = null;
+let exploreStatus: ExploreStatus = {
+  running: false, phase: "idle", pageCount: 0, maxPages: EXPLORE_LIMITS.maxPages, currentRoute: "", summary: "", result: null,
+};
 const feedbackGiven = new Set<string>();
 const STORE = "lotse-observation-session";
 const localUrl = (url?: string): boolean => {
@@ -164,6 +185,7 @@ export default defineBackground(() => {
   });
   browser.tabs.onRemoved.addListener((tabId) => {
     void ready.then(() => {
+      if (exploreTabId === tabId && exploreRunning) void stopExplore();
       if (plan?.tabId === tabId) { plan = null; schedulePersistence(); }
       if (pendingOffer?.tabId === tabId) dropOffer(false);
       if (tabId === recordingTab) return stop();
@@ -195,9 +217,17 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
       message = `Angemeldet als ${account?.email ?? incoming.email.trim()}.`;
       break;
     case "lotse:logout":
+      if (exploreRunning) await stopExplore();
       await auth.signOut();
+      exploreStatus = { running: false, phase: "idle", pageCount: 0, maxPages: EXPLORE_LIMITS.maxPages, currentRoute: "", summary: "", result: null };
       await afterAuthChange();
       message = "Abgemeldet. Lotse arbeitet ohne Konto mit der Demo-Rolle.";
+      break;
+    case "lotse:explore-start":
+      await startExplore();
+      break;
+    case "lotse:explore-stop":
+      await stopExplore();
       break;
     case "lotse:observe": {
       if (!recording || senderTab !== recordingTab) break;
@@ -377,9 +407,16 @@ async function refreshPage() {
   };
 }
 
+async function loadAccount() {
+  const user = await auth.currentUser().catch(() => null);
+  if (!user) { account = null; return; }
+  const isAdmin = await auth.isOrgAdmin().catch(() => false);
+  account = { email: user.email, isAdmin };
+}
+
 /** Login/logout: new identity → new role and policies; push the fresh policies to open app tabs. */
 async function afterAuthChange() {
-  account = await auth.currentUser().then((user) => (user ? { email: user.email } : null)).catch(() => null);
+  await loadAccount();
   clearPolicies();
   threshold = null; // per-user prefs
   const tabs = await browser.tabs.query({ url: ["http://localhost/*", "http://127.0.0.1/*"] }).catch(() => []);
@@ -397,6 +434,7 @@ async function sendTab(tabId: number, command: LotseMessage): Promise<{ ok?: boo
 }
 
 async function start() {
+  if (exploreRunning) throw new Error("Warte, bis die App-Erkundung abgeschlossen ist, oder stoppe sie zuerst.");
   const tab = await activeAppTab();
   if (recording && recordingTab === tab.id) return;
   await stop();
@@ -802,29 +840,278 @@ async function flushAnalytics() {
 }
 
 // ---------------------------------------------------------------------------
+// Admin exploration (D-25): crawl same-origin pages/tabs/menus/dialogs → POST /api/lotse/explore
+// ---------------------------------------------------------------------------
+
+function normalizeExploreRoute(rawUrl: string, startOrigin: string, blockedRoutes: string[]): string | null {
+  try {
+    const u = new URL(rawUrl);
+    if (u.origin !== startOrigin) return null;
+    if (routeBlocked(locationOf(rawUrl), blockedRoutes)) return null;
+    const path = (u.pathname.replace(/\/index\.html$/i, "/") || "/").replace(/\/+$/, "") || "/";
+    const hash = u.hash.startsWith("#/") ? u.hash.split("?")[0] : "";
+    return path + hash;
+  } catch {
+    return null;
+  }
+}
+
+async function startExplore() {
+  if (!account) await loadAccount();
+  if (!account?.isAdmin) throw new Error("Nur Organisations-Admins dürfen eine App erkunden.");
+  const token = await auth.accessToken();
+  if (!token) throw new Error("Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.");
+  if (exploreRunning) return;
+  const tab = await activeAppTab();
+  const startUrl = tab.url!;
+  const policy = await pagePolicy(startUrl);
+  if (!policy?.allowed) throw new Error(policy?.reason ?? "Diese App ist für Lotse nicht freigegeben.");
+  await sendTab(tab.id, { type: "lotse:policy", policy: compactPolicy(policy) });
+  await snapshotOf(tab.id);
+  if (recording) await stop();
+  if (plan?.tabId === tab.id) { plan = null; await sendTab(tab.id, { type: "lotse:clear" }); }
+
+  exploreRunning = true;
+  exploreAborted = false;
+  exploreTabId = tab.id;
+  exploreStatus = {
+    running: true,
+    phase: "crawling",
+    pageCount: 0,
+    maxPages: EXPLORE_LIMITS.maxPages,
+    currentRoute: new URL(startUrl).pathname,
+    summary: `Seite 1 von max. ${EXPLORE_LIMITS.maxPages}`,
+    result: null,
+  };
+  message = "Lotse erkundet die App …";
+  void runExploration(tab.id, startUrl, policy.blockedRoutes);
+}
+
+async function stopExplore() {
+  if (!exploreRunning) return;
+  exploreAborted = true;
+  exploreController?.abort();
+  const tabId = exploreTabId;
+  exploreRunning = false;
+  exploreTabId = null;
+  if (tabId !== null) await sendTab(tabId, { type: "lotse:explore-abort" });
+  exploreStatus = {
+    ...exploreStatus,
+    running: false,
+    phase: "stopped",
+    summary: `Erkundung gestoppt (${exploreStatus.pageCount} von max. ${EXPLORE_LIMITS.maxPages} Seiten erfasst).`,
+  };
+  message = exploreStatus.summary;
+}
+
+async function runExploration(tabId: number, startUrl: string, blockedRoutes: string[]) {
+  const startedAt = Date.now();
+  const deadlineAt = startedAt + EXPLORE_LIMITS.maxDurationMs;
+  const parsedStart = new URL(startUrl);
+  const startOrigin = parsedStart.origin;
+  const appHost = parsedStart.host;
+  const compact: PagePolicy = { allowed: true, blockedRoutes };
+
+  const pages: ExploredPage[] = [];
+  const seenPageKeys = new Set<string>();
+  const visitedRoutes = new Set<string>();
+  let seenGlobalKeys: string[] = [];
+
+  const initialKey = normalizeExploreRoute(startUrl, startOrigin, blockedRoutes) ?? "/";
+  visitedRoutes.add(initialKey);
+  const queue: Array<{ url: string; key: string; reachedVia: string[] }> = [{ url: startUrl, key: initialKey, reachedVia: [] }];
+  let currentUrl = startUrl;
+
+  try {
+    while (queue.length > 0 && pages.length < EXPLORE_LIMITS.maxPages && Date.now() < deadlineAt && !exploreAborted) {
+      const next = queue.shift()!;
+      if (next.url !== currentUrl) {
+        const navigated = await navigateExploreTab(tabId, next.url, compact, deadlineAt);
+        if (!navigated || exploreAborted) continue;
+        currentUrl = next.url;
+      }
+
+      const activeTab = await browser.tabs.get(tabId).catch(() => null);
+      if (!activeTab?.url || new URL(activeTab.url).origin !== startOrigin || routeBlocked(locationOf(activeTab.url), blockedRoutes)) continue;
+
+      const shownCount = Math.min(pages.length + 1, EXPLORE_LIMITS.maxPages);
+      exploreStatus = { ...exploreStatus, currentRoute: next.key, summary: `Seite ${shownCount} von max. ${EXPLORE_LIMITS.maxPages}` };
+      await sendTab(tabId, { type: "lotse:explore-chip", text: `🔍 Erkundung: Seite ${shownCount} von max. ${EXPLORE_LIMITS.maxPages}` });
+
+      const stepResponse = (await sendTab(tabId, {
+        type: "lotse:explore-run",
+        reachedVia: next.reachedVia,
+        maxRemaining: EXPLORE_LIMITS.maxPages - pages.length,
+        deadlineAt,
+        seenGlobalKeys,
+        startOrigin,
+        blockedRoutes,
+      })) as ({ ok?: boolean; error?: string } & Partial<ExploreStepResult>) | null;
+
+      if (exploreAborted) return;
+      if (!stepResponse?.ok || !Array.isArray(stepResponse.pages)) continue;
+      if (Array.isArray(stepResponse.seenGlobalKeys)) seenGlobalKeys = stepResponse.seenGlobalKeys;
+      if (Array.isArray(stepResponse.privacyTerms) && stepResponse.privacyTerms.length) {
+        await pseudo.learnPrivacy({ terms: stepResponse.privacyTerms, rects: [], viewport: { width: 1, height: 1 } });
+      }
+
+      for (const exploredPage of stepResponse.pages) {
+        if (pages.length >= EXPLORE_LIMITS.maxPages) break;
+        const pageKey = `${exploredPage.route}|${exploredPage.kind}|${exploredPage.title}|${exploredPage.elements.slice(0, 8).map((el) => el.label).join(",")}`;
+        if (seenPageKeys.has(pageKey)) continue;
+        seenPageKeys.add(pageKey);
+        pages.push(exploredPage);
+      }
+
+      exploreStatus = {
+        ...exploreStatus,
+        pageCount: pages.length,
+        summary: `Seite ${pages.length} von max. ${EXPLORE_LIMITS.maxPages}`,
+      };
+
+      for (const link of stepResponse.links ?? []) {
+        const key = normalizeExploreRoute(link.url, startOrigin, blockedRoutes);
+        if (!key) continue;
+        if (visitedRoutes.has(key)) {
+          const queued = queue.find((item) => item.key === key);
+          if (queued && !queued.url.includes("?") && link.url.includes("?")) {
+            queued.url = link.url;
+            queued.reachedVia = link.reachedVia;
+          }
+          continue;
+        }
+        visitedRoutes.add(key);
+        queue.push({ url: link.url, key, reachedVia: link.reachedVia });
+      }
+    }
+
+    await sendTab(tabId, { type: "lotse:explore-chip", text: "" });
+    if (exploreAborted) return;
+
+    if (currentUrl !== startUrl) {
+      await navigateExploreTab(tabId, startUrl, compact, Date.now() + 5_000).catch(() => undefined);
+      await sendTab(tabId, { type: "lotse:explore-chip", text: "" });
+    }
+
+    if (exploreAborted) return;
+    if (!pages.length) throw new Error("Es konnten keine Seiten der App erfasst werden.");
+
+    exploreStatus = {
+      ...exploreStatus,
+      phase: "analyzing",
+      pageCount: pages.length,
+      currentRoute: "",
+      summary: `Seite ${pages.length} von max. ${EXPLORE_LIMITS.maxPages} · Auswertung läuft …`,
+    };
+    message = exploreStatus.summary;
+
+    const pseudonymizedPages = await pseudo.pseudonymizeExploredPages(pages);
+    const body = ExploreRequestSchema.parse({
+      appHost,
+      pages: pseudonymizedPages,
+      durationMs: Math.max(0, Math.round(Date.now() - startedAt)),
+    });
+    const rawResult = await callRuntime("explore", {
+      body,
+      appHost,
+      abortable: false,
+      exploreAbortable: true,
+      timeoutMs: 75_000,
+    });
+    if (exploreAborted) return;
+
+    const result = ExploreResponseSchema.parse(rawResult);
+    const summaryText = `${result.features} Funktionen und ${result.findings} Design-Befunde gefunden – im Dashboard unter ‚Lernen‘ prüfen`;
+    exploreRunning = false;
+    exploreTabId = null;
+    exploreStatus = {
+      running: false,
+      phase: "done",
+      pageCount: pages.length,
+      maxPages: EXPLORE_LIMITS.maxPages,
+      currentRoute: "",
+      summary: summaryText,
+      result,
+    };
+    message = summaryText;
+  } catch (error) {
+    await sendTab(tabId, { type: "lotse:explore-chip", text: "" });
+    if (exploreAborted) return;
+    const text = errorText(error);
+    exploreRunning = false;
+    exploreTabId = null;
+    exploreStatus = {
+      ...exploreStatus,
+      running: false,
+      phase: "error",
+      currentRoute: "",
+      summary: text,
+    };
+    message = text;
+  }
+}
+
+async function navigateExploreTab(tabId: number, url: string, policy: PagePolicy, deadlineAt: number): Promise<boolean> {
+  const maxWait = Math.min(8_000, Math.max(1_000, deadlineAt - Date.now()));
+  const loaded = new Promise<boolean>((resolve) => {
+    const timer = setTimeout(() => {
+      browser.tabs.onUpdated.removeListener(listener);
+      resolve(false);
+    }, maxWait);
+    const listener = (updatedTabId: number, changes: { status?: string }) => {
+      if (updatedTabId === tabId && changes.status === "complete") {
+        clearTimeout(timer);
+        browser.tabs.onUpdated.removeListener(listener);
+        resolve(true);
+      }
+    };
+    browser.tabs.onUpdated.addListener(listener);
+  });
+  try {
+    await browser.tabs.update(tabId, { url });
+  } catch {
+    return false;
+  }
+  const ok = await loaded;
+  if (!ok || exploreAborted) return false;
+  for (let attempt = 0; attempt < 15; attempt++) {
+    if (exploreAborted || Date.now() >= deadlineAt) return false;
+    await sendTab(tabId, { type: "lotse:policy", policy });
+    const ping = await sendTab(tabId, { type: "lotse:snapshot" });
+    if (ping && typeof ping === "object" && "url" in ping) {
+      await new Promise((resolve) => setTimeout(resolve, 160));
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 140));
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Runtime HTTP
 // ---------------------------------------------------------------------------
 
-type Endpoint = "state" | "intent" | "decide" | "ask" | "feedback" | "prefs" | "events" | "policy";
+type Endpoint = "state" | "intent" | "decide" | "ask" | "feedback" | "prefs" | "events" | "policy" | "explore";
 type CallOptions = {
   method?: "GET" | "POST" | "PUT"; body?: unknown; onGuidance?: (event: GuidanceEvent) => Promise<void>; abortable?: boolean;
-  query?: string; appHost?: string; timeoutMs?: number;
+  exploreAbortable?: boolean; query?: string; appHost?: string; timeoutMs?: number;
 };
 
 /**
  * Inference calls are abortable (pause/preemption); feedback, prefs, policy and analytics run independently.
  * Every call carries the Supabase access token when signed in (D-05); a 401 refreshes the session and retries once.
  */
-async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidance, abortable = true, query = "", appHost: explicitHost, timeoutMs = 20_000 }: CallOptions = {}): Promise<unknown> {
+async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidance, abortable = true, exploreAbortable = false, query = "", appHost: explicitHost, timeoutMs = 20_000 }: CallOptions = {}): Promise<unknown> {
   const controller = new AbortController();
   if (abortable) requestController = controller;
+  if (exploreAbortable) exploreController = controller;
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const payload = (body ?? {}) as { snapshot?: ObservationSnapshot; context?: ObservationContext; appId?: string };
+    const payload = (body ?? {}) as { snapshot?: ObservationSnapshot; context?: ObservationContext; appId?: string; appHost?: string };
     const snapshotUrl = payload.snapshot?.url ?? payload.context?.snapshot.url;
     // Last gate before data leaves the browser: never send a snapshot of a blocked route.
     if (snapshotUrl && await blockedUrl(snapshotUrl)) throw new Error(PAUSED_TEXT);
-    const appHost = explicitHost ?? payload.appId ?? (snapshotUrl ? new URL(snapshotUrl).host : lastAppHost);
+    const appHost = explicitHost ?? payload.appHost ?? payload.appId ?? (snapshotUrl ? new URL(snapshotUrl).host : lastAppHost);
     const headers: Record<string, string> = { [LOTSE_HEADERS.session]: sessionId };
     if (appHost) headers[LOTSE_HEADERS.app] = appHost;
     if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -842,9 +1129,16 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
       response = await fetch(url, { ...init, headers: fresh ? { ...headers, Authorization: `Bearer ${fresh}` } : headers });
     }
     if (!response.ok) {
-      if (response.status === 401) throw new Error("Bitte melde dich in Lotse an (Sitzung abgelaufen oder ungültig).");
-      if (response.status === 404 && endpoint !== "feedback") throw new Error("Lotse wartet auf den /api/lotse/" + endpoint + "-Endpunkt.");
-      if (response.status === 429) throw new Error("Lotse hat gerade zu viele Anfragen. Versuche es gleich noch einmal.");
+      const errorPayload = (await response.json().catch(() => null)) as { error?: string | { message?: string } } | null;
+      const serverMsg = typeof errorPayload?.error === "string"
+        ? errorPayload.error
+        : typeof errorPayload?.error?.message === "string"
+          ? errorPayload.error.message
+          : "";
+      if (response.status === 401) throw new Error(serverMsg || "Bitte melde dich in Lotse an (Sitzung abgelaufen oder ungültig).");
+      if (response.status === 404 && !serverMsg && endpoint !== "feedback") throw new Error("Lotse wartet auf den /api/lotse/" + endpoint + "-Endpunkt.");
+      if (response.status === 429) throw new Error(serverMsg || "Lotse hat gerade zu viele Anfragen. Versuche es gleich noch einmal.");
+      if (serverMsg) throw new Error(serverMsg);
       throw new Error(`Die Hilfe ist derzeit nicht verfügbar (Server ${response.status}).`);
     }
     if (endpoint === "events") return null;
@@ -854,7 +1148,11 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
     if (controller.signal.aborted) throw new Error("Die Anfrage wurde abgebrochen oder dauerte zu lange.");
     if (error instanceof TypeError) throw new Error("Der Lotse-Server ist nicht erreichbar. Starte npm run dev:server.");
     throw error;
-  } finally { clearTimeout(timeout); if (requestController === controller) requestController = null; }
+  } finally {
+    clearTimeout(timeout);
+    if (requestController === controller) requestController = null;
+    if (exploreController === controller) exploreController = null;
+  }
 }
 
 async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent) => Promise<void>): Promise<AskResponse> {
@@ -922,7 +1220,7 @@ function status(): LotseStatus {
     plan: plan && step ? { index: plan.index, total: plan.steps.length, label: step.label, hint: step.hint } : null,
     threshold, prefsMessage, snoozedUntil: snoozeUntil > Date.now() ? snoozeUntil : null,
     voiceState, lastQuestion, analyticsQueued: analytics.length,
-    account, page,
+    account, page, explore: exploreStatus,
   };
 }
 
@@ -951,7 +1249,7 @@ function parsePlan(value: unknown): PlanRecord | null {
 
 async function restore() {
   await loadSettings().catch(() => undefined);
-  account = await auth.currentUser().then((user) => (user ? { email: user.email } : null)).catch(() => null);
+  await loadAccount();
   try {
     const saved = (await browser.storage.session.get(STORE))[STORE] as Partial<SavedSession> | undefined;
     if (!saved || typeof saved !== "object") return;

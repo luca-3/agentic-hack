@@ -1,4 +1,4 @@
-import type { VoiceState } from "@lotse/shared";
+import { LOTSE_DEFAULTS, type VoiceState } from "@lotse/shared";
 import type { LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
 import "./presence"; // D-29 switches: "Automatisch aktiv", "Status-Kreis anzeigen"
@@ -22,6 +22,11 @@ const loginForm = get<HTMLFormElement>("#login");
 const email = get<HTMLInputElement>("#email");
 const password = get<HTMLInputElement>("#password");
 const loginButton = get<HTMLButtonElement>("#login-button");
+const exploreBox = get<HTMLElement>("#explore-box");
+const exploreStart = get<HTMLButtonElement>("#explore-start");
+const exploreStop = get<HTMLButtonElement>("#explore-stop");
+const exploreDashboardLink = get<HTMLAnchorElement>("#explore-dashboard-link");
+exploreDashboardLink.href = `${LOTSE_DEFAULTS.dashboardUrl}/lernen`;
 const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 bereit", listening: "🎙 hört zu …", thinking: "… denkt nach", speaking: "🔊 spricht" };
 let settingsLoaded = false;
 let thresholdDirty = false;
@@ -47,11 +52,43 @@ function renderAccount(status: LotseStatus) {
   loginForm.hidden = signedIn;
   get("#signed-in").hidden = !signedIn;
   get("#account-line").textContent = signedIn ? `Angemeldet als ${status.account!.email}` : "";
+  get("#admin-badge").hidden = !status.account?.isAdmin;
   get("#org-line").textContent = orgLine(status.page, signedIn);
   get("#paused-box").hidden = !status.page?.paused;
   get("#paused-reason").textContent = status.page?.paused ? status.page.reason : "";
   role.disabled = signedIn;
   get("#role-note").textContent = signedIn ? "Angemeldet: Die Rolle kommt aus deiner Organisation." : "";
+
+  const isAdmin = status.account?.isAdmin === true;
+  exploreBox.hidden = !isAdmin;
+  if (isAdmin) {
+    const exp = status.explore;
+    exploreStart.disabled = exp.running || status.busy || Boolean(status.page?.paused);
+    exploreStop.disabled = !exp.running;
+    if (exp.phase === "crawling") {
+      const shownCount = Math.min(Math.max(exp.pageCount, 1), exp.maxPages);
+      const routeInfo = exp.currentRoute ? ` · ${exp.currentRoute}` : "";
+      get("#explore-progress").textContent = `Seite ${shownCount} von max. ${exp.maxPages}${routeInfo}`;
+      get("#explore-result").textContent = "";
+      exploreDashboardLink.hidden = true;
+    } else if (exp.phase === "analyzing") {
+      get("#explore-progress").textContent = `Seite ${exp.pageCount} von max. ${exp.maxPages} · Auswertung läuft …`;
+      get("#explore-result").textContent = "";
+      exploreDashboardLink.hidden = true;
+    } else if (exp.phase === "done" && exp.result) {
+      get("#explore-progress").textContent = `${exp.pageCount} von max. ${exp.maxPages} Seiten untersucht.`;
+      get("#explore-result").textContent = `${exp.result.features} Funktionen und ${exp.result.findings} Design-Befunde gefunden – im Dashboard unter ‚Lernen‘ prüfen`;
+      exploreDashboardLink.hidden = false;
+    } else if (exp.phase === "stopped" || exp.phase === "error") {
+      get("#explore-progress").textContent = exp.summary;
+      get("#explore-result").textContent = "";
+      exploreDashboardLink.hidden = true;
+    } else {
+      get("#explore-progress").textContent = "";
+      get("#explore-result").textContent = "";
+      exploreDashboardLink.hidden = true;
+    }
+  }
 }
 
 const percent = (value: number) => value.toFixed(2).replace(".", ",");
@@ -64,9 +101,9 @@ function render(status: LotseStatus) {
   const voiceChip = get("#voice-state");
   voiceChip.textContent = status.settings.voice ? VOICE_LABEL[status.voiceState] : "";
   voiceChip.hidden = !voiceChip.textContent;
-  startButton.disabled = status.busy || status.recording;
+  startButton.disabled = status.busy || status.recording || status.explore.running;
   stopButton.disabled = !status.recording;
-  askButton.disabled = status.busy && status.busyMode === "question";
+  askButton.disabled = (status.busy && status.busyMode === "question") || status.explore.running;
   get("#event-count").textContent = String(status.eventCount);
   get("#snapshot-count").textContent = String(status.snapshotCount);
   get("#frame-count").textContent = String(status.screenshotCount);
@@ -136,6 +173,8 @@ loginForm.addEventListener("submit", (event) => {
   void act({ type: "lotse:login", email: email.value, password: secret }).finally(() => { loginButton.disabled = false; });
 });
 get("#logout").addEventListener("click", () => { void act({ type: "lotse:logout" }); });
+exploreStart.addEventListener("click", () => { void act({ type: "lotse:explore-start" }); });
+exploreStop.addEventListener("click", () => { void act({ type: "lotse:explore-stop" }); });
 startButton.addEventListener("click", () => { void act({ type: "lotse:start" }); });
 stopButton.addEventListener("click", () => { void act({ type: "lotse:stop" }); });
 askForm.addEventListener("submit", (event) => {

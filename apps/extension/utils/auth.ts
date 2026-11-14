@@ -114,3 +114,24 @@ export async function accessToken(): Promise<string | null> {
   if (session.expiresAt - REFRESH_MARGIN_MS > Date.now()) return session.accessToken;
   return (await refreshSession())?.accessToken ?? null;
 }
+
+/** True when the signed-in user is an admin of at least one organization (`org_members.is_admin`, D-25). */
+export async function isOrgAdmin(): Promise<boolean> {
+  const token = await accessToken();
+  if (!token || !session) return false;
+  try {
+    const { supabaseUrl, publishableKey } = await authConfig();
+    const response = await fetch(
+      `${supabaseUrl.replace(/\/$/, "")}/rest/v1/org_members?select=is_admin&user_id=eq.${encodeURIComponent(session.userId)}&is_admin=eq.true&limit=1`,
+      {
+        headers: { apikey: publishableKey, Authorization: `Bearer ${token}`, Accept: "application/json" },
+        signal: AbortSignal.timeout(6_000),
+      },
+    );
+    if (!response.ok) return false;
+    const rows = (await response.json().catch(() => [])) as Array<{ is_admin?: boolean }>;
+    return Array.isArray(rows) && rows.some((row) => row.is_admin === true);
+  } catch {
+    return false;
+  }
+}
