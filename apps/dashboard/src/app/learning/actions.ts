@@ -142,3 +142,25 @@ export async function wissenUebernehmen(fd: FormData) {
   revalidatePath("/knowledge");
   zurueck(fd, { ok: "knowledge" });
 }
+
+/** Agent memory (D-28): approve or reject one entry via the server (it checks is_org_admin again). */
+export async function gedaechtnisSetzen(fd: FormData) {
+  const ctx = await requireAdmin();
+  const action = text(fd, "action");
+  const id = Number(text(fd, "id"));
+  if ((action !== "approve" && action !== "reject") || !Number.isInteger(id) || id <= 0) zurueck(fd, { error: "format" });
+  const app = text(fd, "app");
+  let ok = false;
+  try {
+    const res = await fetch(`${serverUrl()}/api/lotse/memory`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${await token(ctx)}` },
+      body: JSON.stringify({ action, id, ...(UUID.test(app) && { app }) }),
+      cache: "no-store",
+    });
+    ok = res.ok;
+  } catch {
+    ok = false;
+  }
+  zurueck(fd, ok ? { ok: action === "approve" ? "memory-approved" : "memory-rejected" } : { error: "server" });
+}

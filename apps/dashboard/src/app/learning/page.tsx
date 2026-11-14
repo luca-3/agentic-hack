@@ -1,8 +1,10 @@
+import { LOTSE_DEFAULTS } from "@lotse/shared";
 import Link from "next/link";
+import { Suspense } from "react";
 import { Shell } from "@/components/Shell";
 import { PRODUCT_NAME } from "@/components/ui";
-import { getOrgContext } from "@/lib/org";
-import { auswerten, erledigen, funktionUebernehmen, verwerfen, wissenUebernehmen } from "./actions";
+import { getOrgContext, type OrgContext } from "@/lib/org";
+import { auswerten, erledigen, funktionUebernehmen, gedaechtnisSetzen, verwerfen, wissenUebernehmen } from "./actions";
 
 export default function LearningPage({ searchParams }: PageProps<"/learning">) {
   return (
@@ -25,6 +27,8 @@ const FEHLER: Record<string, string> = {
   "too-large": "The text is too large (200 KB max).",
 };
 const OK: Record<string, string> = {
+  "memory-approved": "Memory approved – Valo uses it from now on.",
+  "memory-rejected": "Memory rejected – Valo no longer uses it.",
   done: "Marked as done.",
   dismissed: "Suggestion dismissed.",
   feature: "Feature added.",
@@ -83,7 +87,8 @@ const str = (v: unknown) => (typeof v === "string" ? v : "");
 const kurz = (s: string, n = 300) => (s.length > n ? `${s.slice(0, n)} …` : s);
 
 async function Inhalt({ searchParams }: { searchParams: PageProps<"/learning">["searchParams"] }) {
-  const [{ supabase, isAdmin }, sp] = await Promise.all([getOrgContext(), searchParams]);
+  const [ctx, sp] = await Promise.all([getOrgContext(), searchParams]);
+  const { supabase, isAdmin } = ctx;
   if (!isAdmin) return <p className="text-sm text-muted">Only admins can see learning suggestions.</p>;
 
   const app = typeof sp.app === "string" && UUID.test(sp.app) ? sp.app : "";
@@ -184,7 +189,115 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/learning">["
           </section>
         );
       })}
+
+      <Suspense key={app} fallback={<section className={karte}><p className="m-0 text-muted">Loading agent memory …</p></section>}>
+        <Gedaechtnis ctx={ctx} app={app} appName={appName} filter={filter} />
+      </Suspense>
     </div>
+  );
+}
+
+type Memory = {
+  id: number;
+  appId: string | null;
+  kind: string;
+  topic: string;
+  feature: string | null;
+  content: string;
+  source: "agent" | "learn_loop" | "admin";
+  persons: number;
+  negatives: number;
+  status: "proposed" | "active" | "rejected" | "expired";
+};
+const MEMORY_KIND: Record<string, string> = {
+  faq: "Common question",
+  role_hint: "Role hint",
+  pitfall: "Pitfall",
+  path_hint: "Path hint",
+  gap_resolution: "Answered gap",
+};
+
+/**
+ * Agent memory (D-28, R-LRN-5): what Valo learned from usage, labeled and separate from the knowledge base.
+ * Only entries backed by ≥ 5 people or written/approved by an admin are shown – never single persons.
+ */
+async function Gedaechtnis({ ctx, app, appName, filter }: { ctx: OrgContext; app: string; appName: Map<string, string>; filter: React.ReactNode }) {
+  const token = (await ctx.supabase.auth.getSession()).data.session?.access_token;
+  let memories: Memory[] | undefined;
+  let minPersons = 5;
+  try {
+    const res = await fetch(`${process.env.LOTSE_SERVER_URL ?? LOTSE_DEFAULTS.serverUrl}/api/lotse/memory${app ? `?app=${app}` : ""}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const body = (await res.json()) as { memories?: Memory[]; minPersons?: number };
+      minPersons = Math.max(5, body.minPersons ?? 5);
+      memories = body.memories;
+    }
+  } catch {
+    memories = undefined;
+  }
+  const sichtbar = (memories ?? []).filter(
+    (m) => (m.status === "proposed" || m.status === "active") && (m.persons >= minPersons || m.source === "admin"),
+  );
+  const gruppen = [
+    { titel: "Waiting for approval", liste: sichtbar.filter((m) => m.status === "proposed") },
+    { titel: "Active – Valo uses these", liste: sichtbar.filter((m) => m.status === "active") },
+  ];
+
+  return (
+    <section className={karte}>
+      <div className="flex items-baseline gap-3">
+        <h2 className="m-0 text-xl font-semibold">Agent memory</h2>
+        <span className="text-sm text-muted">{sichtbar.length}</span>
+      </div>
+      <p className="mt-1 mb-0 text-sm text-muted">
+        Learned from usage, separate from the knowledge base and lower priority. Shown only when at least {minPersons} people back it or an admin wrote or approved it.
+      </p>
+      {!memories ? (
+        <p className={`mt-3 ${rot}`}>Server not reachable – agent memory can&apos;t be loaded.</p>
+      ) : (
+        gruppen.map((g) => (
+          <div key={g.titel} className="mt-4">
+            <h3 className="m-0 text-md font-semibold">{g.titel} <span className="text-sm font-normal text-muted">{g.liste.length}</span></h3>
+            {g.liste.length === 0 ? (
+              <p className="mt-1 mb-0 text-sm text-muted">Nothing here yet.</p>
+            ) : (
+              <ul className="mt-2 flex flex-col gap-3">
+                {g.liste.map((m) => (
+                  <li key={m.id} className="rounded-[10px] border border-line p-4">
+                    <form className="flex flex-col gap-1">
+                      <input type="hidden" name="id" value={m.id} />
+                      {filter}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-info-soft px-2.5 py-0.5 text-xs font-semibold text-info-text">{MEMORY_KIND[m.kind] ?? m.kind}</span>
+                        <span className="font-semibold">{m.topic}</span>
+                      </div>
+                      <p className="m-0">{m.content}</p>
+                      <p className="m-0 text-xs text-muted">
+                        {[
+                          m.appId ? appName.get(m.appId) : "All apps",
+                          m.feature && `Feature: ${m.feature}`,
+                          m.source === "admin" ? "written by an admin" : `${m.persons} people`,
+                          m.negatives > 0 && `${m.negatives}× 👎`,
+                        ].filter(Boolean).join(" · ")}
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        {m.status === "proposed" && (
+                          <button formAction={gedaechtnisSetzen} name="action" value="approve" className={knopf}>Approve</button>
+                        )}
+                        <button formAction={gedaechtnisSetzen} name="action" value="reject" className={zweit}>{m.status === "active" ? "Stop using" : "Reject"}</button>
+                      </div>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))
+      )}
+    </section>
   );
 }
 
