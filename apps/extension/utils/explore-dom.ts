@@ -6,7 +6,7 @@
  *  - Blocks every form `submit` event in capture phase
  *  - Never clicks anything matching `EXPLORE_NEVER_CLICK` or mutating/reset labels
  *  - Never clicks red or danger-styled controls
- *  - Same origin only; respects `blockedRoutes` (D-27) and `EXPLORE_LIMITS` (60 pages, 150 elements/page, 3 min)
+ *  - Same origin only; respects `blockedRoutes` (D-27) and `EXPLORE_LIMITS` (40 pages, 150 elements/page, 3 min)
  */
 import {
   EXPLORE_LIMITS,

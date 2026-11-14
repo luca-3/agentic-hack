@@ -425,7 +425,7 @@ export const PSEUDONYM_TOKEN = /\[(Kunde|Person|Firma|Adresse|IBAN|E-Mail|Telefo
 export const pseudonym = (kind: PseudonymKind, n: number) => `[${kind}-${n}]`;
 
 /* ── Exploration (D-25): admin-started crawl of an app → page map → suggestions ────────────────── */
-export const EXPLORE_LIMITS = { maxPages: 60, maxElementsPerPage: 150, maxDurationMs: 180_000 } as const;
+export const EXPLORE_LIMITS = { maxPages: 40, maxElementsPerPage: 150, maxDurationMs: 180_000 } as const;
 /** Labels the explorer must never click (case-insensitive substring). Also never click danger-styled buttons or submit forms. */
 export const EXPLORE_NEVER_CLICK = [
   "löschen", "entfernen", "delete", "remove", "senden", "send", "speichern", "save", "abgeben", "submit",
