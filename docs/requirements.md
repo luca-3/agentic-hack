@@ -26,12 +26,14 @@ Status: `open` · `in progress` · `done`.
 | R-UI-2 | Hint bubble with one plain sentence; step-by-step tours ("Schritt 2 von 4", next/back) | Demo | open |
 | R-UI-3 | Status indicator "Lotse aktiv / hört zu" (transparency) | Demo | open |
 | R-UI-4 | Side panel with chat/history (text input) | Pitch | open |
-| R-ACT-1 | Lotse clicks an element itself (by number, DOM-based) after user consent | Demo | open |
-| R-ACT-2 | Lotse completes a short flow itself (demo: create a task in CORPUS) | Demo | open |
+| ~~R-ACT-1~~ | ~~Lotse clicks an element itself~~ — dropped, show only (D-17) | – | dropped |
+| ~~R-ACT-2~~ | ~~Lotse completes a short flow itself~~ — dropped (D-17); demo step 4 becomes a multi-step guided plan | – | dropped |
+| R-UI-5 | Agent cursor: glides to the target element, then highlight + hint; multi-step plans advance locally after each click/navigation | Demo | in progress |
+| R-UI-6 | User settings in side panel: proactive on/off, voice on/off, speak on/off | Demo | in progress |
 | **Voice** ||||
 | R-VOI-1 | Local wake word with **openWakeWord** ("Hey Lotse"); no audio leaves the device before the trigger | Demo | open |
 | R-VOI-2 | Hotkey fallback (e.g. Alt+L) for the same flow | Demo | open |
-| R-VOI-3 | After trigger: Gemini Live session (speech in/out) with tools (snapshot, knowledge search, highlight, click) | Demo | open |
+| R-VOI-3 | After trigger: transcription (Gemini Live, ephemeral token) → central agent `/api/lotse/ask` → spoken only for `say` events, ≤ 2 sentences, silent when a marker suffices (D-16) | Demo | in progress |
 | R-VOI-4 | Proactive spoken offer ("Soll ich dir zeigen …?") with a short yes/no window without wake word | Pitch | open |
 | **Org & knowledge (dashboard)** ||||
 | R-ORG-1 | Org with users and roles; employees log into the extension with their org account | Demo (Supabase Auth test users) | open |
