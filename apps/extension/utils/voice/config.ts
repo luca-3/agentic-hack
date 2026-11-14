@@ -6,7 +6,7 @@ export const VOICE_DEFAULTS = {
    */
   keyword: "hey_valo",
   /** Score threshold of the keyword heads (openWakeWord default 0.5). Raise to ~0.8 if it fires by itself, lower to 0.5 if it never fires. */
-  threshold: 0.7,
+  threshold: 0.85,
   /** No second wake-word hit within this window. */
   cooldownMs: 2_000,
   /** End of utterance after this much silence once speech has started. */
