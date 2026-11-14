@@ -2,6 +2,7 @@ import type { VoiceState } from "@lotse/shared";
 import type { ChatEntry, LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
 import { applyShortcutLabels, isMac, shortcutLabels } from "../../utils/shortcuts";
+import { IS_LOCAL_SERVER } from "../../utils/server-url";
 import "./presence"; // D-29 switches: "Automatically active", "Show the status orb"
 
 const get = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -27,6 +28,12 @@ const loginForm = get<HTMLFormElement>("#login");
 const email = get<HTMLInputElement>("#email");
 const password = get<HTMLInputElement>("#password");
 const loginButton = get<HTMLButtonElement>("#login-button");
+// Demo credentials only work against a local server; hosted accounts have their own passwords.
+if (IS_LOCAL_SERVER) {
+  email.placeholder = "admin@demo.test";
+  password.placeholder = "demo1234";
+  get("#demo-hint").hidden = false;
+}
 const exploreBox = get<HTMLDetailsElement>("#explore-box");
 const exploreStart = get<HTMLButtonElement>("#explore-start");
 const exploreStop = get<HTMLButtonElement>("#explore-stop");

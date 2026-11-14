@@ -7,7 +7,8 @@
  *
  * Call `setupVoice()` synchronously inside `defineBackground()` so the listeners exist when Chrome wakes the worker.
  */
-import { LOTSE_DEFAULTS, LOTSE_SETTINGS_KEY, LotseSettingsSchema, type VoiceState } from "@lotse/shared";
+import { LOTSE_SETTINGS_KEY, LotseSettingsSchema, type VoiceState } from "@lotse/shared";
+import { SERVER_URL } from "../server-url";
 import { browser } from "wxt/browser";
 import { shortenForSpeech, stripWakePhrase, VOICE_CONFIG_KEY, VOICE_DEFAULTS, VOICE_SESSION_KEY, WAKEWORD_MODEL_FILES } from "./config";
 import {
@@ -261,7 +262,7 @@ function buildConfig(raw: unknown, sessionId: string): OffscreenConfig {
   const threshold =
     typeof custom.threshold === "number" && custom.threshold > 0 && custom.threshold < 1 ? custom.threshold : VOICE_DEFAULTS.threshold;
   return {
-    serverUrl: LOTSE_DEFAULTS.serverUrl,
+    serverUrl: SERVER_URL,
     sessionId,
     voice: settings.voice,
     wakeWord: settings.voice && custom.wakeWord !== false,

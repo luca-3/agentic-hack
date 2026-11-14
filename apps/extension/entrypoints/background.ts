@@ -1,12 +1,13 @@
 import {
   AskRequestSchema, AskResponseSchema, DecideRequestSchema, DecideResponseSchema, EventBatchSchema,
   EXPLORE_LIMITS, ExploreRequestSchema, ExploreResponseSchema, GuidanceEventSchema,
-  IntentRequestSchema, LOTSE_DEFAULTS, LOTSE_HEADERS, LOTSE_SETTINGS_KEY, LotseEventSchema, LotseSettingsSchema,
+  IntentRequestSchema, LOTSE_HEADERS, LOTSE_SETTINGS_KEY, LotseEventSchema, LotseSettingsSchema,
   ObservationSnapshotSchema, OfferFeedbackRequestSchema, PROACTIVE_THRESHOLD, PolicyResponseSchema, ProactivePrefsSchema, ScreenshotFrameSchema,
   UIStateInferenceSchema, UIStateRequestSchema, WorkflowIntentSchema,
   type AskResponse, type DecideResponse, type ExploredPage, type ExploreResponse, type GuidanceEvent, type InferredIntent,
   type LotseEvent, type ObservationContext, type ObservationSnapshot, type PolicyResponse, type VoiceState, type WorkflowIntent,
 } from "@lotse/shared";
+import { SERVER_URL } from "../utils/server-url";
 import { routeBlocked } from "@lotse/shared/route";
 import type { ExploreStepResult } from "../utils/explore-dom";
 import { ObservationBuffer, findStuckSignal } from "../utils/observation";
@@ -1266,7 +1267,7 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
     if (appHost) headers[LOTSE_HEADERS.app] = appHost;
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (endpoint === "ask") headers.Accept = "application/x-ndjson";
-    const url = `${LOTSE_DEFAULTS.serverUrl}/api/lotse/${endpoint}${query}`;
+    const url = `${SERVER_URL}/api/lotse/${endpoint}${query}`;
     // D-26: the last step before the network — personal data becomes [Kunde-1], [IBAN-1] …; responses are re-identified.
     const wire = body === undefined ? undefined : await pseudo.pseudonymize(body);
     const init = { method, body: wire === undefined ? undefined : JSON.stringify(wire), signal: controller.signal };
@@ -1430,7 +1431,7 @@ async function debugDump(): Promise<string> {
       Extension: `${manifest.name} ${manifest.version}`,
       Platform: nav.userAgentData?.platform || nav.platform,
       Browser: nav.userAgent,
-      "Runtime URL": LOTSE_DEFAULTS.serverUrl,
+      "Runtime URL": SERVER_URL,
       [LOTSE_HEADERS.session]: sessionId,
       "App host (active tab)": activeUrl ? hostOf(activeUrl) : "(no local app in the active tab)",
       "Signed in": account ? `${maskEmail(account.email)}${account.isAdmin ? " (org admin)" : ""}` : "not signed in (dev mode, demo role)",

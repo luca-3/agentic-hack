@@ -10,6 +10,14 @@ const WAKEWORD_MODELS = ["melspectrogram.onnx", "embedding_model.onnx", "silero_
 
 // Chrome extension (MV3) built with WXT — https://wxt.dev
 // `npm run dev:extension` opens a Chrome with the extension loaded; or load `.output/chrome-mv3` via chrome://extensions → "Load unpacked".
+/** Origin of the hosted Valo server as a host permission, or nothing for local builds. */
+function hostedServerPermission(): string[] {
+  const url = process.env.WXT_LOTSE_SERVER_URL;
+  if (!url) return [];
+  const { protocol, host } = new URL(url);
+  return [`${protocol}//${host}/*`];
+}
+
 export default defineConfig({
   manifest: {
     name: "Valo (dev)",
@@ -17,7 +25,8 @@ export default defineConfig({
     // offscreen: microphone (wake word + transcription) and spoken answers live in an offscreen document.
     permissions: ["sidePanel", "storage", "tabs", "activeTab", "offscreen"],
     // Local dev: our server (3001), dashboard (3000), demo CRM (4000), local CORPUS instance; CORPUS dev; EBV-Portal test system.
-    host_permissions: ["http://localhost/*", "http://127.0.0.1/*", "https://dev.fuller.de/*", "https://ebv-portal.vercel.app/*"],
+    // Hosted build: WXT_LOTSE_SERVER_URL=https://<workspace>.codesphere.com → that origin is added too (utils/server-url.ts).
+    host_permissions: ["http://localhost/*", "http://127.0.0.1/*", "https://dev.fuller.de/*", "https://ebv-portal.vercel.app/*", ...hostedServerPermission()],
     action: { default_title: "Open Valo" },
     commands: {
       "lotse-ask": {
