@@ -12,17 +12,17 @@ import { userFromRequest } from "@/lib/supabase/user";
 export const OPTIONS = preflight;
 
 const MAX_FEATURES = 60;
+// No `.max(MAX_FEATURES)` in responseJsonSchema: Gemini unrolls large array `maxItems` in its grammar and rejects with 400 INVALID_ARGUMENT.
+// The cap is enforced in SYSTEM and via `.slice(0, MAX_FEATURES)` below.
 const FeatureDraftSchema = z.object({
-  features: z
-    .array(
-      z.object({
-        name: z.string().describe("Funktion in Worten der Endnutzer, z. B. „Bankverbindung eines Kunden ändern“"),
-        description: z.string().describe("Ein Satz, was man damit erreicht"),
-        route: z.string().describe("Route der Seite aus der Seitenkarte, auf der die Funktion liegt"),
-        clickPath: z.array(z.string()).describe("Klickweg = reachedVia der Seite + Bezeichnung des Ziel-Elements"),
-      }),
-    )
-    .max(MAX_FEATURES),
+  features: z.array(
+    z.object({
+      name: z.string().describe("Funktion in Worten der Endnutzer, z. B. „Bankverbindung eines Kunden ändern“"),
+      description: z.string().describe("Ein Satz, was man damit erreicht"),
+      route: z.string().describe("Route der Seite aus der Seitenkarte, auf der die Funktion liegt"),
+      clickPath: z.array(z.string()).describe("Klickweg = reachedVia der Seite + Bezeichnung des Ziel-Elements"),
+    }),
+  ),
 });
 
 const SYSTEM = `Du bist der Einrichtungs-Assistent von Lotse. Aus einer Seitenkarte einer Business-Web-App (Routen, Titel, Klickwege, Bedienelemente) leitest du die Funktionen ab, die Mitarbeiter in dieser App erledigen.
@@ -57,6 +57,7 @@ async function draftFeatures(pages: ExploredPage[]): Promise<Feature[]> {
     system: SYSTEM,
     prompt: `<seitenkarte>\n${pageMap(pages)}\n</seitenkarte>`,
     maxOutputTokens: 8_000,
+    providerOptions: { google: { thinkingConfig: { thinkingLevel: "low" } } },
     abortSignal: AbortSignal.timeout(60_000),
     maxRetries: 1,
   });
