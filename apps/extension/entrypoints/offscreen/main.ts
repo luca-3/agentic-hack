@@ -74,7 +74,7 @@ async function handle(command: OffscreenCommand): Promise<OffscreenReply> {
     case "configure":
       return { ok: true, mic };
     case "listen":
-      if (mic !== "granted") return { ok: false, mic, error: "Mikrofon ist nicht freigegeben." };
+      if (mic !== "granted") return { ok: false, mic, error: "Microphone access is not granted." };
       startUtterance(command.trigger);
       return { ok: true, mic };
     case "stop-listening":
@@ -236,7 +236,7 @@ function loadDetector(): Promise<void> {
     .catch((error: unknown) => {
       detectorFailed = true;
       console.warn("[lotse voice] wake word unavailable:", errorText(error));
-      notifyWorker({ type: "error", message: "Wake-Word konnte nicht geladen werden — der Kurzbefehl funktioniert weiter." });
+      notifyWorker({ type: "error", message: "The wake word could not be loaded — the keyboard shortcut still works." });
     })
     .finally(() => {
       detectorLoading = null;
@@ -329,7 +329,7 @@ async function speak(text: string): Promise<OffscreenReply> {
       signal: controller.signal,
     });
     if (response.status === 204) return { ok: true, mic };
-    if (!response.ok) throw new Error(`Sprachausgabe fehlgeschlagen (HTTP ${response.status}).`);
+    if (!response.ok) throw new Error(`Speech output failed (HTTP ${response.status}).`);
     return await play(await response.blob(), controller.signal);
   } catch (error) {
     return { ok: false, mic, error: controller.signal.aborted ? "stopped" : errorText(error) };
@@ -360,7 +360,7 @@ function play(blob: Blob, signal: AbortSignal): Promise<OffscreenReply> {
     const onAbort = () => done({ ok: false, mic, error: "stopped" });
     signal.addEventListener("abort", onAbort, { once: true });
     player.onended = () => done({ ok: true, mic });
-    player.onerror = () => done({ ok: false, mic, error: "Die Antwort konnte nicht abgespielt werden." });
+    player.onerror = () => done({ ok: false, mic, error: "The answer could not be played." });
     player.play().catch((error: unknown) => done({ ok: false, mic, error: errorText(error) }));
   });
 }

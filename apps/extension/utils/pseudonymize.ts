@@ -558,12 +558,12 @@ async function blobToDataUrl(blob: Blob): Promise<string> {
  */
 export async function maskFrame(dataUrl: string, snapshotId: string): Promise<string> {
   const reports = pagePrivacy.get(snapshotId);
-  if (!reports?.length) throw new Error("Kein Datenschutz-Bericht für dieses Bild.");
+  if (!reports?.length) throw new Error("No privacy report for this screenshot.");
   await load();
   const bitmap = await createImageBitmap(dataUrlToBlob(dataUrl));
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   const context = canvas.getContext("2d");
-  if (!context) throw new Error("Bildmaske nicht verfügbar.");
+  if (!context) throw new Error("Screenshot mask not available.");
   context.drawImage(bitmap, 0, 0);
   bitmap.close();
   for (const { rects, viewport } of reports) {

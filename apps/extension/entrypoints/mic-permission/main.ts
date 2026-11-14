@@ -13,18 +13,18 @@ const retry = document.querySelector<HTMLButtonElement>("#retry")!;
 
 async function request(): Promise<void> {
   retry.hidden = true;
-  status.textContent = "Bitte im Browser-Dialog „Zulassen“ wählen …";
+  status.textContent = "Please choose “Allow” in the browser dialog …";
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     stream.getTracks().forEach((track) => track.stop()); // only the grant is needed here; capture happens offscreen
-    status.textContent = `Danke! Das Mikrofon ist freigegeben. Sag „Hey Jarvis …“ oder drücke ${shortcutLabels().listen}. Dieser Tab schließt sich gleich.`;
+    status.textContent = `Thanks! The microphone is allowed. Say “Hey Jarvis …” or press ${shortcutLabels().listen}. This tab will close in a moment.`;
     notifyWorker({ type: "mic-granted" });
   } catch (error) {
     const name = (error as DOMException | null)?.name;
     status.textContent =
       name === "NotAllowedError"
-        ? "Mikrofon blockiert. Klicke links in der Adressleiste auf das Schloss-/Einstellungs-Symbol, erlaube das Mikrofon und versuche es erneut."
-        : "Kein Mikrofon gefunden. Schließe eins an und versuche es erneut.";
+        ? "Microphone blocked. Click the lock/settings icon on the left of the address bar, allow the microphone and try again."
+        : "No microphone found. Connect one and try again.";
     retry.hidden = false;
     notifyWorker({ type: "mic-denied" });
   }

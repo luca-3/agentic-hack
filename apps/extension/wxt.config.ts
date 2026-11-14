@@ -13,20 +13,20 @@ const WAKEWORD_MODELS = ["melspectrogram.onnx", "embedding_model.onnx", "silero_
 export default defineConfig({
   manifest: {
     name: "Valo (dev)",
-    description: "Valo zeigt dir in Web-Apps, wo du klicken musst.",
+    description: "Valo shows you where to click in web apps.",
     // offscreen: microphone (wake word + transcription) and spoken answers live in an offscreen document.
     permissions: ["sidePanel", "storage", "tabs", "activeTab", "offscreen"],
     // Local dev only: our server (3001), dashboard (3000), demo CRM (4000), local CORPUS instance.
     host_permissions: ["http://localhost/*", "http://127.0.0.1/*", "https://dev.fuller.de/*"],
-    action: { default_title: "Valo öffnen" },
+    action: { default_title: "Open Valo" },
     commands: {
       "lotse-ask": {
         suggested_key: { default: "Alt+L", mac: "Command+Shift+L" },
-        description: "Valo öffnen und eine Frage stellen",
+        description: "Open Valo and ask a question",
       },
       "lotse-listen": {
         suggested_key: { default: "Alt+Shift+L", mac: "Command+Shift+K" },
-        description: "Valo zuhören lassen (Frage sprechen)",
+        description: "Let Valo listen (ask by voice)",
       },
     },
     // CSP: Chrome's MV3 default ("script-src 'self'; object-src 'self';") DISABLES WebAssembly → ONNX Runtime Web

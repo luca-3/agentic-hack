@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Valo – Mikrofon freigeben</title>
+    <title>Valo – Allow microphone</title>
     <style>
       :root { color-scheme: light dark; --bg: #f6f7f9; --card: #fff; --text: #17202a; --muted: #5b6673; --accent: #0b6bcb; }
       @media (prefers-color-scheme: dark) { :root { --bg: #111418; --card: #1b2027; --text: #e8edf2; --muted: #9aa6b2; --accent: #5aa9ff; } }
@@ -18,10 +18,10 @@
   </head>
   <body>
     <main>
-      <h1>Valo braucht dein Mikrofon</h1>
-      <p>Damit du Valo per Stimme fragen kannst („Hey Jarvis …“ oder <kbd data-shortcut="listen">Alt+Shift+L</kbd>). Das Wake-Word wird nur lokal erkannt; erst danach geht deine Frage zur Spracherkennung (Google Gemini).</p>
-      <p id="status">Bitte im Browser-Dialog „Zulassen“ wählen …</p>
-      <button id="retry" type="button" hidden>Mikrofon freigeben</button>
+      <h1>Valo needs your microphone</h1>
+      <p>So you can ask Valo by voice (“Hey Jarvis …” or <kbd data-shortcut="listen">Alt+Shift+L</kbd>). The wake word is detected only on your device; only after that does your question go to speech recognition (Google Gemini).</p>
+      <p id="status">Please choose “Allow” in the browser dialog …</p>
+      <button id="retry" type="button" hidden>Allow microphone</button>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>

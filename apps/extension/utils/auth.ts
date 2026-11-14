@@ -35,8 +35,8 @@ async function save(next: AuthSession | null) {
 async function authConfig(): Promise<AuthConfigResponse> {
   if (config) return config;
   const response = await fetch(`${LOTSE_DEFAULTS.serverUrl}/api/lotse/auth-config`, { signal: AbortSignal.timeout(8_000) })
-    .catch(() => { throw new Error("Der Valo-Server ist nicht erreichbar. Starte npm run dev:server."); });
-  if (!response.ok) throw new Error("Die Anmeldung ist auf dem Valo-Server nicht eingerichtet.");
+    .catch(() => { throw new Error("The Valo server is not reachable. Start npm run dev:server."); });
+  if (!response.ok) throw new Error("Sign-in is not set up on the Valo server.");
   config = AuthConfigResponseSchema.parse(await response.json());
   return config;
 }
@@ -49,13 +49,13 @@ async function tokenRequest(grant: "password" | "refresh_token", body: Record<st
     headers: { apikey: publishableKey, "Content-Type": "application/json" },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(10_000),
-  }).catch(() => { throw new Error("Die Anmeldung (Supabase) ist nicht erreichbar."); });
+  }).catch(() => { throw new Error("Sign-in (Supabase) is not reachable."); });
   const data = (await response.json().catch(() => ({}))) as {
     access_token?: unknown; refresh_token?: unknown; expires_in?: unknown; expires_at?: unknown; user?: { id?: unknown; email?: unknown };
   };
   if (!response.ok) {
-    if (grant === "password" && (response.status === 400 || response.status === 401)) throw new Error("E-Mail oder Passwort ist falsch.");
-    throw new Error(grant === "refresh_token" ? "Die Anmeldung ist abgelaufen. Bitte melde dich neu an." : `Anmeldung fehlgeschlagen (${response.status}).`);
+    if (grant === "password" && (response.status === 400 || response.status === 401)) throw new Error("Wrong email or password.");
+    throw new Error(grant === "refresh_token" ? "Your session has expired. Please sign in again." : `Sign-in failed (${response.status}).`);
   }
   const next = parseSession({
     accessToken: data.access_token,
@@ -64,12 +64,12 @@ async function tokenRequest(grant: "password" | "refresh_token", body: Record<st
     userId: data.user?.id,
     email: data.user?.email ?? body.email ?? session?.email,
   });
-  if (!next) throw new Error("Die Anmeldung hat keine gültige Sitzung geliefert.");
+  if (!next) throw new Error("Sign-in did not return a valid session.");
   return next;
 }
 
 export async function signIn(email: string, password: string): Promise<AuthSession> {
-  if (!email.trim() || email.length > 200 || !password || password.length > 200) throw new Error("Bitte E-Mail und Passwort eingeben.");
+  if (!email.trim() || email.length > 200 || !password || password.length > 200) throw new Error("Please enter your email and password.");
   await load();
   const next = await tokenRequest("password", { email: email.trim(), password });
   await save(next);

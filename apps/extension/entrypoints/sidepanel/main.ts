@@ -2,7 +2,7 @@ import type { VoiceState } from "@lotse/shared";
 import type { LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
 import { applyShortcutLabels, isMac, shortcutLabels } from "../../utils/shortcuts";
-import "./presence"; // D-29 switches: "Automatisch aktiv", "Status-Kreis anzeigen"
+import "./presence"; // D-29 switches: "Automatically active", "Show the status orb"
 
 const get = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
 applyShortcutLabels();
@@ -30,7 +30,7 @@ const exploreStop = get<HTMLButtonElement>("#explore-stop");
 const exploreBarWrap = get<HTMLDivElement>("#explore-bar-wrap");
 const exploreBar = get<HTMLDivElement>("#explore-bar");
 const exploreSpinner = get<HTMLSpanElement>("#explore-spinner");
-const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 bereit", listening: "🎙 hört zu …", thinking: "… denkt nach", speaking: "🔊 spricht" };
+const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 ready", listening: "🎙 listening …", thinking: "… thinking", speaking: "🔊 speaking" };
 let settingsLoaded = false;
 let thresholdDirty = false;
 let offerId: string | null = null;
@@ -41,26 +41,26 @@ async function send(message: LotseMessage): Promise<LotseResult> {
 
 /** App · org · role of the active tab, as the server resolved it (GET /api/lotse/policy). */
 function orgLine(page: PageStatus | null, signedIn: boolean) {
-  if (!page) return "Kein App-Tab aktiv.";
+  if (!page) return "No app tab active.";
   const app = page.appName ? `${page.appName} (${page.host})` : page.host;
-  if (!page.known) return `${app} · keiner Organisation zugeordnet${signedIn ? "" : " (Dev-Modus)"}`;
-  const org = page.orgName ?? "Organisation";
-  if (page.member && page.role) return `${app} · ${org} · Rolle: ${page.role}`;
-  if (signedIn) return `${app} · ${org} · dein Konto ist kein Mitglied dieser Organisation`;
-  return `${app} · ${org} · ohne Anmeldung (Demo-Rolle)`;
+  if (!page.known) return `${app} · not assigned to an organization${signedIn ? "" : " (dev mode)"}`;
+  const org = page.orgName ?? "Organization";
+  if (page.member && page.role) return `${app} · ${org} · Role: ${page.role}`;
+  if (signedIn) return `${app} · ${org} · your account is not a member of this organization`;
+  return `${app} · ${org} · not signed in (demo role)`;
 }
 
 function renderAccount(status: LotseStatus) {
   const signedIn = status.account !== null;
   loginForm.hidden = signedIn;
   get("#signed-in").hidden = !signedIn;
-  get("#account-line").textContent = signedIn ? `Angemeldet als ${status.account!.email}` : "";
+  get("#account-line").textContent = signedIn ? `Signed in as ${status.account!.email}` : "";
   get("#admin-badge").hidden = !status.account?.isAdmin;
   get("#org-line").textContent = orgLine(status.page, signedIn);
   get("#paused-box").hidden = !status.page?.paused;
   get("#paused-reason").textContent = status.page?.paused ? status.page.reason : "";
   role.disabled = signedIn;
-  get("#role-note").textContent = signedIn ? "Angemeldet: Die Rolle kommt aus deiner Organisation." : "";
+  get("#role-note").textContent = signedIn ? "Signed in: your role comes from your organization." : "";
 
   const isAdmin = status.account?.isAdmin === true;
   exploreBox.hidden = !isAdmin;
@@ -79,16 +79,16 @@ function renderAccount(status: LotseStatus) {
       const pct = Math.min(100, Math.max(4, Math.round((shownCount / exp.maxPages) * 100)));
       exploreBar.style.width = `${pct}%`;
       const routeInfo = exp.currentRoute ? ` · ${exp.currentRoute}` : "";
-      get("#explore-progress").textContent = `Seite ${shownCount} von max. ${exp.maxPages}${routeInfo} (${elapsedSec} s)`;
+      get("#explore-progress").textContent = `Page ${shownCount} of up to ${exp.maxPages}${routeInfo} (${elapsedSec} s)`;
     } else if (exp.phase === "analyzing") {
       exploreBar.style.width = "";
-      get("#explore-progress").textContent = `Auswertung läuft (${elapsedSec} s) …`;
+      get("#explore-progress").textContent = `Analyzing (${elapsedSec} s) …`;
     } else if (exp.phase === "done" && exp.result) {
       get("#explore-progress").textContent = exp.result.features === 0
-        ? "Keine neuen Funktionen – alles bereits vorhanden."
+        ? "No new features – everything already exists."
         : exp.result.features === 1
-          ? "1 neue Funktion angelegt."
-          : `${exp.result.features} neue Funktionen angelegt.`;
+          ? "1 new feature added."
+          : `${exp.result.features} new features added.`;
     } else if (exp.phase === "stopped" || exp.phase === "error") {
       get("#explore-progress").textContent = exp.summary;
     } else {
@@ -98,12 +98,12 @@ function renderAccount(status: LotseStatus) {
   }
 }
 
-const percent = (value: number) => value.toFixed(2).replace(".", ",");
-const clock = (timestamp: number) => new Date(timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+const percent = (value: number) => value.toFixed(2);
+const clock = (timestamp: number) => new Date(timestamp).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
 function render(status: LotseStatus) {
   renderAccount(status);
-  get("#activity").textContent = status.recording ? "Valo aktiv" : "Valo pausiert";
+  get("#activity").textContent = status.recording ? "Valo active" : "Valo paused";
   get("#activity").classList.toggle("active", status.recording);
   const voiceChip = get("#voice-state");
   voiceChip.textContent = status.settings.voice ? VOICE_LABEL[status.voiceState] : "";
@@ -117,17 +117,17 @@ function render(status: LotseStatus) {
   get("#state-count").textContent = String(status.stateCount);
   get("#status").textContent = status.message;
   get("#image-status").textContent = status.screenshotMessage;
-  get("#last-question").textContent = status.lastQuestion ? `${status.lastQuestion.source === "voice" ? "🎙" : "⌨"} „${status.lastQuestion.text}“` : "";
-  get("#workflow").textContent = status.inference?.workflowName ?? (status.workflowId ? "Workflow wird beobachtet" : "Noch kein Workflow");
-  get("#intent").textContent = status.inference?.intent.goal ?? "Das Ziel wird aus dem beobachteten Verlauf eingeordnet.";
+  get("#last-question").textContent = status.lastQuestion ? `${status.lastQuestion.source === "voice" ? "🎙" : "⌨"} “${status.lastQuestion.text}”` : "";
+  get("#workflow").textContent = status.inference?.workflowName ?? (status.workflowId ? "Observing workflow" : "No workflow yet");
+  get("#intent").textContent = status.inference?.intent.goal ?? "The goal is inferred from the observed history.";
   get("#decision").textContent = status.decision
-    ? `${status.decision.intervene ? "Hilfe empfohlen" : "Weiter beobachten"} · Sicherheit ${percent(status.decision.confidence)}${status.decision.threshold !== undefined ? " / Schwelle " + percent(status.decision.threshold) : ""}`
+    ? `${status.decision.intervene ? "Help recommended" : "Keep observing"} · Confidence ${percent(status.decision.confidence)}${status.decision.threshold !== undefined ? " / threshold " + percent(status.decision.threshold) : ""}`
     : "";
-  get("#analytics").textContent = status.analyticsQueued ? `${status.analyticsQueued} Ereignisse warten auf die nächste Analytics-Übertragung.` : "";
+  get("#analytics").textContent = status.analyticsQueued ? `${status.analyticsQueued} events waiting for the next analytics upload.` : "";
   const events = get<HTMLUListElement>("#events");
   events.replaceChildren(...status.events.map((event) => {
     const row = document.createElement("li");
-    const time = new Date(event.ts).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const time = new Date(event.ts).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     row.textContent = `${time} · ${event.type} · ${event.elementLabel || event.route}`;
     return row;
   }));
@@ -137,9 +137,9 @@ function render(status: LotseStatus) {
   get("#offer-text").textContent = status.offer?.text ?? "";
   get("#plan-box").hidden = !status.plan;
   if (status.plan) {
-    get("#plan-step").textContent = `Schritt ${status.plan.index + 1}/${status.plan.total}: ${status.plan.hint || status.plan.label}`;
+    get("#plan-step").textContent = `Step ${status.plan.index + 1}/${status.plan.total}: ${status.plan.hint || status.plan.label}`;
     get<HTMLButtonElement>("#plan-back").disabled = status.plan.index === 0;
-    get("#plan-next").textContent = status.plan.index + 1 === status.plan.total ? "Fertig" : "Weiter";
+    get("#plan-next").textContent = status.plan.index + 1 === status.plan.total ? "Done" : "Next";
   }
 
   proactive.checked = status.settings.proactive;
@@ -148,7 +148,7 @@ function render(status: LotseStatus) {
   speakToggle.disabled = !status.settings.voice;
   get<HTMLButtonElement>("#listen").disabled = !status.settings.voice;
   const snoozed = status.snoozedUntil !== null;
-  get("#snooze-line").textContent = !status.settings.proactive ? "Valo bietet keine Hilfe von sich aus an." : snoozed ? `Pausiert bis ${clock(status.snoozedUntil!)}.` : "";
+  get("#snooze-line").textContent = !status.settings.proactive ? "Valo won't offer help on its own." : snoozed ? `Paused until ${clock(status.snoozedUntil!)}.` : "";
   get("#snooze").hidden = snoozed || !status.settings.proactive;
   get("#resume").hidden = !snoozed;
   get("#threshold-value").textContent = status.threshold === null ? "–" : percent(status.threshold);
@@ -163,7 +163,7 @@ function render(status: LotseStatus) {
   }
 }
 
-const RELOAD_HINT = `Erweiterung wurde aktualisiert – bitte Seitenleiste schließen (✕) und neu öffnen (${shortcutLabels().ask}).`;
+const RELOAD_HINT = `The extension was updated – please close the side panel (✕) and open it again (${shortcutLabels().ask}).`;
 
 function contextInvalidated(): boolean {
   try { return !browser.runtime?.id; } catch { return true; }
@@ -182,7 +182,7 @@ async function act(message: LotseMessage) {
   } catch {
     notice.textContent = contextInvalidated()
       ? RELOAD_HINT
-      : "Valo ist noch nicht erreichbar. Lade die Erweiterung neu.";
+      : "Valo is not reachable yet. Reload the extension.";
   }
 }
 
@@ -236,29 +236,29 @@ const debugNote = get<HTMLSpanElement>("#debug-note");
 const debugText = get<HTMLTextAreaElement>("#debug-text");
 debugCopy.addEventListener("click", () => { void copyDebug(); });
 
-/** "Debug-Kontext kopieren": the worker collects the session context as Markdown (≤ 40 KB), the panel copies it. */
+/** "Copy debug context": the worker collects the session context as Markdown (≤ 40 KB), the panel copies it. */
 async function copyDebug() {
   if (contextInvalidated()) { debugNote.textContent = RELOAD_HINT; return; }
   debugCopy.disabled = true;
   debugText.hidden = true;
-  debugNote.textContent = "Sammle …";
+  debugNote.textContent = "Collecting …";
   try {
     const result = await send({ type: "lotse:debug-dump" });
     if (!result.ok) throw new Error(result.error);
     const text = result.debug ?? "";
     try {
       await navigator.clipboard.writeText(text);
-      debugNote.textContent = `Kopiert ✓ (${Math.max(1, Math.round(text.length / 1024))} KB)`;
+      debugNote.textContent = `Copied ✓ (${Math.max(1, Math.round(text.length / 1024))} KB)`;
     } catch {
       // The click's user activation can run out while the worker collects → let the user copy by hand.
       debugText.value = text;
       debugText.hidden = false;
       debugText.focus();
       debugText.select();
-      debugNote.textContent = `Automatisch kopieren ging nicht – der Text ist markiert, drücke ${isMac() ? "⌘C" : "Strg+C"}.`;
+      debugNote.textContent = `Could not copy automatically – the text is selected, press ${isMac() ? "⌘C" : "Ctrl+C"}.`;
     }
   } catch (error) {
-    debugNote.textContent = error instanceof Error ? error.message : "Debug-Kontext ist gerade nicht verfügbar.";
+    debugNote.textContent = error instanceof Error ? error.message : "The debug context is not available right now.";
   } finally { debugCopy.disabled = false; }
 }
 

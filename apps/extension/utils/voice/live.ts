@@ -54,9 +54,9 @@ export class LiveUtterance {
     this.timers.push(
       setTimeout(() => this.endOfSpeech(), VOICE_DEFAULTS.maxUtteranceMs),
       setTimeout(() => {
-        if (!this.speechStarted && !this.interim) this.finish("", "Ich habe keine Frage gehört.");
+        if (!this.speechStarted && !this.interim) this.finish("", "I didn't hear a question.");
       }, VOICE_DEFAULTS.noSpeechMs),
-      setTimeout(() => this.finish(this.interim, "Die Spracherkennung hat zu lange gebraucht."), VOICE_DEFAULTS.sessionTimeoutMs),
+      setTimeout(() => this.finish(this.interim, "Speech recognition took too long."), VOICE_DEFAULTS.sessionTimeoutMs),
     );
     void this.connect();
   }
@@ -103,7 +103,7 @@ export class LiveUtterance {
         signal: this.abort.signal,
       });
       if (!response.ok) {
-        throw new Error(response.status === 429 ? "Zu viele Sprachanfragen — kurz warten." : `Sprach-Token fehlgeschlagen (HTTP ${response.status}).`);
+        throw new Error(response.status === 429 ? "Too many voice requests — wait a moment." : `Voice token failed (HTTP ${response.status}).`);
       }
       const token = LiveTokenResponseSchema.parse(await response.json());
       if (this.finished) return;
@@ -113,7 +113,7 @@ export class LiveUtterance {
       ws.onmessage = (event: MessageEvent) => void this.onMessage(event.data);
       ws.onclose = (event: CloseEvent) => {
         if (this.finished) return;
-        const reason = event.code === 1000 ? undefined : `Spracherkennung getrennt (${event.code}${event.reason ? `: ${event.reason}` : ""}).`;
+        const reason = event.code === 1000 ? undefined : `Speech recognition disconnected (${event.code}${event.reason ? `: ${event.reason}` : ""}).`;
         if (reason) console.warn("[lotse voice]", reason);
         this.finish(this.interim, reason);
       };
@@ -155,7 +155,7 @@ export class LiveUtterance {
     this.endSent = true;
     this.send({ realtimeInput: { audioStreamEnd: true } });
     this.timers.push(
-      setTimeout(() => this.finish(this.interim, this.interim ? undefined : "Ich habe keine Frage verstanden."), VOICE_DEFAULTS.finalTranscriptTimeoutMs),
+      setTimeout(() => this.finish(this.interim, this.interim ? undefined : "I didn't catch a question."), VOICE_DEFAULTS.finalTranscriptTimeoutMs),
     );
   }
 

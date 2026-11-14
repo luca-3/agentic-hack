@@ -48,6 +48,6 @@ export type WorkerCommand =
   | { type: "lotse:logout" }
   | { type: "lotse:explore-start" }
   | { type: "lotse:explore-stop" }
-  | { type: "lotse:debug-dump" }; // side panel "Debug-Kontext kopieren" → LotseResult.debug (Markdown)
+  | { type: "lotse:debug-dump" }; // side panel "Copy debug context" → LotseResult.debug (Markdown)
 
 export type LotseMessage = ExtensionMessage | ContentCommand | WorkerCommand;

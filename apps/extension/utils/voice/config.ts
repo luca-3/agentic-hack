@@ -35,8 +35,8 @@ export const VOICE_CONFIG_KEY = "lotse:voice-config";
 /** chrome.storage.session key for the pseudonymous voice session id (rate-limit key on the server). */
 export const VOICE_SESSION_KEY = "lotse:voice-session";
 
-// "Hey Jarvis, …" / "Hallo Valo: …" / "Valo …" at the start of the transcript.
-const WAKE_PHRASE = /^\s*(?:(?:hey|hei|hi|he|hallo|ok|okay)[\s,!.]+)?(?:jarvis|valo|walo|lotse|lotsen|lotze)\b[\s,.!?:;–-]*/i;
+// "Hey Jarvis, …" / "Hello Valo: …" / "Hallo Valo: …" / "Valo …" at the start of the transcript (English and German).
+const WAKE_PHRASE = /^\s*(?:(?:hey|hei|hi|he|hello|hallo|ok|okay)[\s,!.]+)?(?:jarvis|valo|walo|lotse|lotsen|lotze)\b[\s,.!?:;–-]*/i;
 
 /** Removes a leading wake phrase from a transcript; "" when nothing else was said. */
 export function stripWakePhrase(text: string): string {

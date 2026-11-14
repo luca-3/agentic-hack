@@ -19,7 +19,7 @@ type OverlayOptions = {
 type Point = { x: number; y: number };
 
 const GLIDE_MS = 600;
-const VOICE_TEXT: Partial<Record<VoiceState, string>> = { listening: "🎙 Valo hört zu …", thinking: "… Valo denkt nach", speaking: "🔊 Valo spricht" };
+const VOICE_TEXT: Partial<Record<VoiceState, string>> = { listening: "🎙 Valo is listening …", thinking: "… Valo is thinking", speaking: "🔊 Valo is speaking" };
 const STYLE = `
 :host { all: initial; }
 [hidden] { display: none !important; }
@@ -230,7 +230,7 @@ export class LotseOverlay {
   }
 
   private syncChip() {
-    this.recordingChip.textContent = this.paused ? "⏸ Valo pausiert auf dieser Seite" : "● Valo zeichnet lokal auf";
+    this.recordingChip.textContent = this.paused ? "⏸ Valo is paused on this page" : "● Valo is recording locally";
     this.recordingChip.hidden = this.chipsHidden || !(this.recording || this.pausedVisible);
   }
 

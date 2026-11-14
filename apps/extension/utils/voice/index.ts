@@ -39,7 +39,7 @@ export interface VoiceHandlers {
   onTranscript(text: string): void | Promise<unknown>;
   /** off · idle · listening · thinking · speaking — for the side panel and the page overlay. */
   onState?(state: VoiceState): void;
-  /** Short German message worth showing (microphone missing, nothing heard, …). */
+  /** Short message worth showing (microphone missing, nothing heard, …). */
   onError?(message: string): void;
 }
 
@@ -84,7 +84,7 @@ export function setupVoice(next: VoiceHandlers): void {
 export async function startListening(trigger: ListenTrigger = "button"): Promise<void> {
   await ready;
   if (!settings.voice) {
-    report("Sprachsteuerung ist in den Einstellungen ausgeschaltet.");
+    report("Voice control is turned off in the settings.");
     return;
   }
   try {
@@ -96,7 +96,7 @@ export async function startListening(trigger: ListenTrigger = "button"): Promise
     const reply = await sendToOffscreen({ type: "listen", trigger });
     if (!reply.ok) {
       if (reply.mic === "needed" || reply.mic === "denied") await requestMicPermission();
-      else report(reply.error ?? "Valo kann gerade nicht zuhören.");
+      else report(reply.error ?? "Valo can't listen right now.");
     }
   } catch (error) {
     report(errorText(error));
@@ -160,10 +160,10 @@ export async function voiceDebug(): Promise<VoiceDebug> {
       const command = { type: "debug-log", target: OFFSCREEN_TARGET, config } satisfies OffscreenCommand;
       const timeout = new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 1_500));
       const reply = (await Promise.race([browser.runtime.sendMessage(command), timeout])) as OffscreenReply | undefined;
-      offscreenLog = reply?.log ?? ["(Offscreen-Dokument hat nicht geantwortet)"];
+      offscreenLog = reply?.log ?? ["(offscreen document did not respond)"];
     }
   } catch (error) {
-    offscreenLog = [`(Offscreen-Log nicht verfügbar: ${errorText(error)})`];
+    offscreenLog = [`(offscreen log not available: ${errorText(error)})`];
   }
   return {
     state: currentState(), mic, mode, speaking, voice: settings.voice, speak: settings.speak,
@@ -202,7 +202,7 @@ function onWorkerEvent(event: WorkerEvent, tabId?: number): void {
       if (tabId !== undefined) setTimeout(() => void browser.tabs.remove(tabId).catch(() => undefined), 1_500);
       break;
     case "mic-denied":
-      report("Ohne Mikrofon-Freigabe kann Valo nicht zuhören.");
+      report("Valo can't listen without microphone access.");
       break;
   }
 }
@@ -210,7 +210,7 @@ function onWorkerEvent(event: WorkerEvent, tabId?: number): void {
 function deliver(raw: string): void {
   const question = stripWakePhrase(raw);
   if (!question) {
-    report("Ich habe keine Frage verstanden.");
+    report("I didn't catch a question.");
     return;
   }
   setThinking(true);
@@ -295,7 +295,7 @@ async function ensureOffscreen(): Promise<void> {
     .createDocument({
       url: OFFSCREEN_PATH.slice(1),
       reasons: ["USER_MEDIA", "AUDIO_PLAYBACK"],
-      justification: "Valo erkennt das Wake-Word lokal, nimmt danach die gesprochene Frage auf und spielt kurze gesprochene Antworten ab.",
+      justification: "Valo detects the wake word locally, then records the spoken question and plays short spoken answers.",
     })
     .catch((error: unknown) => {
       if (!/single offscreen document/i.test(errorText(error))) throw error;
@@ -314,14 +314,14 @@ async function closeOffscreen(): Promise<void> {
 
 /** Sends a command (with the current config) to the offscreen document; retries only while it is still starting up. */
 async function sendToOffscreen(body: OffscreenCommandBody): Promise<OffscreenReply> {
-  if (!config) throw new Error("Sprachmodul ist noch nicht bereit.");
+  if (!config) throw new Error("The voice module is not ready yet.");
   await ensureOffscreen();
   const command = { ...body, target: OFFSCREEN_TARGET, config } as OffscreenCommand;
   let lastError: unknown;
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const reply = (await browser.runtime.sendMessage(command)) as OffscreenReply | undefined;
-      if (!reply || typeof reply.ok !== "boolean") return { ok: false, error: "Unerwartete Antwort vom Sprachmodul." };
+      if (!reply || typeof reply.ok !== "boolean") return { ok: false, error: "Unexpected reply from the voice module." };
       if (reply.mic) mic = reply.mic;
       if (reply.mode) mode = reply.mode;
       return reply;
@@ -330,7 +330,7 @@ async function sendToOffscreen(body: OffscreenCommandBody): Promise<OffscreenRep
       await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)));
     }
   }
-  throw new Error(`Sprachmodul antwortet nicht (${errorText(lastError)}).`);
+  throw new Error(`The voice module is not responding (${errorText(lastError)}).`);
 }
 
 // ---------------------------------------------------------------------------

@@ -90,7 +90,7 @@ let inferenceTimer: ReturnType<typeof setTimeout> | undefined;
 let lastInferenceKey = "";
 let busyOwner = 0;
 let busyMode: "proactive" | "question" | null = null;
-let message = "Bereit. Öffne deine App und starte die Beobachtung.";
+let message = "Ready. Open your app and start observing.";
 let screenshotMessage = "";
 let lastCaptureAt = 0;
 let capturing = false;
@@ -225,10 +225,10 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
       if (incoming.paused === true && senderTab !== undefined && senderTab === recordingTab) pauseForPolicy();
       break;
     case "lotse:login":
-      if (typeof incoming.email !== "string" || typeof incoming.password !== "string") throw new Error("Bitte E-Mail und Passwort eingeben.");
+      if (typeof incoming.email !== "string" || typeof incoming.password !== "string") throw new Error("Please enter your email and password.");
       await auth.signIn(incoming.email, incoming.password);
       await afterAuthChange();
-      message = `Angemeldet als ${account?.email ?? incoming.email.trim()}.`;
+      message = `Signed in as ${account?.email ?? incoming.email.trim()}.`;
       break;
     case "lotse:logout":
       if (exploreRunning) await stopExplore();
@@ -238,7 +238,7 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
         startedAt: null, phaseStartedAt: null,
       };
       await afterAuthChange();
-      message = "Abgemeldet. Valo arbeitet ohne Konto mit der Demo-Rolle.";
+      message = "Signed out. Valo works without an account, using the demo role.";
       break;
     case "lotse:explore-start":
       await startExplore();
@@ -286,7 +286,7 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
       break;
     case "lotse:plan-end":
       if (plan && plan.id === incoming.planId) {
-        if (incoming.reason === "done") message = "Anleitung abgeschlossen.";
+        if (incoming.reason === "done") message = "Guide completed.";
         plan = null;
         schedulePersistence();
       }
@@ -299,16 +299,16 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
     case "lotse:offer-feedback": await offerFeedback(incoming.offerId, incoming.feedback); break;
     case "lotse:prefs": await loadPrefs(incoming.threshold); break;
     case "lotse:listen":
-      if (!settings.voice) throw new Error("Sprachsteuerung ist in den Einstellungen ausgeschaltet.");
-      if (!startListening) throw new Error("Die Spracheingabe ist in dieser Version noch nicht verfügbar.");
+      if (!settings.voice) throw new Error("Voice control is turned off in the settings.");
+      if (!startListening) throw new Error("Voice input is not available in this version yet.");
       await startListening("button");
       break;
     case "lotse:snooze":
       snoozeUntil = incoming.minutes > 0 ? Date.now() + Math.min(incoming.minutes, 240) * 60_000 : 0;
-      message = snoozeUntil ? `Proaktive Hilfe pausiert bis ${clock(snoozeUntil)}.` : "Proaktive Hilfe ist wieder aktiv.";
+      message = snoozeUntil ? `Proactive help paused until ${clock(snoozeUntil)}.` : "Proactive help is active again.";
       schedulePersistence();
       break;
-    default: throw new Error("Diese Nachricht ist für das Content Script bestimmt.");
+    default: throw new Error("This message is meant for the content script.");
   }
   return { ok: true, status: status() };
 }
@@ -318,20 +318,20 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
 // ---------------------------------------------------------------------------
 
 function settingsPatch(value: unknown): Partial<ExtensionSettings> {
-  if (!value || typeof value !== "object") throw new Error("Ungültige Einstellungen.");
+  if (!value || typeof value !== "object") throw new Error("Invalid settings.");
   const input = value as Record<string, unknown>;
   const patch: Partial<ExtensionSettings> = {};
   for (const key of ["proactive", "voice", "speak", "screenshots"] as const) {
     if (!(key in input)) continue;
-    if (typeof input[key] !== "boolean") throw new Error("Ungültige Einstellungen.");
+    if (typeof input[key] !== "boolean") throw new Error("Invalid settings.");
     patch[key] = input[key];
   }
   if ("role" in input) {
-    if (typeof input.role !== "string" || input.role.length > 100) throw new Error("Die Rolle darf höchstens 100 Zeichen haben.");
+    if (typeof input.role !== "string" || input.role.length > 100) throw new Error("The role can have at most 100 characters.");
     patch.role = input.role.trim();
   }
   if ("appKnowledge" in input) {
-    if (typeof input.appKnowledge !== "string" || input.appKnowledge.length > 12_000) throw new Error("Das App-Wissen darf höchstens 12.000 Zeichen haben.");
+    if (typeof input.appKnowledge !== "string" || input.appKnowledge.length > 12_000) throw new Error("The app knowledge can have at most 12,000 characters.");
     patch.appKnowledge = input.appKnowledge.trim();
   }
   return patch;
@@ -345,7 +345,7 @@ async function updateSettings(value: unknown) {
   if (proactiveOff) dropOffer(true);
   await browser.storage.sync.set({ [LOTSE_SETTINGS_KEY]: { proactive: settings.proactive, voice: settings.voice, speak: settings.speak } })
     .then(() => browser.storage.local.set({ [DEMO_CONTEXT_KEY]: { screenshots: settings.screenshots, role: settings.role, appKnowledge: settings.appKnowledge } }))
-    .catch(() => { message = "Die Einstellungen konnten nicht gespeichert werden."; });
+    .catch(() => { message = "The settings could not be saved."; });
   schedulePersistence();
 }
 
@@ -364,7 +364,7 @@ async function loadSettings() {
 /** Active app tab — and the policy gate for everything that reads it (snapshots, screenshots, questions, inference). */
 async function activeAppTab() {
   const [tab] = await browser.tabs.query({ active: true, lastFocusedWindow: true });
-  if (tab?.id === undefined || !localUrl(tab.url)) throw new Error("Öffne eine freigegebene localhost-App im aktiven Tab.");
+  if (tab?.id === undefined || !localUrl(tab.url)) throw new Error("Open an allowed localhost app in the active tab.");
   if (await blockedUrl(tab.url)) throw new Error(PAUSED_TEXT);
   return tab as typeof tab & { id: number };
 }
@@ -372,11 +372,11 @@ async function activeAppTab() {
 async function snapshotOf(tabId: number): Promise<ObservationSnapshot> {
   let result: unknown;
   try { result = await browser.tabs.sendMessage(tabId, { type: "lotse:snapshot" } satisfies LotseMessage); }
-  catch { throw new Error("Valo ist auf dieser Seite noch nicht aktiv. Lade die App-Seite neu."); }
+  catch { throw new Error("Valo is not active on this page yet. Reload the app page."); }
   if (result && typeof result === "object" && "paused" in result) throw new Error(PAUSED_TEXT);
   await pseudo.learn(result);
   const snapshot = ObservationSnapshotSchema.safeParse(result);
-  if (!snapshot.success || !localUrl(snapshot.data.url)) throw new Error("Valo ist auf dieser Seite noch nicht aktiv. Lade die App-Seite neu.");
+  if (!snapshot.success || !localUrl(snapshot.data.url)) throw new Error("Valo is not active on this page yet. Reload the app page.");
   return snapshot.data;
 }
 
@@ -409,7 +409,7 @@ function pauseForPolicy() {
   busyOwner++; busy = false; busyMode = null; inferencePending = false;
   clearTimeout(inferenceTimer);
   dropOffer(true);
-  message = PAUSED_TEXT + " Hier wird nichts beobachtet, aufgenommen oder gesendet.";
+  message = PAUSED_TEXT + " Nothing is observed, recorded or sent here.";
   schedulePersistence();
 }
 
@@ -453,7 +453,7 @@ async function sendTab(tabId: number, command: LotseMessage): Promise<{ ok?: boo
 }
 
 async function start() {
-  if (exploreRunning) throw new Error("Warte, bis die App-Erkundung abgeschlossen ist, oder stoppe sie zuerst.");
+  if (exploreRunning) throw new Error("Wait until the app exploration has finished, or stop it first.");
   const tab = await activeAppTab();
   if (recording && recordingTab === tab.id) return;
   await stop();
@@ -465,7 +465,7 @@ async function start() {
     await browser.tabs.sendMessage(tab.id, { type: "lotse:start" } satisfies LotseMessage);
     const snapshot = await snapshotOf(tab.id);
     buffer.record({ snapshot });
-    message = "Valo beobachtet diese App. Der Verlauf bleibt zunächst lokal.";
+    message = "Valo is observing this app. The history stays local for now.";
     await captureFrame(tab.id, snapshot);
     schedulePersistence();
   } catch (error) { recording = false; recordingTab = null; schedulePersistence(); throw error; }
@@ -480,7 +480,7 @@ async function stop() {
   const oldTab = recordingTab;
   recording = false; recordingTab = null;
   if (oldTab !== null) await sendTab(oldTab, { type: "lotse:stop" });
-  message = "Beobachtung pausiert. Der lokale Verlauf läuft nach drei Minuten ab.";
+  message = "Observation paused. The local history expires after three minutes.";
   schedulePersistence();
 }
 
@@ -518,15 +518,15 @@ async function captureFrame(tabId: number, expected: ObservationSnapshot, target
     if (epoch !== generation || before.id !== after.id || activeAfter?.id !== tabId || !settings.screenshots) return;
     // D-26: content regions are painted over before the frame is buffered; no privacy report → no frame (fail closed).
     const masked = await pseudo.maskFrame(dataUrl, before.id).catch(() => null);
-    if (!masked) { screenshotMessage = "Bild ohne Datenschutz-Maske ausgelassen. Lade die App-Seite neu."; return; }
+    if (!masked) { screenshotMessage = "Screenshot without privacy mask skipped. Reload the app page."; return; }
     const frame = ScreenshotFrameSchema.safeParse({ snapshotId: before.id, capturedAt, dataUrl: masked });
-    if (!frame.success) { screenshotMessage = "Dieses Bild war zu groß und wurde ausgelassen."; return; }
+    if (!frame.success) { screenshotMessage = "This screenshot was too large and was skipped."; return; }
     targetBuffer.record({ snapshot: after });
     targetBuffer.addScreenshot(frame.data);
     screenshotMessage = "";
     if (targetBuffer === buffer) schedulePersistence();
   } catch (error) {
-    screenshotMessage = errorText(error) === PAUSED_TEXT ? "" : "Bildaufnahme nicht verfügbar. Klicke das Valo-Symbol im aktiven App-Tab.";
+    screenshotMessage = errorText(error) === PAUSED_TEXT ? "" : "Screenshots not available. Click the Valo icon in the active app tab.";
   } finally { capturing = false; }
 }
 
@@ -538,12 +538,12 @@ function queueInference() {
 
 /** User controls (D-20/D-22): switch, snooze, one open offer, cooldown, no offers during a guided plan. */
 function proactiveHold(): string | null {
-  if (!settings.proactive) return "Proaktive Hilfe ist aus. Valo beobachtet weiter.";
-  if (Date.now() < snoozeUntil) return `Proaktive Hilfe pausiert bis ${clock(snoozeUntil)}.`;
-  if (pendingOffer && Date.now() - pendingOffer.shownAt < OFFER_TTL_MS) return "Valo wartet auf deine Antwort zum Hilfe-Angebot.";
+  if (!settings.proactive) return "Proactive help is off. Valo keeps observing.";
+  if (Date.now() < snoozeUntil) return `Proactive help paused until ${clock(snoozeUntil)}.`;
+  if (pendingOffer && Date.now() - pendingOffer.shownAt < OFFER_TTL_MS) return "Valo is waiting for your answer to the help offer.";
   if (pendingOffer) { pendingOffer = null; if (prefetch && !prefetch.live) prefetch = null; }
-  if (Date.now() - lastDecisionAt < OFFER_COOLDOWN_MS) return "Valo hält sich nach dem letzten Hinweis zurück.";
-  if (plan && plan.tabId === recordingTab) return "Valo führt dich gerade durch eine Anleitung.";
+  if (Date.now() - lastDecisionAt < OFFER_COOLDOWN_MS) return "Valo is holding back after the last hint.";
+  if (plan && plan.tabId === recordingTab) return "Valo is walking you through a guide right now.";
   return null;
 }
 
@@ -565,11 +565,11 @@ async function maybeIntervene() {
     if (!context) return;
     const key = context.workflow.id + ":" + snapshot.id + ":" + (context.workflow.events.at(-1)?.id ?? "");
     if (key === lastInferenceKey) return;
-    message = "Valo versteht den aktuellen UI-Zustand …";
+    message = "Valo is reading the current UI state …";
     const stateBody = UIStateRequestSchema.parse({ snapshot, events: context.workflow.events });
     const state = UIStateInferenceSchema.parse(await callRuntime("state", { body: stateBody }));
     if (!current()) return;
-    if (state.snapshotId !== snapshot.id) throw new Error("Die UI-Inferenz gehört zu einem anderen Seitenzustand.");
+    if (state.snapshotId !== snapshot.id) throw new Error("The UI inference belongs to a different page state.");
     buffer.addState({ ...state, capturedAt: snapshot.capturedAt });
     schedulePersistence();
     const stateSnapshot = await snapshotOf(tabId);
@@ -577,7 +577,7 @@ async function maybeIntervene() {
     if (stateSnapshot.id !== snapshot.id) { queueInference(); return; }
     const textContext = buffer.getContext({ includeScreenshots: false });
     if (!textContext?.states?.length) return;
-    message = "Valo ordnet Workflow und Ziel ein …";
+    message = "Valo is identifying the workflow and goal …";
     const intentBody = IntentRequestSchema.parse({ context: textContext, ...appContext() });
     const understood = WorkflowIntentSchema.parse(await callRuntime("intent", { body: intentBody }));
     if (!current()) return;
@@ -587,7 +587,7 @@ async function maybeIntervene() {
     if (intentSnapshot.id !== snapshot.id) { queueInference(); return; }
     const hold = proactiveHold();
     if (hold) { message = hold; lastInferenceKey = key; return; }
-    message = "Valo prüft, ob Hilfe sinnvoll ist …";
+    message = "Valo is checking whether help makes sense …";
     const signal = findStuckSignal(textContext);
     const trigger = signal?.type === "unsuccessful_searches" ? "repeated_search" :
       signal?.type === "route_ping_pong" ? "page_pingpong" : signal?.type ?? "workflow_update";
@@ -600,7 +600,7 @@ async function maybeIntervene() {
     decision = result;
     lastInferenceKey = key;
     if (result.threshold !== undefined) threshold = result.threshold;
-    if (!result.intervene) { message = "Valo beobachtet weiter."; return; }
+    if (!result.intervene) { message = "Valo keeps observing."; return; }
     const holdAfter = proactiveHold();
     if (holdAfter) { message = holdAfter; return; }
     if (buffer.workflow?.id !== context.workflow.id) { queueInference(); return; }
@@ -611,15 +611,15 @@ async function maybeIntervene() {
     buffer.record({ snapshot: latest });
 
     // Offer first; the guidance is prefetched meanwhile and only shown after "Ja".
-    const question = (result.intent || understood.intent.goal || understood.workflowName).trim().slice(0, 500) || "Wie komme ich auf dieser Seite weiter?";
+    const question = (result.intent || understood.intent.goal || understood.workflowName).trim().slice(0, 500) || "How do I continue on this page?";
     const offerId = result.offerId ?? "local-" + crypto.randomUUID();
-    const text = (result.offer || `Soll ich dir zeigen, wie es weitergeht? (${question})`).slice(0, 140);
+    const text = (result.offer || `Want me to show you how to continue? (${question})`).slice(0, 140);
     const shown = await sendTab(tabId, { type: "lotse:show-offer", offerId, offer: text });
     if (!current()) return;
-    if (!shown?.ok) { message = "Valo hält das Angebot zurück, weil gerade ein Hinweis sichtbar ist."; return; }
+    if (!shown?.ok) { message = "Valo is holding the offer back because a hint is visible right now."; return; }
     pendingOffer = { id: offerId, text, question, tabId, shownAt: Date.now(), intent: understood.intent };
     lastDecisionAt = Date.now();
-    message = "Valo bietet Hilfe an: " + text;
+    message = "Valo offers help: " + text;
     schedulePersistence();
     // Screenshots are attached only now, after the explicit intervention decision.
     await captureFrame(tabId, latest);
@@ -638,7 +638,7 @@ async function maybeIntervene() {
       if (job.live) {
         await job.chain;
         if (prefetch === job) prefetch = null;
-        if (current()) message = job.ctx.warning ?? (job.answer.sentence || "Valo zeigt dir den Weg.");
+        if (current()) message = job.ctx.warning ?? (job.answer.sentence || "Valo is showing you the way.");
       }
     } catch (error) {
       job.failed = errorText(error);
@@ -646,7 +646,7 @@ async function maybeIntervene() {
       if (job.live && prefetch === job) {
         prefetch = null;
         message = job.failed;
-        await sendTab(tabId, { type: "lotse:say", text: "Valo konnte den Weg gerade nicht laden. Frag mich gern direkt." });
+        await sendTab(tabId, { type: "lotse:say", text: "Valo could not load the way just now. Feel free to ask me directly." });
       }
     }
   } catch (error) { if (epoch === generation) message = errorText(error); }
@@ -673,18 +673,18 @@ function dropOffer(hide: boolean) {
 
 async function acceptOffer(offerId: string) {
   const offer = pendingOffer;
-  if (!offer || offer.id !== offerId) { message = "Dieses Hilfe-Angebot ist nicht mehr aktuell."; return; }
+  if (!offer || offer.id !== offerId) { message = "This help offer is no longer current."; return; }
   pendingOffer = null;
   await sendTab(offer.tabId, { type: "lotse:hide-offer" });
   const job = prefetch?.offerId === offerId ? prefetch : null;
   if (job && !job.failed) {
     job.live = true;
-    message = "Valo zeigt dir den Weg …";
+    message = "Valo is showing you the way …";
     for (const event of job.events.splice(0)) job.chain = job.chain.then(() => deliver(job.ctx, event)).catch(() => undefined);
     await job.chain;
     if (job.done && job.answer) {
       if (prefetch === job) prefetch = null;
-      message = job.ctx.warning ?? (job.answer.sentence || "Valo zeigt dir den Weg.");
+      message = job.ctx.warning ?? (job.answer.sentence || "Valo is showing you the way.");
     }
     return;
   }
@@ -693,15 +693,15 @@ async function acceptOffer(offerId: string) {
 }
 
 async function offerFeedback(offerId: string, feedback: "up" | "down" | "declined") {
-  if (typeof offerId !== "string" || !offerId) throw new Error("Ungültiges Feedback.");
+  if (typeof offerId !== "string" || !offerId) throw new Error("Invalid feedback.");
   if (feedback === "declined") {
     if (pendingOffer?.id === offerId) dropOffer(true);
     snoozeUntil = Date.now() + SNOOZE_MS;
-    message = "Okay – Valo bietet die nächsten 10 Minuten keine Hilfe an.";
+    message = "Okay – Valo won't offer help for the next 10 minutes.";
     schedulePersistence();
   } else {
     if (feedbackGiven.has(offerId)) return;
-    message = feedback === "up" ? "Danke! Valo merkt sich, dass der Hinweis geholfen hat." : "Danke! Valo hält sich künftig mehr zurück.";
+    message = feedback === "up" ? "Thanks! Valo will remember that the hint helped." : "Thanks! Valo will hold back more from now on.";
   }
   feedbackGiven.add(offerId);
   if (offerId.startsWith("local-")) return; // the server never issued this offer
@@ -714,7 +714,7 @@ async function offerFeedback(offerId: string, feedback: "up" | "down" | "decline
 
 async function loadPrefs(value?: number) {
   try {
-    if (value !== undefined && (typeof value !== "number" || !Number.isFinite(value))) throw new Error("Ungültige Schwelle.");
+    if (value !== undefined && (typeof value !== "number" || !Number.isFinite(value))) throw new Error("Invalid threshold.");
     const result = value === undefined
       ? await callRuntime("prefs", { method: "GET", abortable: false })
       : await callRuntime("prefs", {
@@ -722,7 +722,7 @@ async function loadPrefs(value?: number) {
         body: ProactivePrefsSchema.parse({ proactiveThreshold: Math.min(Math.max(value, PROACTIVE_THRESHOLD.min), PROACTIVE_THRESHOLD.max) }),
       });
     threshold = ProactivePrefsSchema.parse(result).proactiveThreshold;
-    prefsMessage = value === undefined ? "" : "Schwelle gespeichert.";
+    prefsMessage = value === undefined ? "" : "Threshold saved.";
   } catch (error) { prefsMessage = errorText(error); }
 }
 
@@ -731,33 +731,33 @@ async function loadPrefs(value?: number) {
 // ---------------------------------------------------------------------------
 
 async function explicitQuestion(question: string, source: Source = "text", options: { offerId?: string; intent?: InferredIntent } = {}): Promise<AskResponse> {
-  if (typeof question !== "string" || !question.trim() || question.length > 500) throw new Error("Bitte stelle eine Frage mit höchstens 500 Zeichen.");
+  if (typeof question !== "string" || !question.trim() || question.length > 500) throw new Error("Please ask a question with at most 500 characters.");
   questionLog.push({ at: Date.now(), source, text: question.trim() });
   try { stopSpeaking(); } catch { /* voice module not ready */ }
   if (source !== "proactive") { lastQuestion = { text: question.trim(), source }; dropOffer(true); }
   if (busy && busyMode === "proactive") { generation++; requestController?.abort(); busy = false; inferencePending = true; }
-  if (busy) throw new Error("Valo bearbeitet gerade einen Hinweis. Versuche es gleich noch einmal.");
+  if (busy) throw new Error("Valo is working on a hint right now. Try again in a moment.");
   busy = true; busyMode = "question"; const owner = ++busyOwner;
   const epoch = generation;
   try {
     const tab = await activeAppTab();
-    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
+    if (epoch !== generation) throw new Error("The request was cancelled.");
     lastAppHost = new URL(tab.url!).host;
     const snapshot = await snapshotOf(tab.id);
-    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
+    if (epoch !== generation) throw new Error("The request was cancelled.");
     const questionBuffer = tab.id === recordingTab ? buffer : new ObservationBuffer();
     questionBuffer.record({ snapshot });
     await captureFrame(tab.id, snapshot, questionBuffer);
-    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
+    if (epoch !== generation) throw new Error("The request was cancelled.");
     const latest = await snapshotOf(tab.id);
     questionBuffer.record({ snapshot: latest });
-    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
-    message = "Valo sucht den nächsten Schritt …";
+    if (epoch !== generation) throw new Error("The request was cancelled.");
+    message = "Valo is finding the next step …";
     const knownIntent = options.intent ?? (tab.id === recordingTab ? inference?.intent : undefined);
     const answer = await requestHelp(tab.id, latest, questionBuffer.getContext(), question.trim(), knownIntent, source, { offerId: options.offerId });
-    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
+    if (epoch !== generation) throw new Error("The request was cancelled.");
     lastDecisionAt = Date.now(); // no proactive offer right on top of fresh guidance
-    message = answer.sentence || "Valo hat den Weg markiert.";
+    message = answer.sentence || "Valo has marked the way.";
     return answer;
   } catch (error) { if (epoch === generation) message = errorText(error); throw error; }
   finally { if (owner === busyOwner) { busy = false; busyMode = null; if (inferencePending) queueInference(); } schedulePersistence(); }
@@ -778,7 +778,7 @@ async function requestHelp(
   const ctx: HelpContext = extra.prefetch?.ctx ?? { tabId, snapshotId: snapshot.id, source, offerId: extra.offerId, cleared: false };
   let streamed = false;
   const route = async (event: RenderEvent) => {
-    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
+    if (epoch !== generation) throw new Error("The request was cancelled.");
     const job = extra.prefetch;
     if (!job) { await deliver(ctx, event); return; }
     if (job.live) { job.chain = job.chain.then(() => deliver(ctx, event)).catch(() => undefined); await job.chain; }
@@ -790,8 +790,8 @@ async function requestHelp(
       if (event.type === "point" || event.type === "plan" || event.type === "say") { streamed = true; await route(event); }
     },
   }));
-  if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
-  if (answer.snapshotId && answer.snapshotId !== snapshot.id) throw new Error("Der Hinweis gehört zu einem anderen Seitenzustand.");
+  if (epoch !== generation) throw new Error("The request was cancelled.");
+  if (answer.snapshotId && answer.snapshotId !== snapshot.id) throw new Error("The hint belongs to a different page state.");
   if (!streamed) {
     // Legacy JSON answer → the same rendering path as the stream.
     if (answer.elementNumber !== null) await route({ type: "point", elementNumber: answer.elementNumber, label: answer.sentence, hint: answer.sentence.slice(0, 120) });
@@ -809,7 +809,7 @@ async function deliver(ctx: HelpContext, event: RenderEvent) {
   }
   if (event.type === "point") {
     const result = await sendTab(ctx.tabId, { type: "lotse:point", elementNumber: event.elementNumber, label: event.label, hint: event.hint, snapshotId: ctx.snapshotId, offerId: ctx.offerId });
-    if (!result?.ok) ctx.warning = "Das vorgeschlagene Element ist gerade nicht sichtbar.";
+    if (!result?.ok) ctx.warning = "The suggested element is not visible right now.";
   } else if (event.type === "plan") {
     plan = { id: crypto.randomUUID(), steps: event.steps, index: 0, snapshotId: ctx.snapshotId, offerId: ctx.offerId, tabId: ctx.tabId, updatedAt: Date.now() };
     schedulePersistence();
@@ -878,14 +878,14 @@ function normalizeExploreRoute(rawUrl: string, startOrigin: string, blockedRoute
 
 async function startExplore() {
   if (!account) await loadAccount();
-  if (!account?.isAdmin) throw new Error("Nur Organisations-Admins dürfen eine App erkunden.");
+  if (!account?.isAdmin) throw new Error("Only organization admins can explore an app.");
   const token = await auth.accessToken();
-  if (!token) throw new Error("Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.");
+  if (!token) throw new Error("Your session has expired. Please sign in again.");
   if (exploreRunning) return;
   const tab = await activeAppTab();
   const startUrl = tab.url!;
   const policy = await pagePolicy(startUrl);
-  if (!policy?.allowed) throw new Error(policy?.reason ?? "Diese App ist für Valo nicht freigegeben.");
+  if (!policy?.allowed) throw new Error(policy?.reason ?? "This app is not enabled for Valo.");
   await sendTab(tab.id, { type: "lotse:policy", policy: compactPolicy(policy) });
   await snapshotOf(tab.id);
   if (recording) await stop();
@@ -901,12 +901,12 @@ async function startExplore() {
     pageCount: 0,
     maxPages: EXPLORE_LIMITS.maxPages,
     currentRoute: new URL(startUrl).pathname,
-    summary: `Seite 1 von max. ${EXPLORE_LIMITS.maxPages}`,
+    summary: `Page 1 of up to ${EXPLORE_LIMITS.maxPages}`,
     result: null,
     startedAt: now,
     phaseStartedAt: now,
   };
-  message = "Valo erkundet die App …";
+  message = "Valo is exploring the app …";
   void runExploration(tab.id, startUrl, policy.blockedRoutes);
 }
 
@@ -922,7 +922,7 @@ async function stopExplore() {
     ...exploreStatus,
     running: false,
     phase: "stopped",
-    summary: `Erkundung gestoppt (${exploreStatus.pageCount} von max. ${EXPLORE_LIMITS.maxPages} Seiten erfasst).`,
+    summary: `Exploration stopped (${exploreStatus.pageCount} of up to ${EXPLORE_LIMITS.maxPages} pages captured).`,
   };
   message = exploreStatus.summary;
 }
@@ -958,8 +958,8 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
       if (!activeTab?.url || new URL(activeTab.url).origin !== startOrigin || routeBlocked(locationOf(activeTab.url), blockedRoutes)) continue;
 
       const shownCount = Math.min(pages.length + 1, EXPLORE_LIMITS.maxPages);
-      exploreStatus = { ...exploreStatus, currentRoute: next.key, summary: `Seite ${shownCount} von max. ${EXPLORE_LIMITS.maxPages}` };
-      await sendTab(tabId, { type: "lotse:explore-chip", text: `🔍 Erkundung: Seite ${shownCount} von max. ${EXPLORE_LIMITS.maxPages}` });
+      exploreStatus = { ...exploreStatus, currentRoute: next.key, summary: `Page ${shownCount} of up to ${EXPLORE_LIMITS.maxPages}` };
+      await sendTab(tabId, { type: "lotse:explore-chip", text: `🔍 Exploring: page ${shownCount} of up to ${EXPLORE_LIMITS.maxPages}` });
 
       const stepResponse = (await sendTab(tabId, {
         type: "lotse:explore-run",
@@ -989,7 +989,7 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
       exploreStatus = {
         ...exploreStatus,
         pageCount: pages.length,
-        summary: `Seite ${pages.length} von max. ${EXPLORE_LIMITS.maxPages}`,
+        summary: `Page ${pages.length} of up to ${EXPLORE_LIMITS.maxPages}`,
       };
 
       for (const link of stepResponse.links ?? []) {
@@ -1017,18 +1017,18 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
     }
 
     if (exploreAborted) return;
-    if (!pages.length) throw new Error("Es konnten keine Seiten der App erfasst werden.");
+    if (!pages.length) throw new Error("No pages of the app could be captured.");
 
     exploreStatus = {
       ...exploreStatus,
       phase: "analyzing",
       pageCount: pages.length,
       currentRoute: "",
-      summary: `Seite ${pages.length} von max. ${EXPLORE_LIMITS.maxPages} · Auswertung läuft …`,
+      summary: `Page ${pages.length} of up to ${EXPLORE_LIMITS.maxPages} · analyzing …`,
       phaseStartedAt: Date.now(),
     };
     message = exploreStatus.summary;
-    await sendTab(tabId, { type: "lotse:explore-chip", text: `⏳ Valo wertet ${pages.length} Seiten aus …` });
+    await sendTab(tabId, { type: "lotse:explore-chip", text: `⏳ Valo is analyzing ${pages.length} pages …` });
 
     const pseudonymizedPages = await pseudo.pseudonymizeExploredPages(pages);
     const body = ExploreRequestSchema.parse({
@@ -1048,10 +1048,10 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
 
     const result = ExploreResponseSchema.parse(rawResult);
     const summaryText = result.features === 0
-      ? "Keine neuen Funktionen – alles bereits vorhanden."
+      ? "No new features – everything already exists."
       : result.features === 1
-        ? "1 neue Funktion angelegt."
-        : `${result.features} neue Funktionen angelegt.`;
+        ? "1 new feature added."
+        : `${result.features} new features added.`;
     exploreRunning = false;
     exploreTabId = null;
     exploreStatus = {
@@ -1171,18 +1171,18 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
         : typeof errorPayload?.error?.message === "string"
           ? errorPayload.error.message
           : "";
-      if (response.status === 401) throw new Error(serverMsg || "Bitte melde dich in Valo an (Sitzung abgelaufen oder ungültig).");
-      if (response.status === 404 && !serverMsg && endpoint !== "feedback") throw new Error("Valo wartet auf den /api/lotse/" + endpoint + "-Endpunkt.");
-      if (response.status === 429) throw new Error(serverMsg || "Valo hat gerade zu viele Anfragen. Versuche es gleich noch einmal.");
+      if (response.status === 401) throw new Error(serverMsg || "Please sign in to Valo (session expired or invalid).");
+      if (response.status === 404 && !serverMsg && endpoint !== "feedback") throw new Error("Valo is waiting for the /api/lotse/" + endpoint + " endpoint.");
+      if (response.status === 429) throw new Error(serverMsg || "Valo is getting too many requests right now. Try again in a moment.");
       if (serverMsg) throw new Error(serverMsg);
-      throw new Error(`Die Hilfe ist derzeit nicht verfügbar (Server ${response.status}).`);
+      throw new Error(`Help is not available right now (server ${response.status}).`);
     }
     if (endpoint === "events") return null;
     if (endpoint === "ask" && response.headers.get("content-type")?.includes("ndjson")) return await readGuidance(response, onGuidance, log);
     return pseudo.reidentify(await response.json());
   } catch (error) {
-    const failure = controller.signal.aborted ? new Error("Die Anfrage wurde abgebrochen oder dauerte zu lange.")
-      : error instanceof TypeError ? new Error("Der Valo-Server ist nicht erreichbar. Starte npm run dev:server.")
+    const failure = controller.signal.aborted ? new Error("The request was cancelled or took too long.")
+      : error instanceof TypeError ? new Error("The Valo server is not reachable. Start npm run dev:server.")
       : error;
     log.error = errorText(failure);
     throw failure;
@@ -1199,7 +1199,7 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
 function guidanceLine(event: GuidanceEvent): string {
   switch (event.type) {
     case "tier": return `tier ${event.tier} · ${event.model}`;
-    case "point": return `point #${event.elementNumber} „${event.label}“${event.hint ? " – " + event.hint : ""}`;
+    case "point": return `point #${event.elementNumber} "${event.label}"${event.hint ? " – " + event.hint : ""}`;
     case "plan": return "plan " + event.steps.map((step, index) => `${index + 1}. ${step.label}`).join(" | ");
     case "say": return "say " + event.text;
     case "error": return `error ${event.code}: ${event.message}`;
@@ -1209,7 +1209,7 @@ function guidanceLine(event: GuidanceEvent): string {
 
 async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent) => Promise<void>, log?: RuntimeCallLog): Promise<AskResponse> {
   const reader = response.body?.getReader();
-  if (!reader) throw new Error("Der Server hat keine Hilfe gesendet.");
+  if (!reader) throw new Error("The server did not send any help.");
   const decoder = new TextDecoder();
   let pending = "";
   let completed = false;
@@ -1224,14 +1224,14 @@ async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent)
     const event = pseudo.reidentify(wire); // real names for overlay + panel
     received = true;
     if (event.type === "error") {
-      if (event.code === "budget_exceeded") throw new Error("Valo macht Pause bis morgen (Tagesbudget erreicht).");
-      if (event.code === "rate_limited") throw new Error("Valo hat gerade zu viele Anfragen. Versuche es gleich noch einmal.");
+      if (event.code === "budget_exceeded") throw new Error("Valo is taking a break until tomorrow (daily budget reached).");
+      if (event.code === "rate_limited") throw new Error("Valo is getting too many requests right now. Try again in a moment.");
       throw new Error(event.message);
     }
     if (event.type === "point") { answer.elementNumber = event.elementNumber; answer.sentence ||= event.hint ?? event.label; }
     if (event.type === "plan") answer.sentence = event.steps.map((step, index) => (index + 1) + ". " + (step.hint ?? step.label)).join("\n");
     if (event.type === "say") answer.sentence = event.text;
-    if (event.type === "tier") message = "Valo arbeitet am nächsten Schritt …";
+    if (event.type === "tier") message = "Valo is working on the next step …";
     if (event.type === "done") completed = true;
     await onEvent?.(event);
   };
@@ -1239,7 +1239,7 @@ async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent)
     while (!completed) {
       const chunk = await reader.read();
       pending += decoder.decode(chunk.value, { stream: !chunk.done });
-      if (pending.length > 65_536) throw new Error("Die Antwort des Servers ist zu groß.");
+      if (pending.length > 65_536) throw new Error("The server's answer is too large.");
       let boundary = pending.indexOf("\n");
       while (boundary !== -1 && !completed) {
         const line = pending.slice(0, boundary); pending = pending.slice(boundary + 1);
@@ -1247,25 +1247,25 @@ async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent)
       }
       if (chunk.done) { if (!completed && pending.trim()) await consume(pending); break; }
     }
-    if (!received) throw new Error("Der Server hat keine Hilfe gesendet.");
-    if (!completed) throw new Error("Die Hilfe-Antwort wurde unterbrochen.");
+    if (!received) throw new Error("The server did not send any help.");
+    if (!completed) throw new Error("The help answer was interrupted.");
     return answer;
   } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
 }
 
 function errorText(error: unknown): string {
-  return error instanceof Error ? error.message : "Valo konnte die Anfrage nicht bearbeiten.";
+  return error instanceof Error ? error.message : "Valo could not process the request.";
 }
 
 function clock(timestamp: number) {
-  return new Date(timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return new Date(timestamp).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
 // ---------------------------------------------------------------------------
 // Status + persistence
 // ---------------------------------------------------------------------------
 
-/** Status lines as the side panel shows them (it polls status() every second) → "Meldungen" in the debug dump. */
+/** Status lines as the side panel shows them (it polls status() every second) → "Messages to the user" in the debug dump. */
 function noteShown() {
   const now = { message, screenshotMessage, prefsMessage };
   for (const key of ["message", "screenshotMessage", "prefsMessage"] as const) {
@@ -1309,54 +1309,54 @@ async function debugDump(): Promise<string> {
   });
   return formatDebugDump({
     header: {
-      Zeit: new Date().toISOString(),
-      Erweiterung: `${manifest.name} ${manifest.version}`,
-      Plattform: nav.userAgentData?.platform || nav.platform,
+      Time: new Date().toISOString(),
+      Extension: `${manifest.name} ${manifest.version}`,
+      Platform: nav.userAgentData?.platform || nav.platform,
       Browser: nav.userAgent,
-      "Runtime-URL": LOTSE_DEFAULTS.serverUrl,
+      "Runtime URL": LOTSE_DEFAULTS.serverUrl,
       [LOTSE_HEADERS.session]: sessionId,
-      "App-Host (aktiver Tab)": activeUrl ? hostOf(activeUrl) : "(keine lokale App im aktiven Tab)",
-      Anmeldung: account ? `${maskEmail(account.email)}${account.isAdmin ? " (Org-Admin)" : ""}` : "nicht angemeldet (Dev-Modus, Demo-Rolle)",
-      Organisation: page?.orgName ?? null, App: page?.appName ?? null,
-      Rolle: page?.role ?? (account ? null : settings.role || null), Mitglied: page?.member ?? null,
+      "App host (active tab)": activeUrl ? hostOf(activeUrl) : "(no local app in the active tab)",
+      "Signed in": account ? `${maskEmail(account.email)}${account.isAdmin ? " (org admin)" : ""}` : "not signed in (dev mode, demo role)",
+      Organization: page?.orgName ?? null, App: page?.appName ?? null,
+      Role: page?.role ?? (account ? null : settings.role || null), Member: page?.member ?? null,
     },
     settings: {
       proactive: settings.proactive, voice: settings.voice, speak: settings.speak, screenshots: settings.screenshots,
-      autoActivate: activation.autoActivate, orb: activation.orb, "manuell pausiert": activation.manualPause,
-      "Auto-Tab": activation.autoTab, "App-Hosts": activation.appHosts.join(", ") || null,
-      "Demo-Rolle": settings.role || null, "App-Wissen (Zeichen)": settings.appKnowledge.length,
-      Schwelle: threshold, "Ruhe bis": snoozeUntil > Date.now() ? clock(snoozeUntil) : null,
-      "Orb-Fehler": activation.lastError ? `${new Date(activation.lastError.at).toISOString().slice(11, 19)} ${activation.lastError.text}` : null,
+      autoActivate: activation.autoActivate, orb: activation.orb, "manually paused": activation.manualPause,
+      "Auto tab": activation.autoTab, "App hosts": activation.appHosts.join(", ") || null,
+      "Demo role": settings.role || null, "App knowledge (chars)": settings.appKnowledge.length,
+      Threshold: threshold, "Quiet until": snoozeUntil > Date.now() ? clock(snoozeUntil) : null,
+      "Orb error": activation.lastError ? `${new Date(activation.lastError.at).toISOString().slice(11, 19)} ${activation.lastError.text}` : null,
     },
     policy: policy && activeUrl ? {
-      Host: policy.app, bekannt: policy.known, erlaubt: policy.allowed, autoStart: policy.autoStart ?? null,
-      angemeldet: policy.signedIn, Mitglied: policy.member, Rolle: policy.role,
-      "gesperrte Routen": policy.blockedRoutes.join(", ") || null,
-      "Route gesperrt": routeBlocked(locationOf(activeUrl), policy.blockedRoutes),
-      pausiert: verdict?.paused ?? null, Grund: verdict?.reason || policy.reason || null, ttlSec: policy.ttlSec,
-    } : { Policy: activeUrl ? "unbekannt (Server nicht erreichbar?) → pausiert (fail closed)" : "keine lokale App im aktiven Tab" },
+      Host: policy.app, known: policy.known, allowed: policy.allowed, autoStart: policy.autoStart ?? null,
+      "signed in": policy.signedIn, member: policy.member, role: policy.role,
+      "blocked routes": policy.blockedRoutes.join(", ") || null,
+      "route blocked": routeBlocked(locationOf(activeUrl), policy.blockedRoutes),
+      paused: verdict?.paused ?? null, reason: verdict?.reason || policy.reason || null, ttlSec: policy.ttlSec,
+    } : { Policy: activeUrl ? "unknown (server not reachable?) → paused (fail closed)" : "no local app in the active tab" },
     observation: {
-      Beobachtung: recording, "Beobachteter Tab": recordingTab, "Tab-Pfad": pathOf(recordingUrl ?? activeUrl),
-      beschäftigt: busy ? `ja (${busyMode ?? "?"})` : "nein",
-      "Workflow-ID": context?.workflow.id ?? null, Workflow: safe.observation.workflowName, Ziel: safe.observation.goal,
-      "Ziel-Konfidenz": inference?.intent.confidence ?? null,
-      Events: buffer.events.length, Snapshots: buffer.snapshots.length, Bilder: buffer.screenshots.length, "UI-Zustände": buffer.states.length,
-      "Analytics in Warteschlange": analytics.length,
-      "Letzte Entscheidung": decision ? `intervene=${decision.intervene} confidence=${decision.confidence.toFixed(2)} threshold=${decision.threshold ?? "–"}` : null,
-      Angebot: safe.observation.offer, offerId: decision?.offerId ?? null, "Offenes Angebot": safe.observation.pendingOffer,
-      "Plan-Schritt": safe.observation.planStep, Stimme: voiceState,
-      Erkundung: `${exploreStatus.phase} (${exploreStatus.pageCount} Seiten)`,
-      Statuszeile: safe.observation.message, Bildstatus: safe.observation.screenshotMessage || null,
+      Observing: recording, "Observed tab": recordingTab, "Tab path": pathOf(recordingUrl ?? activeUrl),
+      busy: busy ? `yes (${busyMode ?? "?"})` : "no",
+      "Workflow ID": context?.workflow.id ?? null, Workflow: safe.observation.workflowName, Goal: safe.observation.goal,
+      "Goal confidence": inference?.intent.confidence ?? null,
+      Events: buffer.events.length, Snapshots: buffer.snapshots.length, Screenshots: buffer.screenshots.length, "UI states": buffer.states.length,
+      "Analytics queued": analytics.length,
+      "Last decision": decision ? `intervene=${decision.intervene} confidence=${decision.confidence.toFixed(2)} threshold=${decision.threshold ?? "–"}` : null,
+      Offer: safe.observation.offer, offerId: decision?.offerId ?? null, "Open offer": safe.observation.pendingOffer,
+      "Plan step": safe.observation.planStep, "Voice state": voiceState,
+      Exploration: `${exploreStatus.phase} (${exploreStatus.pageCount} pages)`,
+      "Status line": safe.observation.message, "Screenshot status": safe.observation.screenshotMessage || null,
     },
     calls: safe.calls,
     guidance: guidanceLog.newestFirst(),
     // Proactive "questions" are model-inferred goals (re-identified) → tokens; typed/spoken ones are the user's own.
     questions: questionLog.newestFirst().map((q) => (q.source === "proactive" ? { ...q, text: pseudo.pseudonymizeText(q.text) } : q)),
     voice: voiceInfo ? {
-      Zustand: voiceInfo.state, Mikrofon: voiceInfo.mic, "Offscreen-Modus": voiceInfo.mode, "Offscreen offen": voiceInfo.offscreenOpen,
-      spricht: voiceInfo.speaking, Sprache: voiceInfo.voice, Vorlesen: voiceInfo.speak,
-      Keyword: voiceInfo.keywordModel, Schwelle: voiceInfo.threshold, "Wake-Word": voiceInfo.wakeWord,
-    } : { Sprache: "Sprachmodul nicht verfügbar" },
+      State: voiceInfo.state, Microphone: voiceInfo.mic, "Offscreen mode": voiceInfo.mode, "Offscreen open": voiceInfo.offscreenOpen,
+      speaking: voiceInfo.speaking, Voice: voiceInfo.voice, "Read aloud": voiceInfo.speak,
+      Keyword: voiceInfo.keywordModel, Threshold: voiceInfo.threshold, "Wake word": voiceInfo.wakeWord,
+    } : { Voice: "voice module not available" },
     voiceLog: voiceInfo?.offscreenLog ?? [],
     voiceWorkerLog: voiceInfo?.workerLog ?? [],
     events: safe.events,
@@ -1385,7 +1385,7 @@ function schedulePersistence() {
   persistenceTimer = setTimeout(() => {
     persistenceTimer = undefined;
     const saved: SavedSession = { recording, recordingTab, buffer: buffer.serialize(), decision, inference, sessionId, plan, snoozeUntil, lastDecisionAt, threshold, analytics };
-    void browser.storage.session.set({ [STORE]: saved }).catch(() => { message = "Der lokale Verlauf konnte nicht gespeichert werden."; });
+    void browser.storage.session.set({ [STORE]: saved }).catch(() => { message = "The local history could not be saved."; });
   }, 700);
 }
 
@@ -1430,7 +1430,7 @@ async function restore() {
     if (recording && recordingTab !== null) {
       const tab = await browser.tabs.get(recordingTab).catch(() => null);
       if (!tab || !localUrl(tab.url)) { recording = false; recordingTab = null; }
-      else { message = "Valo beobachtet diese App weiter."; lastAppHost = new URL(tab.url!).host; }
+      else { message = "Valo keeps observing this app."; lastAppHost = new URL(tab.url!).host; }
     }
     schedulePersistence();
   } catch { recording = false; recordingTab = null; buffer.clear(); }

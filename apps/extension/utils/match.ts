@@ -108,7 +108,7 @@ export function routeMatches(stepRoute: string | undefined, currentRoute: string
 /** Human-readable page name for "expected page" hints. */
 export function prettyRoute(route: string): string {
   const path = route.replace(/^https?:\/\/[^/]+/, "").split(/[?#]/)[0] ?? "";
-  const file = path.split("/").filter(Boolean).at(-1) ?? "Startseite";
+  const file = path.split("/").filter(Boolean).at(-1) ?? "Home";
   const name = file.replace(/\.html?$/, "").replace(/[-_]/g, " ");
-  return name === "index" || !name ? "Startseite" : name.charAt(0).toLocaleUpperCase("de-DE") + name.slice(1);
+  return name === "index" || !name ? "Home" : name.charAt(0).toLocaleUpperCase("de-DE") + name.slice(1);
 }

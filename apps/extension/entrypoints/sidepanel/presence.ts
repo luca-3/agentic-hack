@@ -1,5 +1,5 @@
 /**
- * Side panel switches for D-29: "Automatisch aktiv" and "Status-Kreis anzeigen" (chrome.storage.sync `lotse:presence`,
+ * Side panel switches for D-29: "Automatically active" and "Show the status orb" (chrome.storage.sync `lotse:presence`,
  * both default on), the hosts where the orb was hidden, and where Valo starts by itself (`lotse:activation`).
  */
 import {
@@ -23,7 +23,7 @@ async function save(patch: Partial<Presence>) {
 async function renderHidden() {
   const stored = await browser.storage.local.get(ORB_PLACES_KEY).catch(() => ({} as Record<string, unknown>));
   const hidden = parsePlaces(stored[ORB_PLACES_KEY]).hidden;
-  hiddenText.textContent = hidden.length ? `Status-Kreis ausgeblendet auf: ${hidden.join(", ")}` : "";
+  hiddenText.textContent = hidden.length ? `Status orb hidden on: ${hidden.join(", ")}` : "";
   hiddenLine.hidden = hidden.length === 0;
 }
 
@@ -32,10 +32,10 @@ async function renderActivation() {
   if (!info) { autoLine.textContent = ""; return; }
   const hosts = info.appHosts.length ? `: ${info.appHosts.join(", ")}` : "";
   autoLine.textContent = info.manualPause
-    ? "Von dir pausiert – „Beobachtung starten“ oder „Fortsetzen“ im Status-Kreis setzt fort."
+    ? "Paused by you – “Start observing” or “Resume” in the status orb continues."
     : info.autoActivate
-      ? `Valo startet auf den Apps deiner Organisation von selbst${hosts}.`
-      : "„Automatisch aktiv“ ist aus – starte Valo mit „Beobachtung starten“.";
+      ? `Valo starts by itself on your organization’s apps${hosts}.`
+      : "“Automatically active” is off – start Valo with “Start observing”.";
 }
 
 auto.addEventListener("change", () => { void save({ autoActivate: auto.checked }).then(renderActivation); });

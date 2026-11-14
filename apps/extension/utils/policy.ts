@@ -5,7 +5,7 @@ import { routeBlocked } from "@lotse/shared/route";
  * App policy cache for the service worker (GET /api/lotse/policy, D-12). Fail closed: no policy = paused.
  * A failed refetch keeps the last known policy (its blocklist still applies) and retries after a short pause.
  */
-export const PAUSED_TEXT = "Valo pausiert auf dieser Seite.";
+export const PAUSED_TEXT = "Valo is paused on this page.";
 
 type Entry = { policy: PolicyResponse | null; until: number };
 const RETRY_MS = 5_000;
@@ -64,8 +64,8 @@ export function clearPolicies() {
 export type PageVerdict = { paused: boolean; reason: string };
 
 export function pageVerdict(url: string | undefined, policy: PolicyResponse | null): PageVerdict {
-  if (!policy) return { paused: true, reason: "Valo kann die Freigabe dieser App gerade nicht prüfen (Valo-Server erreichbar?)." };
-  if (!policy.allowed) return { paused: true, reason: policy.reason ?? "Diese App ist für Valo nicht freigegeben." };
-  if (routeBlocked(locationOf(url), policy.blockedRoutes)) return { paused: true, reason: "Auf dieser Seite beobachtet Valo nichts (geschützte Daten)." };
+  if (!policy) return { paused: true, reason: "Valo can't check right now whether this app is allowed (is the Valo server reachable?)." };
+  if (!policy.allowed) return { paused: true, reason: policy.reason ?? "This app is not enabled for Valo." };
+  if (routeBlocked(locationOf(url), policy.blockedRoutes)) return { paused: true, reason: "Valo observes nothing on this page (protected data)." };
   return { paused: false, reason: "" };
 }

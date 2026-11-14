@@ -35,7 +35,7 @@ import { setupVoice, speak, stopSpeaking } from "../utils/voice";
 setupVoice({
   onTranscript: (text) => explicitQuestion(text, "voice"), // return the promise → state "thinking" ends when the answer is done
   onState: (state) => broadcast(state),                    // off | idle | listening | thinking | speaking
-  onError: (message) => showStatus(message),               // optional, German one-liners (mic missing, nothing heard, …)
+  onError: (message) => showStatus(message),               // optional, short one-liners (mic missing, nothing heard, …)
 });
 speak(sayText);   // only for `say` events; ≤ 2 sentences; no-op for "" or settings.speak = false; resolves after playback
 stopSpeaking();   // when a new question starts
@@ -44,7 +44,7 @@ stopSpeaking();   // when a new question starts
 - Call `setupVoice` during the worker's first turn (inside `defineBackground`), so `commands.onCommand` and the offscreen messages are handled after the worker is woken.
 - If `onTranscript` returns nothing, "thinking" lasts until `speak()` is called or 25 s pass.
 - Any other `runtime.onMessage` listener must ignore voice messages (`isVoiceMessage(message)` → `return false`): the offscreen document answers worker commands itself, and a faster foreign `respond()` would steal the reply.
-- Side panel: `startListening("button")` for a mic button; `requestMicPermission()` for a "Mikrofon freigeben" link.
+- Side panel: `startListening("button")` for a mic button; `requestMicPermission()` for an "Allow microphone" link.
 
 ## Settings
 
@@ -68,17 +68,17 @@ stopSpeaking();   // when a new question starts
 
 ## End of utterance
 
-Speech starts when Silero VAD reports ≥ 0.5, ignoring the first 250–350 ms (wake-word tail, start beep). Listening ends after ~1 s below 0.35, after 10 s, or on a second hotkey press. That sends `audioStreamEnd`, and Gemini's final transcript arrives about 0.4–0.6 s later (`apps/server/VOICE.md`). If nothing is said within 6 s, it ends with "Ich habe keine Frage gehört.". If Gemini sends no final transcript within 4 s, the last interim transcript is used. If the VAD model is unavailable, a loudness threshold is used.
+Speech starts when Silero VAD reports ≥ 0.5, ignoring the first 250–350 ms (wake-word tail, start beep). Listening ends after ~1 s below 0.35, after 10 s, or on a second hotkey press. That sends `audioStreamEnd`, and Gemini's final transcript arrives about 0.4–0.6 s later (`apps/server/VOICE.md`). If nothing is said within 6 s, it ends with "I didn't hear a question.". If Gemini sends no final transcript within 4 s, the last interim transcript is used. If the VAD model is unavailable, a loudness threshold is used.
 
 ## Manual checklist (human, real Chrome — no automated tests by request)
 
 1. `npm run dev:server` (port 3001) and `npm run demo:crm` (port 4000). Then `npm run build -w @lotse/extension` and load `apps/extension/.output/chrome-mv3` via chrome://extensions → Developer mode → Load unpacked (reload after each build).
-2. Open the demo CRM, press **Alt+Shift+L** (macOS **⌘⇧K**). On the first use, the "Valo braucht dein Mikrofon" tab opens → click Allow → the tab closes by itself.
-3. Press Alt+Shift+L (⌘⇧K) again → short rising beep, state `listening` (side panel). Ask "Wie ändere ich die IBAN?" and stop talking → about 1 s later the state goes to `thinking` and the question runs through the normal guidance path (the side panel shows it). Valo points at the field.
+2. Open the demo CRM, press **Alt+Shift+L** (macOS **⌘⇧K**). On the first use, the "Valo needs your microphone" tab opens → click Allow → the tab closes by itself.
+3. Press Alt+Shift+L (⌘⇧K) again → short rising beep, state `listening` (side panel). Ask "How do I change the IBAN?" and stop talking → about 1 s later the state goes to `thinking` and the question runs through the normal guidance path (the side panel shows it). Valo points at the field.
 4. Say **"Hey Jarvis"** (speak clearly, short pause optional) → beep → ask a question. If it never triggers, lower `threshold` to 0.4. If it triggers by itself, raise it to 0.6 (`lotse:voice-config`, see above).
-5. If the answer has a `say` event → at most two short German sentences are spoken (state `speaking`). Say "Hey Jarvis" or press the hotkey during speech → speech stops immediately (barge-in).
+5. If the answer has a `say` event → at most two short sentences are spoken (state `speaking`). Say "Hey Jarvis" or press the hotkey during speech → speech stops immediately (barge-in).
 6. Set `lotse:settings.voice = false` → the mic indicator disappears. Set `speak = false` → answers stay silent.
 7. Debugging: chrome://extensions → Valo → "Inspect views: offscreen.html" (wake word, WebSocket, TTS logs `[lotse voice]`) and "service worker".
-8. TTS route alone: `curl -s -o /tmp/t.wav -w "%{http_code}\n" -X POST localhost:3001/api/lotse/tts -H "Content-Type: application/json" -H "x-lotse-session: t" -d '{"text":"Klick auf Bankverbindung."}'`, then play `/tmp/t.wav`. Checked 2026-11-14: 200, 24 kHz mono WAV, about 3 s including the first route compile.
+8. TTS route alone: `curl -s -o /tmp/t.wav -w "%{http_code}\n" -X POST localhost:3001/api/lotse/tts -H "Content-Type: application/json" -H "x-lotse-session: t" -d '{"text":"Click on bank details."}'`, then play `/tmp/t.wav`. Checked 2026-11-14: 200, 24 kHz mono WAV, about 3 s including the first route compile.
 
 Not verified in a browser (no browser runs by request): wake-word accuracy of the port, AudioContext autoplay in the offscreen document, offscreen document lifetime.

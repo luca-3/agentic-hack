@@ -83,38 +83,38 @@ ${Object.entries(COLORS).map(([mode, color]) => `.wrap[data-mode="${mode}"] { --
 @keyframes valo-sea { from { transform: translateX(0); } to { transform: translateX(5px); } }
 @keyframes valo-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes valo-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-/* aktiv: the beacon burns calmly */
+/* active: the beacon burns calmly */
 .wrap[data-mode="active"] .lamp { animation: valo-glow 3s ease-in-out infinite; filter: drop-shadow(0 0 1.5px #FF8A3D); }
 .wrap[data-mode="active"] .beam { animation: valo-beams 3s ease-in-out infinite; }
-/* bereit: lamp dimmed, beams off */
+/* ready: lamp dimmed, beams off */
 .wrap[data-mode="idle"] .lamp { opacity: .55; }
 .wrap[data-mode="idle"] .beam { opacity: .12; }
-/* hört zu: the light cone turns, orange pulse rings */
+/* listening: the light cone turns, orange pulse rings */
 .wrap[data-mode="listening"] .beam { opacity: .15; }
 .wrap[data-mode="listening"] .lamp { filter: drop-shadow(0 0 2.5px #FF8A3D); }
 .wrap[data-mode="listening"] .sweep { opacity: .45; animation: valo-sweep 1.8s linear infinite; }
 .wrap[data-mode="listening"] .ring { animation: valo-pulse 1.2s ease-out infinite; }
 .wrap[data-mode="listening"] .ring.r2 { animation-delay: .6s; }
-/* denkt: beams signal left/right in turn */
+/* thinking: beams signal left/right in turn */
 .wrap[data-mode="thinking"] .beam-l { animation: valo-blink .9s steps(1) infinite; }
 .wrap[data-mode="thinking"] .beam-r { animation: valo-blink .9s steps(1) infinite .45s; }
 .wrap[data-mode="thinking"] .lamp { animation: valo-glow .9s ease-in-out infinite; }
-/* spricht: beams pulse, the sea moves */
+/* speaking: beams pulse, the sea moves */
 .wrap[data-mode="speaking"] .beam, .wrap[data-mode="speaking"] .lamp { animation: valo-glow .6s ease-in-out infinite; }
 .wrap[data-mode="speaking"] .waves { animation: valo-sea .8s linear infinite; }
 .wrap[data-mode="speaking"] .ring { animation: valo-pulse 1.7s ease-out infinite; }
 .wrap[data-mode="speaking"] .ring.r2 { animation-delay: .85s; }
-/* Vorschlag: the beacon flashes twice, the orb bobs */
+/* offer: the beacon flashes twice, the orb bobs */
 .wrap[data-mode="offer"] .beam, .wrap[data-mode="offer"] .lamp { animation: valo-flash 2s ease-in-out infinite; }
 .wrap[data-mode="offer"] .lamp { filter: drop-shadow(0 0 2.5px #FF8A3D); }
 .wrap[data-mode="offer"] .orb { animation: valo-bob 1.4s ease-in-out infinite; }
-/* pausiert / gesperrt / offline / abgemeldet: light off, tower muted */
+/* paused / blocked / offline / signed out: light off, tower muted */
 .wrap[data-mode="paused"] .orb, .wrap[data-mode="blocked"] .orb, .wrap[data-mode="offline"] .orb, .wrap[data-mode="signed-out"] .orb { filter: saturate(.25); }
 .wrap[data-mode="paused"] .beam, .wrap[data-mode="blocked"] .beam, .wrap[data-mode="offline"] .beam, .wrap[data-mode="signed-out"] .beam { opacity: 0; }
 .wrap[data-mode="paused"] .lamp, .wrap[data-mode="blocked"] .lamp, .wrap[data-mode="offline"] .lamp, .wrap[data-mode="signed-out"] .lamp { fill: #456E8C; }
 .wrap[data-mode="paused"] .tower, .wrap[data-mode="offline"] .tower, .wrap[data-mode="signed-out"] .tower { fill: #9AB5C9; }
 .wrap[data-mode="blocked"] .ring:not(.r2), .wrap[data-mode="offline"] .ring:not(.r2) { opacity: 1; inset: -6px; border: 2px dashed var(--c); }
-/* Fehler: red lamp, short shake */
+/* error: red lamp, short shake */
 .wrap[data-mode="error"] { --light: #EF4444; }
 .wrap[data-mode="error"] .lamp { filter: drop-shadow(0 0 2px #EF4444); }
 .wrap[data-mode="error"] .orb { animation: valo-shake .35s ease-in-out 2; }
@@ -158,7 +158,7 @@ export class OrbView {
       + '<span class="ring"></span><span class="ring r2"></span>'
       + `<button class="orb" type="button" aria-haspopup="menu" aria-describedby="lotse-orb-tip">${LIGHTHOUSE}</button>`
       + '<span class="badge" hidden></span>'
-      + '<button class="more" type="button" aria-label="Valo-Menü" aria-haspopup="menu" aria-expanded="false">⋯</button>'
+      + '<button class="more" type="button" aria-label="Valo menu" aria-haspopup="menu" aria-expanded="false">⋯</button>'
       + '<div class="tip" id="lotse-orb-tip" role="tooltip" hidden></div><div class="menu" role="menu" aria-label="Valo" hidden></div>'
       + '<div class="sr" role="status" aria-live="polite"></div></div>';
     const $ = <T extends Element>(selector: string) => this.shadow.querySelector<T>(selector)!;

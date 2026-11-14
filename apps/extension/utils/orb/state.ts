@@ -34,7 +34,7 @@ export function parsePlaces(value: unknown): OrbPlaces {
 
 /** chrome.storage.session — manual pause (orb menu / side panel) survives page loads and worker restarts. */
 export const ACTIVATION_KEY = "lotse:activation";
-/** chrome.storage.local — hosts a policy marked as org app, so the orb can still say "nicht verbunden" there offline. */
+/** chrome.storage.local — hosts a policy marked as org app, so the orb can still say "not connected" there offline. */
 export const APP_HOSTS_KEY = "lotse:app-hosts";
 
 /** What the service worker knows about Valo in one tab. The orb adds voice and transient states on top. */
@@ -74,15 +74,15 @@ export function orbMode(status: OrbStatus, localError: string | null): OrbMode {
 }
 
 export const ORB_TITLE: Record<OrbMode, string> = {
-  active: "Valo ist aktiv",
-  idle: "Valo ist bereit",
-  paused: "Valo pausiert",
-  blocked: "Valo pausiert auf dieser Seite",
-  offline: "Valo nicht verbunden",
-  "signed-out": "Nicht angemeldet",
-  listening: "Valo hört zu …",
-  thinking: "Valo denkt nach …",
-  speaking: "Valo spricht",
-  offer: "Valo hat einen Vorschlag",
-  error: "Das hat nicht geklappt",
+  active: "Valo is active",
+  idle: "Valo is ready",
+  paused: "Valo is paused",
+  blocked: "Valo is paused on this page",
+  offline: "Valo is not connected",
+  "signed-out": "Not signed in",
+  listening: "Valo is listening …",
+  thinking: "Valo is thinking …",
+  speaking: "Valo is speaking",
+  offer: "Valo has a suggestion",
+  error: "That didn't work",
 };

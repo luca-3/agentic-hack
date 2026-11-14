@@ -64,7 +64,7 @@ export default defineContentScript({
     const onMessage = (message: LotseMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
       // Fail closed: nothing that reads or marks the page runs on a paused page.
       const blocked = paused();
-      const refuse = { ok: false, paused: true, error: "Valo pausiert auf dieser Seite." };
+      const refuse = { ok: false, paused: true, error: "Valo is paused on this page." };
       switch (message.type) {
         case "lotse:policy": applyPolicy(message.policy); sendResponse({ ok: true }); break;
         case "lotse:snapshot": sendResponse(blocked ? refuse : withPrivacy(buildSnapshot())); break;
@@ -91,7 +91,7 @@ export default defineContentScript({
             hostId: HOST_ID,
           }).then(
             (res) => sendResponse({ ok: true, ...res }),
-            (err: unknown) => sendResponse({ ok: false, error: err instanceof Error ? err.message : "Erkundungsfehler" }),
+            (err: unknown) => sendResponse({ ok: false, error: err instanceof Error ? err.message : "Exploration error" }),
           );
           return true;
         case "lotse:start": {
@@ -580,11 +580,11 @@ function byLabel(label: string, snapshot: ObservationSnapshot): HTMLElement | un
 
 function thumbs(): OverlayButton[] {
   if (!guidanceOfferId || feedbackSent.has(guidanceOfferId)) return [];
-  return [{ action: "up", label: "👍", title: "Hilfreich" }, { action: "down", label: "👎", title: "Nicht hilfreich" }];
+  return [{ action: "up", label: "👍", title: "Helpful" }, { action: "down", label: "👎", title: "Not helpful" }];
 }
 
 function feedbackNote() {
-  return guidanceOfferId && feedbackSent.has(guidanceOfferId) ? "Danke für dein Feedback!" : undefined;
+  return guidanceOfferId && feedbackSent.has(guidanceOfferId) ? "Thanks for your feedback!" : undefined;
 }
 
 function autoHide(ms: number) {
@@ -609,19 +609,19 @@ function resetGuidance() {
 }
 
 function pointView(): OverlayView {
-  return { text: pointText, detail: answerSay || undefined, note: feedbackNote(), buttons: [...thumbs(), { action: "close", label: "✕", title: "Hinweis schließen (Esc)" }] };
+  return { text: pointText, detail: answerSay || undefined, note: feedbackNote(), buttons: [...thumbs(), { action: "close", label: "✕", title: "Close hint (Esc)" }] };
 }
 
 function sayView(): OverlayView {
-  return { title: "Valo", text: answerSay, note: feedbackNote(), buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen (Esc)" }] };
+  return { title: "Valo", text: answerSay, note: feedbackNote(), buttons: [...thumbs(), { action: "close", label: "✕", title: "Close (Esc)" }] };
 }
 
 function legacyHighlight(elementNumber: number, sentence: string, snapshotId?: string) {
   const previous = currentSnapshot?.id;
   const snapshot = buildSnapshot();
-  if ((snapshotId && snapshotId !== snapshot.id) || (!snapshotId && previous !== snapshot.id)) return { ok: false, error: "Der Seitenzustand hat sich geändert." };
+  if ((snapshotId && snapshotId !== snapshot.id) || (!snapshotId && previous !== snapshot.id)) return { ok: false, error: "The page has changed." };
   const element = numbered[elementNumber];
-  if (!usable(element)) return { ok: false, error: "Das Ziel ist nicht verfügbar." };
+  if (!usable(element)) return { ok: false, error: "The target is not available." };
   clearTimeout(hideTimer);
   mode = "point";
   pointText = sentence.slice(0, 600);
@@ -635,7 +635,7 @@ function showPoint(elementNumber: number, label: string, hint: string | undefine
   const snapshot = buildSnapshot();
   let element: HTMLElement | undefined = snapshot.id === snapshotId ? numbered[elementNumber] : undefined;
   if (!usable(element)) element = byLabel(label, snapshot);
-  if (!usable(element)) return { ok: false, error: "Das Ziel ist auf der Seite nicht mehr verfügbar." };
+  if (!usable(element)) return { ok: false, error: "The target is no longer available on the page." };
   clearTimeout(hideTimer);
   if (offerId) guidanceOfferId = offerId;
   offer = null;
@@ -666,18 +666,18 @@ function completePoint() {
 
 function showFeedbackCard() {
   mode = "feedback";
-  overlay.show({ title: "Valo", text: "War der Hinweis hilfreich?", buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen" }] }, null);
+  overlay.show({ title: "Valo", text: "Was this hint helpful?", buttons: [...thumbs(), { action: "close", label: "✕", title: "Close" }] }, null);
   autoHide(12_000);
 }
 
 function showOffer(offerId: string, text: string) {
-  if (mode === "point" || mode === "plan") return { ok: false, error: "Valo zeigt gerade schon einen Hinweis." };
+  if (mode === "point" || mode === "plan") return { ok: false, error: "Valo is already showing a hint." };
   clearTimeout(hideTimer);
   offer = { offerId, text };
   mode = "offer";
   overlay.show({
     title: "Valo", text, tone: "offer",
-    buttons: [{ action: "yes", label: "Ja, zeig's mir", primary: true }, { action: "no", label: "Nein" }],
+    buttons: [{ action: "yes", label: "Show me", primary: true }, { action: "no", label: "Not now" }],
   }, null);
   autoHide(60_000);
   return { ok: true };
@@ -749,17 +749,17 @@ function planView(found: boolean): OverlayView {
   const here = route();
   let detail: string | undefined;
   if (!found) {
-    if (step.route && !routeMatches(step.route, here)) detail = `Dieser Schritt ist auf der Seite „${prettyRoute(step.route)}“.`;
-    else if (hasPlaceholder(step.label)) detail = "Wähle den passenden Eintrag aus – dann geht es weiter.";
-    else detail = `„${step.label}“ ist hier gerade nicht sichtbar.`;
+    if (step.route && !routeMatches(step.route, here)) detail = `This step is on the “${prettyRoute(step.route)}” page.`;
+    else if (hasPlaceholder(step.label)) detail = "Pick the matching entry – then we'll continue.";
+    else detail = `“${step.label}” is not visible here right now.`;
   } else if (position === 1 && answerSay) detail = answerSay;
   const buttons: OverlayButton[] = [];
-  if (position > 1) buttons.push({ action: "back", label: "Zurück" });
-  buttons.push({ action: "next", label: position === total ? "Fertig" : "Weiter", primary: !found });
-  buttons.push(...thumbs(), { action: "end", label: "✕", title: "Anleitung beenden (Esc)" });
+  if (position > 1) buttons.push({ action: "back", label: "Back" });
+  buttons.push({ action: "next", label: position === total ? "Done" : "Next", primary: !found });
+  buttons.push(...thumbs(), { action: "end", label: "✕", title: "End guide (Esc)" });
   return {
-    title: `Schritt ${position}/${total}`,
-    text: (step.hint?.trim() || (found ? step.label : `Nächster Schritt: „${step.label}“`)).slice(0, 300),
+    title: `Step ${position}/${total}`,
+    text: (step.hint?.trim() || (found ? step.label : `Next step: “${step.label}”`)).slice(0, 300),
     detail, note: feedbackNote(), buttons,
   };
 }
@@ -788,7 +788,7 @@ function finishPlan() {
   clearTimeout(planTimer);
   mode = "done";
   const feedbackOpen = thumbs().length > 0;
-  overlay.show({ title: "Fertig", text: "Alle Schritte erledigt.", detail: feedbackOpen ? "War die Anleitung hilfreich?" : undefined, buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen" }] }, null);
+  overlay.show({ title: "Done", text: "All steps completed.", detail: feedbackOpen ? "Was this guide helpful?" : undefined, buttons: [...thumbs(), { action: "close", label: "✕", title: "Close" }] }, null);
   autoHide(feedbackOpen ? 15_000 : 3_000);
 }
 
@@ -876,7 +876,7 @@ function onOverlayAction(action: OverlayAction) {
       else if (mode === "point") overlay.update(pointView());
       else if (mode === "say") overlay.update(sayView());
       else if (mode === "feedback" || mode === "done") {
-        overlay.update({ title: "Valo", text: "Danke für dein Feedback!", buttons: [{ action: "close", label: "✕", title: "Schließen" }] });
+        overlay.update({ title: "Valo", text: "Thanks for your feedback!", buttons: [{ action: "close", label: "✕", title: "Close" }] });
         autoHide(1_500);
       }
       break;

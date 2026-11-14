@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -83,30 +83,30 @@
   <body>
     <header>
       <div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><g class="beam"><polygon points="14.5,10.6 2,7 2,8.9"/><polygon points="14.5,12.4 2,16.2 2,14.3"/><polygon points="25.5,10.6 38,7 38,8.9"/><polygon points="25.5,12.4 38,16.2 38,14.3"/></g><rect class="lamp" x="16.4" y="9" width="7.2" height="5" rx="0.6"/><g class="tower"><circle cx="20" cy="4.4" r="1.1"/><path d="M15 9.2 Q20 3.6 25 9.2 Z"/><path d="M15.4 9 h1.4 v5 h-1.4 Z M23.2 9 h1.4 v5 h-1.4 Z"/><rect x="13.8" y="14" width="12.4" height="2.3" rx="0.6"/><path fill-rule="evenodd" d="M15.6 16.3 H24.4 L26.9 32 H13.1 Z M19.1 19.6 h1.8 v3.4 h-1.8 Z M19.1 25.4 h1.8 v3.2 h-1.8 Z"/><path d="M8.5 34 Q11 30 13.6 31.4 L16.4 29.6 L20 31.2 L23.6 29.4 L26.4 31.2 Q29.5 30 31.5 34 Z"/></g><path class="sea" d="M5 37.2 q2.5 -1.4 5 0 t5 0 t5 0 t5 0 t5 0 t5 0"/></svg><h1>Valo</h1></div>
-      <div class="chips"><span id="voice-state" class="activity voice" hidden></span><span id="activity" class="activity">Valo pausiert</span></div>
+      <div class="chips"><span id="voice-state" class="activity voice" hidden></span><span id="activity" class="activity">Valo paused</span></div>
     </header>
     <section id="paused-box" class="paused" aria-labelledby="paused-title" role="status" hidden>
-      <h2 id="paused-title">Valo pausiert auf dieser Seite</h2>
+      <h2 id="paused-title">Valo is paused on this page</h2>
       <p id="paused-reason" class="muted"></p>
-      <p class="muted">Valo beobachtet hier nichts, macht keine Bilder und sendet nichts. Auf freigegebenen Seiten geht es von selbst weiter.</p>
+      <p class="muted">Valo observes nothing here, takes no screenshots and sends nothing. It resumes by itself on allowed pages.</p>
     </section>
     <section aria-labelledby="account-title">
-      <h2 id="account-title">Konto</h2>
+      <h2 id="account-title">Account</h2>
       <form id="login">
-        <label for="email">E-Mail</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="admin@demo.test" />
-        <label for="password">Passwort</label><input id="password" type="password" autocomplete="current-password" maxlength="200" placeholder="demo1234" />
-        <div class="row" style="margin-top: 8px"><button id="login-button" type="submit">Anmelden</button></div>
-        <p class="muted">Ohne Anmeldung arbeitet Valo im Dev-Modus mit der Demo-Rolle aus „Demo-Kontext“. Demo-Admin: admin@demo.test / demo1234</p>
+        <label for="email">Email</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="admin@demo.test" />
+        <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" maxlength="200" placeholder="demo1234" />
+        <div class="row" style="margin-top: 8px"><button id="login-button" type="submit">Sign in</button></div>
+        <p class="muted">Without signing in, Valo runs in dev mode with the demo role from “Demo context”. Demo admin: admin@demo.test / demo1234</p>
       </form>
-      <div id="signed-in" class="row" hidden><p id="account-line" style="flex: 1"></p><span id="admin-badge" class="badge-admin" hidden>Admin</span><button id="logout" class="secondary small" type="button">Abmelden</button></div>
+      <div id="signed-in" class="row" hidden><p id="account-line" style="flex: 1"></p><span id="admin-badge" class="badge-admin" hidden>Admin</span><button id="logout" class="secondary small" type="button">Sign out</button></div>
       <p id="org-line" class="muted"></p>
     </section>
     <section id="explore-box" class="admin-card" aria-labelledby="explore-title" hidden>
-      <h2 id="explore-title">Einrichtung (Admin)</h2>
-      <p class="muted">Erkundet einmalig Seiten, Reiter, Menüs und Dialoge dieser App-Domain ohne Formulare abzusenden.</p>
+      <h2 id="explore-title">Setup (admin)</h2>
+      <p class="muted">Explores the pages, tabs, menus and dialogs of this app domain once, without submitting any forms.</p>
       <div class="actions">
-        <button id="explore-start" type="button">App erkunden</button>
-        <button id="explore-stop" class="danger" type="button" disabled>Stopp</button>
+        <button id="explore-start" type="button">Explore app</button>
+        <button id="explore-stop" class="danger" type="button" disabled>Stop</button>
       </div>
       <div id="explore-bar-wrap" class="progress-track" hidden><div id="explore-bar" class="progress-fill"></div></div>
       <div id="explore-status-row" class="progress-row">
@@ -115,78 +115,78 @@
       </div>
     </section>
     <section id="offer-box" class="callout" aria-labelledby="offer-title" hidden>
-      <h2 id="offer-title">Valo bietet Hilfe an</h2>
+      <h2 id="offer-title">Valo can help</h2>
       <p id="offer-text"></p>
-      <div class="actions"><button id="offer-yes" type="button">Ja, zeig's mir</button><button id="offer-no" class="secondary" type="button">Nein</button></div>
+      <div class="actions"><button id="offer-yes" type="button">Show me</button><button id="offer-no" class="secondary" type="button">Not now</button></div>
     </section>
     <section id="plan-box" class="callout" aria-labelledby="plan-title" hidden>
-      <h2 id="plan-title">Anleitung</h2>
+      <h2 id="plan-title">Guide</h2>
       <p id="plan-step"></p>
-      <div class="actions"><button id="plan-back" class="secondary small" type="button">Zurück</button><button id="plan-next" class="small" type="button">Weiter</button><button id="plan-end" class="secondary small" type="button">Beenden</button></div>
+      <div class="actions"><button id="plan-back" class="secondary small" type="button">Back</button><button id="plan-next" class="small" type="button">Next</button><button id="plan-end" class="secondary small" type="button">End</button></div>
     </section>
     <section aria-labelledby="observe-title">
-      <h2 id="observe-title">Hilfe während der Arbeit</h2>
-      <p class="muted">Valo startet auf den Apps deiner Organisation von selbst; „Pausieren“ hält es an, bis du wieder startest. Aktionen und Bildverlauf bleiben zunächst in deinem Browser.</p>
+      <h2 id="observe-title">Help while you work</h2>
+      <p class="muted">Valo starts by itself on your organization’s apps; “Pause” stops it until you start it again. Actions and screenshot history stay in your browser at first.</p>
       <p id="auto-line" class="muted"></p>
-      <div class="actions"><button id="start" type="button">Beobachtung starten</button><button id="stop" class="secondary" type="button" disabled>Pausieren</button></div>
-      <div class="stats" aria-label="Lokaler Verlauf">
-        <div><strong id="event-count">0</strong>Aktionen</div>
-        <div><strong id="snapshot-count">0</strong>UI-Zustände</div>
-        <div><strong id="frame-count">0</strong>Bilder</div>
-        <div><strong id="state-count">0</strong>Verstanden</div>
+      <div class="actions"><button id="start" type="button">Start observing</button><button id="stop" class="secondary" type="button" disabled>Pause</button></div>
+      <div class="stats" aria-label="Local history">
+        <div><strong id="event-count">0</strong>Actions</div>
+        <div><strong id="snapshot-count">0</strong>UI states</div>
+        <div><strong id="frame-count">0</strong>Screenshots</div>
+        <div><strong id="state-count">0</strong>Understood</div>
       </div>
-      <p class="muted">Datenschutz: Vor dem Senden <strong>pseudonymisiert, nicht anonym</strong> – Seiteninhalte und Muster (IBAN, E-Mail, Telefon, „Herr/Frau …“, Straße) werden im Browser durch Platzhalter wie <code>[Kunde-1]</code> ersetzt und vor dem Anzeigen zurückübersetzt; Inhaltsflächen in Bildern werden übermalt. Ein frei getippter Name ohne Seitenbezug fällt nur über die Muster auf.</p>
+      <p class="muted">Privacy: <strong>pseudonymized, not anonymous</strong> before sending – page content and patterns (IBAN, email, phone, salutation + name, street) are replaced in the browser by placeholders such as <code>[Person-1]</code> and translated back before display; content areas in screenshots are painted over. A freely typed name that is not on the page is only caught by the patterns.</p>
     </section>
     <section aria-labelledby="question-title">
-      <h2 id="question-title">Direkt fragen</h2>
+      <h2 id="question-title">Ask directly</h2>
       <form id="ask">
-        <label for="question">Was möchtest du tun?</label>
-        <textarea id="question" rows="3" maxlength="500" placeholder="Wie ändere ich die IBAN?"></textarea>
-        <div class="row"><button id="ask-button" type="submit">Nächsten Schritt zeigen</button><button id="listen" class="secondary" type="button" title="Frage sprechen" aria-label="Frage sprechen">🎙</button></div>
+        <label for="question">What do you want to do?</label>
+        <textarea id="question" rows="3" maxlength="500" placeholder="How do I change the IBAN?"></textarea>
+        <div class="row"><button id="ask-button" type="submit">Show next step</button><button id="listen" class="secondary" type="button" title="Ask by voice" aria-label="Ask by voice">🎙</button></div>
       </form>
       <p id="last-question" class="muted"></p>
-      <p class="muted"><span data-shortcut="ask">Alt+L</span> öffnet Valo. Fragen funktionieren auch ohne laufende Beobachtung. Valo markiert nur – klicken und tippen machst du.</p>
+      <p class="muted"><span data-shortcut="ask">Alt+L</span> opens Valo. Questions work even when Valo is not observing. Valo only highlights – you do the clicking and typing.</p>
     </section>
-    <p id="status" role="status">Valo ist bereit.</p>
+    <p id="status" role="status">Valo is ready.</p>
     <p id="notice" role="alert"></p>
     <p id="image-status" class="muted"></p>
     <section aria-labelledby="behaviour-title">
-      <h2 id="behaviour-title">Valo-Verhalten</h2>
-      <label class="toggle"><input id="auto-activate" type="checkbox" checked />Automatisch aktiv auf den Apps meiner Organisation</label>
-      <label class="toggle"><input id="show-orb" type="checkbox" checked />Status-Kreis auf der Seite anzeigen</label>
-      <p id="orb-hidden-line" class="muted row" hidden><span id="orb-hidden-text"></span><button id="orb-unhide" class="secondary small" type="button">Wieder einblenden</button></p>
-      <label class="toggle"><input id="proactive" type="checkbox" />Proaktiv Hilfe anbieten</label>
-      <label class="toggle"><input id="voice" type="checkbox" />Sprache: Wake Word &amp; Hotkey (<span data-shortcut="listen">Alt+Shift+L</span>)</label>
-      <label class="toggle"><input id="speak" type="checkbox" />Antworten vorlesen (nur bei Sprachfragen)</label>
+      <h2 id="behaviour-title">Valo behavior</h2>
+      <label class="toggle"><input id="auto-activate" type="checkbox" checked />Automatically active on my organization’s apps</label>
+      <label class="toggle"><input id="show-orb" type="checkbox" checked />Show the status orb on the page</label>
+      <p id="orb-hidden-line" class="muted row" hidden><span id="orb-hidden-text"></span><button id="orb-unhide" class="secondary small" type="button">Show again</button></p>
+      <label class="toggle"><input id="proactive" type="checkbox" />Offer help proactively</label>
+      <label class="toggle"><input id="voice" type="checkbox" />Voice: wake word &amp; hotkey (<span data-shortcut="listen">Alt+Shift+L</span>)</label>
+      <label class="toggle"><input id="speak" type="checkbox" />Read answers aloud (voice questions only)</label>
       <p id="snooze-line" class="muted"></p>
-      <div class="actions"><button id="snooze" class="secondary small" type="button">10 Min. Ruhe</button><button id="resume" class="secondary small" type="button" hidden>Wieder anbieten</button></div>
-      <label for="threshold">Schwelle für Angebote: <strong id="threshold-value">–</strong></label>
-      <div class="row"><input id="threshold" type="range" min="0.6" max="0.95" step="0.01" value="0.8" aria-describedby="threshold-help" /><button id="threshold-save" class="secondary small" type="button">Übernehmen</button></div>
-      <p id="threshold-help" class="muted">Höher = Valo bietet seltener Hilfe an. 👍/👎 auf Angebote passen die Schwelle automatisch an.</p>
+      <div class="actions"><button id="snooze" class="secondary small" type="button">Quiet for 10 min</button><button id="resume" class="secondary small" type="button" hidden>Offer again</button></div>
+      <label for="threshold">Offer threshold: <strong id="threshold-value">–</strong></label>
+      <div class="row"><input id="threshold" type="range" min="0.6" max="0.95" step="0.01" value="0.8" aria-describedby="threshold-help" /><button id="threshold-save" class="secondary small" type="button">Apply</button></div>
+      <p id="threshold-help" class="muted">Higher = Valo offers help less often. 👍/👎 on offers adjust the threshold automatically.</p>
       <p id="prefs-message" class="muted"></p>
     </section>
     <section aria-labelledby="workflow">
-      <h2 id="workflow">Noch kein Workflow</h2>
-      <p id="intent" class="muted">Das Ziel wird bei einem möglichen Hilfebedarf eingeordnet.</p>
+      <h2 id="workflow">No workflow yet</h2>
+      <p id="intent" class="muted">The goal is identified when you might need help.</p>
       <p id="decision" class="muted"></p>
-      <details><summary>Letzte Aktionen</summary><ul id="events"></ul><p id="analytics" class="muted"></p></details>
+      <details><summary>Recent actions</summary><ul id="events"></ul><p id="analytics" class="muted"></p></details>
     </section>
     <details>
-      <summary>Demo-Kontext</summary>
+      <summary>Demo context</summary>
       <form id="settings">
-        <label class="toggle"><input id="screenshots" type="checkbox" checked />Bildverlauf aufnehmen</label>
-        <p class="muted">Ausgewählte Bilder werden bei einer Frage oder möglichem Hilfebedarf mit übermalten Inhaltsflächen mitgesendet.</p>
-        <label for="role">Rolle im Demo-Szenario</label><input id="role" type="text" maxlength="100" placeholder="z. B. Sachbearbeitung" />
+        <label class="toggle"><input id="screenshots" type="checkbox" checked />Record screenshot history</label>
+        <p class="muted">Selected screenshots are sent along with a question or a possible need for help, with content areas painted over.</p>
+        <label for="role">Role in the demo scenario</label><input id="role" type="text" maxlength="100" placeholder="e.g. Accounting" />
         <p id="role-note" class="muted"></p>
-        <label for="knowledge">Wissen über die App</label><textarea id="knowledge" rows="4" maxlength="12000" placeholder="Beschreibe die Funktionen und die Schritte für den Demo-Ablauf."></textarea>
-        <button type="submit">Kontext übernehmen</button>
+        <label for="knowledge">Knowledge about the app</label><textarea id="knowledge" rows="4" maxlength="12000" placeholder="Describe the features and the steps of the demo flow."></textarea>
+        <button type="submit">Apply context</button>
       </form>
     </details>
     <section aria-labelledby="debug-title">
-      <h2 id="debug-title">Fehlersuche</h2>
-      <p class="muted">Kopiert den Sitzungs-Kontext (Einstellungen, Policy, letzte Server-Aufrufe, Hinweise, Sprach-Log, Events) als Text zum Einfügen in eine Nachricht an die Entwickler. Ohne Anmelde-Token, Schlüssel und Bilder; Seiteninhalte pseudonymisiert.</p>
-      <div class="row"><button id="debug-copy" class="secondary small" type="button">Debug-Kontext kopieren</button><span id="debug-note" class="muted" role="status"></span></div>
-      <textarea id="debug-text" rows="6" readonly hidden aria-label="Debug-Kontext"></textarea>
+      <h2 id="debug-title">Troubleshooting</h2>
+      <p class="muted">Copies the session context (settings, policy, recent server calls, hints, voice log, events) as text to paste into a message to the developers. No sign-in token, keys or screenshots; page content is pseudonymized.</p>
+      <div class="row"><button id="debug-copy" class="secondary small" type="button">Copy debug context</button><span id="debug-note" class="muted" role="status"></span></div>
+      <textarea id="debug-text" rows="6" readonly hidden aria-label="Debug context"></textarea>
     </section>
     <script type="module" src="./main.ts"></script>
   </body>

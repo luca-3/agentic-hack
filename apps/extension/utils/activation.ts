@@ -1,9 +1,9 @@
 /**
  * Auto-activation (D-29), service worker only. Once signed in, Valo is permanently active on the apps of the user's org:
  * whenever the focused tab shows a host whose policy says `autoStart` (dashboard `apps.domains` of the user's org; in dev
- * also apps the runtime knows, e.g. the demo CRM) and the route is not blocked, observation starts by itself — no "Start".
+ * also apps the runtime knows, e.g. the demo CRM) and the route is not blocked, observation starts by itself — no "Start observing".
  * It follows the focused tab and stops when the tab it started leaves the org's apps. A manual pause (orb menu or side
- * panel "Pausieren") holds until the user resumes; it lives in chrome.storage.session, so it survives page loads.
+ * panel "Pause") holds until the user resumes; it lives in chrome.storage.session, so it survives page loads.
  *
  * Also answers the orb's messages (`lotse:orb-status`, `lotse:open-panel`, `lotse:orb-pause`) and the side panel's
  * `lotse:activation` with its own runtime.onMessage listener — background.ts's handler never sees these types.
@@ -165,10 +165,10 @@ function onMessage(message: unknown, sender: Sender, respond: (response: unknown
     case "lotse:open-panel": {
       // Chrome only opens the side panel inside the user's gesture: call it before any await.
       const windowId = sender.tab?.windowId;
-      if (windowId === undefined) { respond({ ok: false, error: `Öffne den Seitenbereich mit ${shortcutLabels().ask}.` }); return true; }
+      if (windowId === undefined) { respond({ ok: false, error: `Open the side panel with ${shortcutLabels().ask}.` }); return true; }
       browser.sidePanel.open({ windowId }).then(
         () => respond({ ok: true }),
-        () => respond({ ok: false, error: `Öffne den Seitenbereich mit ${shortcutLabels().ask}.` }),
+        () => respond({ ok: false, error: `Open the side panel with ${shortcutLabels().ask}.` }),
       );
       return true;
     }
@@ -177,12 +177,12 @@ function onMessage(message: unknown, sender: Sender, respond: (response: unknown
       return true;
     case "lotse:orb-pause":
       void setPaused((message as { paused?: unknown }).paused === true).then(respond, (error: unknown) =>
-        respond({ ok: false, error: error instanceof Error ? error.message : "Valo konnte nicht starten." }));
+        respond({ ok: false, error: error instanceof Error ? error.message : "Valo could not start." }));
       return true;
     case "lotse:activation":
       void loaded.then(() => respond({ manualPause, autoActivate: presence.autoActivate, appHosts: [...appHosts], autoTab } satisfies ActivationInfo));
       return true;
-    // Side panel Start/Pausieren (answered by background.ts) — only note the user's intent here.
+    // Side panel Start/Pause (answered by background.ts) — only note the user's intent here.
     case "lotse:start": void loaded.then(() => { manualPause = false; autoTab = null; void save(); }); return undefined;
     case "lotse:stop": void loaded.then(() => { manualPause = true; autoTab = null; void save(); }); return undefined;
     // A content script (re)loaded → it can take `lotse:start` now.
@@ -193,7 +193,7 @@ function onMessage(message: unknown, sender: Sender, respond: (response: unknown
 }
 
 async function setPaused(paused: boolean): Promise<{ ok: true }> {
-  if (!deps) throw new Error("Valo startet noch.");
+  if (!deps) throw new Error("Valo is still starting.");
   await deps.ready;
   await loaded;
   manualPause = paused;
@@ -201,7 +201,7 @@ async function setPaused(paused: boolean): Promise<{ ok: true }> {
   await save();
   if (paused) { await deps.stop(); return { ok: true }; }
   failures.clear();
-  await deps.start(); // explicit resume: works even with "Automatisch aktiv" off
+  await deps.start(); // explicit resume: works even with "Automatically active" off
   return { ok: true };
 }
 
@@ -218,19 +218,19 @@ async function orbStatus(sender: Sender): Promise<OrbStatus> {
   const live = deps.live();
   const here = rec.on && tabId !== null && rec.tabId === tabId;
   const isApp = policy ? autoStartOf(policy) : host !== null && appHosts.has(host);
-  const who = live.signedIn ? "" : " · ohne Anmeldung (Dev-Modus)";
+  const who = live.signedIn ? "" : " · not signed in (dev mode)";
   const app = policy?.appName ? `${policy.appName}${policy.orgName ? " · " + policy.orgName : ""}` : host ?? "";
   let base: OrbBase;
   let detail: string;
-  if (!policy) { base = "offline"; detail = "Der Valo-Server ist nicht erreichbar. Bis dahin beobachtet Valo nichts."; }
-  else if (!policy.allowed && policy.known && !policy.signedIn) { base = "signed-out"; detail = policy.reason ?? `Melde dich im Seitenbereich an (${shortcutLabels().ask}).`; }
-  else if (!policy.allowed) { base = "blocked"; detail = policy.reason ?? "Diese App ist für Valo nicht freigegeben."; }
-  else if (pageVerdict(url, policy).paused) { base = "blocked"; detail = "Hier beobachtet Valo nichts (geschützte Daten). Auf freigegebenen Seiten geht es von selbst weiter."; }
-  else if (here) { base = "active"; detail = `Beobachtet ${app} und hilft bei Bedarf${who}.`; }
-  else if (manualPause) { base = "paused"; detail = "Von dir pausiert. Menü → Fortsetzen."; }
-  else if (!presence.autoActivate) { base = "idle"; detail = "„Automatisch aktiv“ ist aus. Menü → Starten."; }
-  else if (isApp) { base = "idle"; detail = "Valo startet gleich …"; schedule(300); }
-  else { base = "idle"; detail = "Diese Seite ist keine App deiner Organisation. Menü → Starten."; }
+  if (!policy) { base = "offline"; detail = "The Valo server is not reachable. Until then, Valo observes nothing."; }
+  else if (!policy.allowed && policy.known && !policy.signedIn) { base = "signed-out"; detail = policy.reason ?? `Sign in via the side panel (${shortcutLabels().ask}).`; }
+  else if (!policy.allowed) { base = "blocked"; detail = policy.reason ?? "This app is not enabled for Valo."; }
+  else if (pageVerdict(url, policy).paused) { base = "blocked"; detail = "Valo observes nothing here (protected data). It resumes by itself on allowed pages."; }
+  else if (here) { base = "active"; detail = `Observing ${app} and helping when needed${who}.`; }
+  else if (manualPause) { base = "paused"; detail = "Paused by you. Menu → Resume."; }
+  else if (!presence.autoActivate) { base = "idle"; detail = "“Automatically active” is off. Menu → Start Valo here."; }
+  else if (isApp) { base = "idle"; detail = "Valo is starting …"; schedule(300); }
+  else { base = "idle"; detail = "This page is not one of your organization’s apps. Menu → Start."; }
   const error = lastError && Date.now() - lastError.at < ERROR_MS ? lastError.text : null;
   return {
     visible: presence.orb && (here || isApp),
