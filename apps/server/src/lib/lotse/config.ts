@@ -10,7 +10,8 @@ const num = (name: string, fallback: number) => {
 };
 
 const KB = 1024;
-const GLOBAL = num("LOTSE_LIMIT_GLOBAL_PER_MIN", 300);
+// Defaults raised 2026-11-14: the hackathon key has no usage limits, so these only guard against runaway loops.
+const GLOBAL = num("LOTSE_LIMIT_GLOBAL_PER_MIN", 3000);
 
 export const LIMITS = {
   /**
@@ -19,17 +20,17 @@ export const LIMITS = {
    * extension → ≤ ~30 cycles/min in bursts. 60/min per stage leaves headroom without letting a loop run away.
    */
   perMinute: {
-    ask: num("LOTSE_LIMIT_ASK_PER_MIN", 20),
-    state: num("LOTSE_LIMIT_STATE_PER_MIN", 60),
-    intent: num("LOTSE_LIMIT_INTENT_PER_MIN", 60),
-    decide: num("LOTSE_LIMIT_DECIDE_PER_MIN", 60),
-    events: num("LOTSE_LIMIT_EVENTS_PER_MIN", 6),
+    ask: num("LOTSE_LIMIT_ASK_PER_MIN", 120),
+    state: num("LOTSE_LIMIT_STATE_PER_MIN", 300),
+    intent: num("LOTSE_LIMIT_INTENT_PER_MIN", 300),
+    decide: num("LOTSE_LIMIT_DECIDE_PER_MIN", 300),
+    events: num("LOTSE_LIMIT_EVENTS_PER_MIN", 60),
     /** Voice sessions per minute per session — one Live token = one spoken question (not LLM tokens). */
-    voice: num("LOTSE_LIMIT_LIVE_TOKENS_PER_MIN", 8),
+    voice: num("LOTSE_LIMIT_LIVE_TOKENS_PER_MIN", 30),
     /** /feedback + /prefs */
-    prefs: num("LOTSE_LIMIT_PREFS_PER_MIN", 20),
+    prefs: num("LOTSE_LIMIT_PREFS_PER_MIN", 120),
     /** GET /policy — the extension caches it per host (60 s), so this is generous. */
-    policy: num("LOTSE_LIMIT_POLICY_PER_MIN", 60),
+    policy: num("LOTSE_LIMIT_POLICY_PER_MIN", 300),
   },
   /** Global caps per minute across all callers (protect the Gemini key). */
   globalPerMinute: {
@@ -38,12 +39,12 @@ export const LIMITS = {
     intent: GLOBAL,
     decide: GLOBAL,
     events: GLOBAL,
-    voice: num("LOTSE_LIMIT_LIVE_TOKENS_GLOBAL_PER_MIN", 60),
+    voice: num("LOTSE_LIMIT_LIVE_TOKENS_GLOBAL_PER_MIN", 600),
     prefs: GLOBAL,
     policy: GLOBAL,
   },
   /** LLM tokens (input + output; state + intent + decide + ask) per caller per UTC day. ~8 k per observation cycle. */
-  dailyTokens: num("LOTSE_DAILY_TOKEN_BUDGET", 2_000_000),
+  dailyTokens: num("LOTSE_DAILY_TOKEN_BUDGET", 50_000_000),
   /**
    * Request body caps per route (bytes) → 413. /ask carries ≤ 4 screenshots (≤ 600 k chars each) + history;
    * /intent and /decide carry the image-free history (≤ 13 DOM states, ~350 KB worst case); everything else stays small.
