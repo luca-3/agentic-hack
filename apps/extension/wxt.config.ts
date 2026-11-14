@@ -17,7 +17,7 @@ export default defineConfig({
     // offscreen: microphone (wake word + transcription) and spoken answers live in an offscreen document.
     permissions: ["sidePanel", "storage", "tabs", "activeTab", "offscreen"],
     // Local dev only: our server (3001), dashboard (3000), demo CRM (4000), local CORPUS instance.
-    host_permissions: ["http://localhost/*", "http://127.0.0.1/*"],
+    host_permissions: ["http://localhost/*", "http://127.0.0.1/*", "https://dev.fuller.de/*"],
     action: { default_title: "Valo öffnen" },
     commands: {
       "lotse-ask": {
