@@ -305,7 +305,7 @@ export async function POST(request: Request) {
         })),
       );
       if (insertErr) throw new Error(`app_features insert failed: ${insertErr.message}`);
-      clearKnowledgeCache();
+      if (typeof clearKnowledgeCache === "function") clearKnowledgeCache();
     }
 
     const designItems: SuggestionInput[] = designFindings(pages).map(({ finding, title, detail }) => ({
