@@ -56,9 +56,18 @@ function renderAccount(status: LotseStatus) {
   const signedIn = status.account !== null;
   loginForm.hidden = signedIn;
   get("#signed-in").hidden = !signedIn;
-  get("#account-line").textContent = signedIn ? `Signed in as ${status.account!.email}` : "";
+  const orgText = orgLine(status.page, signedIn);
+  if (signedIn && status.account) {
+    get("#account-line").textContent = status.account.email;
+    get("#account-avatar").textContent = (status.account.email[0] ?? "V").toUpperCase();
+    get("#org-line").textContent = orgText;
+    get("#org-line-anon").textContent = "";
+  } else {
+    get("#account-line").textContent = "";
+    get("#org-line").textContent = "";
+    get("#org-line-anon").textContent = orgText;
+  }
   get("#admin-badge").hidden = !status.account?.isAdmin;
-  get("#org-line").textContent = orgLine(status.page, signedIn);
   get("#paused-box").hidden = !status.page?.paused;
   get("#paused-reason").textContent = status.page?.paused ? status.page.reason : "";
   role.disabled = signedIn;
