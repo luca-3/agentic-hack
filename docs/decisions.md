@@ -143,6 +143,11 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Decision:** ≥ 5 presses on the same element (role + label + route; else the same 24-px screen cell) within 20 s emit a `repeated_click` event (detail `clicks=n;disabled=true|false;reason=<tooltip>`), captured via `pointerdown` because Chrome fires no click on disabled controls. It is the highest-priority local rule; `/decide` treats it as strong evidence (P ≥ 0.9, the user's adaptive threshold still applies) and offers "„X“ ist gerade gesperrt – soll ich dir zeigen, warum?". `/ask` sees disabled elements as "(deaktiviert)" and points at what unlocks them.
 - **Why:** users press disabled buttons that "do nothing" and don't understand why (user, 2026-11-14).
 
+### D-31 · Dashboard follows the Valo design handoff; product name centrally swappable (2026-11-14)
+- **Decision:** the dashboard implements the "Valo – Admin-Dashboard" design handoff: IBM Plex Sans/Mono, navy/petrol tokens as a Tailwind v4 `@theme` block (`apps/dashboard/src/app/globals.css`), light + dark (follows the system setting, no JS), shell header with pill navigation, sidebar ("Erkenntnisse nach App", quick actions, privacy box), sand-white panel; UI building blocks in `apps/dashboard/src/components/ui.tsx`. Routes are German like the design (`/anmelden`, `/registrieren`, `/erkenntnisse`, `/schulungen`; old English routes redirect, `/lernen` stays because the extension links to it). The visible product name is `PRODUCT_NAME` in `ui.tsx` (currently "Valo").
+- **Why:** the user handed over a high-fidelity design for the admin dashboard ("Setze dieses Design schema um für das Dashboard") and doesn't like the working name "Lotse".
+- **Consequence:** server, extension and package names still say Lotse; renaming them is a separate step for their owners. Only layout A of the insights page (cards per app) is built; layouts B/C of the handoff were alternatives.
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?
