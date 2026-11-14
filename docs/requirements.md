@@ -13,20 +13,21 @@ Status: `open` · `in progress` · `done`.
 | ID | Requirement | Prio | Status |
 | --- | --- | --- | --- |
 | **Observe** ||||
-| R-OBS-1 | Extension captures clicks, route changes (incl. SPA), searches, form focus/errors, visible error messages, idle time — **no input values** | Demo | open |
-| R-OBS-2 | Extension builds a numbered snapshot of interactive elements (number, role, label, route, bounding box) | Demo | open |
-| R-OBS-3 | Screenshot of visible tab only as fallback (icon-only buttons, ambiguous snapshot) | Later | open |
+| R-OBS-1 | Extension captures clicks, route changes (incl. SPA), searches, form focus/errors, visible error messages, idle time — **no input values** | Demo | done (extension) |
+| R-OBS-2 | Extension builds a numbered snapshot of interactive elements (number, role, label, route, bounding box) with semantic state IDs | Demo | done (extension) |
+| R-OBS-3 | Bounded local screenshot history; selected frames sent only for actual guidance after positive intervention decision or explicit question | Demo | done (extension) |
 | R-OBS-4 | Events sent to runtime, stored per org under a pseudonymous user id | Demo | open |
+| R-OBS-5 | Local action/workflow buffer and chronological Gemini-inferred UI-state sequence; separate state and workflow/intent API calls | Demo | done (extension; endpoints user-owned) |
 | **Decide** ||||
-| R-DEC-1 | Stuck rules in the browser (e.g. 3 searches without result, ping-pong between 2 pages, 30 s idle in a form, same error twice) | Demo | open |
+| R-DEC-1 | Local stuck-rule annotations (repeated empty searches, route ping-pong, form inactivity, repeated errors); enrich decision input without gating the confirmed state/intent inference stages | Demo | done (extension) |
 | R-DEC-2 | Google Decisions API (`gemini-decision-1`): Boolean "needs help?" with calibrated confidence + Choice "which feature?" (options = app feature list) in one call; lite model as fallback | Demo | in progress |
 | R-DEC-4 | Adaptive proactivity per user: intervene only if confidence ≥ the user's threshold (start 0.80, range 0.60–0.95); thumbs up/down and "Nein" on offers adjust it; manual override in settings | Demo | in progress |
 | R-DEC-3 | Main model gets snapshot + feature list + role and returns `{ elementNumber, sentence }`; never invents element numbers | Demo | open |
 | **Guide & act** ||||
-| R-UI-1 | Overlay: frame + arrow on the target element, follows scroll/resize, click-through | Demo | open |
+| R-UI-1 | Overlay: frame + arrow on the target element, follows scroll/resize, click-through; validates snapshot identity | Demo | done (extension) |
 | R-UI-2 | Hint bubble with one plain sentence; step-by-step tours ("Schritt 2 von 4", next/back) | Demo | open |
-| R-UI-3 | Status indicator "Lotse aktiv / hört zu" (transparency) | Demo | open |
-| R-UI-4 | Side panel with chat/history (text input) | Pitch | open |
+| R-UI-3 | Status indicator "Lotse aktiv / hört zu" (transparency) | Demo | in progress (recording status done; voice open) |
+| R-UI-4 | Side panel with chat/history (text input) | Pitch | in progress (questions and observation history done; chat persistence open) |
 | ~~R-ACT-1~~ | ~~Lotse clicks an element itself~~ — dropped, show only (D-17) | – | dropped |
 | ~~R-ACT-2~~ | ~~Lotse completes a short flow itself~~ — dropped (D-17); demo step 4 becomes a multi-step guided plan | – | dropped |
 | R-UI-5 | Agent cursor: glides to the target element, then highlight + hint; multi-step plans advance locally after each click/navigation | Demo | in progress |
@@ -54,6 +55,7 @@ Status: `open` · `in progress` · `done`.
 - **Data:** test data only. CORPUS runs locally on the demo laptop with sample data and a test login; **vehicle pages are excluded** (real fleet data).
 - **Gemini:** paid key only (no training on our data). EU residency would require Vertex AI (open, see decisions).
 - **Reliability:** every demoed feature works 20 of 20 runs, otherwise it's cut.
+- **Current validation instruction:** the user forbids tests. Extension completion means code implemented and statically checked (typecheck, lint, build); browser/Gemini execution and 20/20 reliability have not been established.
 - **Cost/abuse:** bounded agent loops (`isStepCount ≤ 10`), one short Live session per question, no always-on streaming.
 - **Latency target:** highlight visible < 3 s after question/trigger.
 
@@ -73,4 +75,4 @@ Status: `open` · `in progress` · `done`.
 
 ## Out of scope (today)
 
-Repo-scanning wizard/PR, Entra ID login, enterprise policy rollout, mobile, screenshots, real customer data, production hosting.
+Repo-scanning wizard/PR, Entra ID login, enterprise policy rollout, mobile, real customer data, production hosting.

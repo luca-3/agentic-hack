@@ -1,128 +1,140 @@
-# Extension observability and Gemini endpoint contract
+# Extension observability: runtime contract
 
-Implementation lives in `apps/extension` (WXT / Chrome MV3). The user implements the Gemini endpoints in `apps/server`; the extension only calls HTTP from its background service worker. The source of truth for request/response validation is `packages/shared/src/index.ts` (`@lotse/shared`).
+The user implements the Gemini endpoints in apps/server. The extension lives in apps/extension and calls the runtime only from its service worker. All wire schemas are in packages/shared/src/index.ts (@lotse/shared).
 
-## Local observation
+## Confirmed flows
 
-- Start recording on the active allowed localhost tab from the side panel. Observe UI labels and actions, never input values.
-- Buffer timestamped events, semantic DOM states and optional screenshots locally. Retention: three minutes, with separate count and byte limits.
-- A workflow is a local action segment, with a new segment after 30 seconds of user inactivity. Navigation can be part of the same workflow. Semantic workflow names and intents come from Gemini.
-- Snapshots have stable state IDs, numbered interactive elements, optional UI messages and capture timestamps. Geometry changes alone do not create a new semantic state.
-- Screenshots are of the active visible tab, periodically and after important state changes; they are not streamed to the server. Capture uses the extension API and its permissions.
-- A request contains up to 12 historical states and four relevant frames. Frames reference snapshot IDs and have independent capture timestamps.
-- Browser rules flag possible friction: repeated visible errors, repeated empty searches, route ping-pong or form inactivity. These are candidates; Gemini makes the intervention decision.
+Proactive: events + semantic DOM -> UI-state inference -> local inferred state/action sequence -> workflow/intent inference -> intervention decision -> only if positive, guidance with selected screenshots.
 
-## Proactive flow
+Explicit question: question + current UI + existing workflow/intent + history + application knowledge -> guidance directly. This request does not invoke state, intent or decision inference.
 
-1. Collect observations and run local candidate rules.
-2. Build an `ObservationContext` and call `POST http://localhost:3001/api/lotse/decide`.
-3. Validate `DecisionResponseSchema`; store the inferred workflow name and intent locally.
-4. If `intervene` is true, obtain the current snapshot and call `/api/lotse/ask` with the inferred goal as `question`, the intent, observation context, role and application knowledge.
-5. Validate the answer and the current snapshot identity before drawing a highlight. An absent or stale target must not cause an arbitrary click/highlight.
+Screenshots are recorded locally in parallel. They are NEVER included in the first three calls. Intent and decision schemas require an empty screenshot array.
 
-## Decision endpoint (user-owned)
+## Endpoints
 
-Use `DecisionRequestSchema` to validate input and `DecisionResponseSchema` for the Gemini structured output. Interpret the workflow and intent in this call, then decide whether unsolicited help is warranted. Application knowledge and the declared demo role are optional; do not treat a client-provided role as authentication.
+| POST route | Request | Response | Images |
+| --- | --- | --- | --- |
+| /api/lotse/state | UIStateRequestSchema | UIStateInferenceSchema | None |
+| /api/lotse/intent | IntentRequestSchema | WorkflowIntentSchema | None |
+| /api/lotse/decide | DecideRequestSchema | DecideResponseSchema | None |
+| /api/lotse/ask | AskRequestSchema | NDJSON GuidanceEventSchema; legacy AskResponseSchema supported | At most four |
 
-Example request, without screenshots:
+The base URL is LOTSE_DEFAULTS.serverUrl (http://localhost:3001). Every request includes Content-Type: application/json, x-lotse-session (random browser-session ID), and x-lotse-app (current host including port, e.g. localhost:4000). Guidance explicitly requests Accept: application/x-ndjson. CORS must allow the extension origin and these headers; add Authorization when extension login is implemented.
+
+## 1. UI-state inference
+
+The request contains the current numbered DOM snapshot and recent workflow events. Example:
 
 ```json
 {
-  "context": {
-    "workflow": {
-      "id": "flow-1",
-      "startedAt": 1794654000000,
-      "lastActivityAt": 1794654005000,
-      "routeSequence": ["/aufgaben.html"],
-      "events": [{
-        "id": "event-1",
-        "type": "idle",
-        "route": "/aufgaben.html",
-        "elementRole": "textbox",
-        "elementLabel": "Form idle",
-        "snapshotId": "state-1",
-        "ts": 1794654035000
-      }]
-    },
-    "snapshot": {
-      "id": "state-1",
-      "url": "http://localhost:4000/aufgaben.html",
-      "title": "Aufgaben",
-      "capturedAt": 1794654035000,
-      "elements": [{
-        "number": 0,
-        "role": "button",
-        "label": "Neue Aufgabe",
-        "route": "/aufgaben.html",
-        "disabled": false
-      }],
-      "messages": []
-    },
-    "history": [],
-    "screenshots": []
+  "snapshot": {
+    "id": "state-1",
+    "url": "http://localhost:4000/aufgaben.html",
+    "title": "Aufgaben",
+    "capturedAt": 1794654000000,
+    "elements": [{ "number": 0, "role": "button", "label": "Neue Aufgabe", "route": "/aufgaben.html", "disabled": false }],
+    "messages": []
   },
-  "trigger": {
-    "type": "form_idle",
-    "reason": "No action in a focused form for 30 seconds."
-  },
-  "role": "demo-user",
-  "appKnowledge": "Use Neue Aufgabe to open the task creation dialog."
+  "events": [{ "id": "event-1", "snapshotId": "state-1", "type": "route", "route": "/aufgaben.html", "ts": 1794654000000 }]
 }
 ```
 
-Example response:
+Response:
+
+```json
+{
+  "snapshotId": "state-1",
+  "capturedAt": 1794654000000,
+  "summary": "Die Aufgabenübersicht ist geöffnet; eine neue Aufgabe kann angelegt werden.",
+  "action": "Aufgabenübersicht aufgerufen"
+}
+```
+
+The server should bind snapshotId/capturedAt to the input metadata. Gemini supplies the semantic summary/action. action may be omitted; it is not nullable. The extension rejects a mismatched snapshot ID and stores the inference with the request timestamp.
+
+## 2. Workflow and intent
+
+IntentRequestSchema receives:
+
+- context.workflow: ID, start/last-activity timestamps, route sequence and recent events.
+- context.snapshot: current DOM state.
+- context.history: up to 12 previous DOM states.
+- context.states: the chronological UIStateInference entries, at least one and at most 40.
+- context.screenshots: always [].
+- Optional role, appId and appKnowledge (at most 12,000 characters).
+
+WorkflowIntentSchema response:
 
 ```json
 {
   "workflowName": "Aufgabe anlegen",
   "intent": {
     "goal": "Eine neue Aufgabe anlegen",
-    "confidence": 0.75,
-    "evidence": ["Aufgabenansicht geöffnet", "Längere Pause im Formular"]
-  },
-  "intervene": true,
-  "reason": "Eine kurze Erklärung des nächsten Schritts könnte helfen."
+    "confidence": 0.8,
+    "evidence": ["Aufgabenübersicht aufgerufen", "Formular zur Aufgabenerstellung geöffnet"]
+  }
 }
 ```
 
-`confidence` is a model estimate, not a calibrated probability. `intervene: false` prevents the subsequent help call. No screenshots or raw events are permanently ingested by this client implementation.
+This confidence is a model estimate. The calibrated help decision is the separate next call.
 
-## Help endpoint (user-owned)
+## 3. Intervention decision
 
-Extend the existing `POST /api/lotse/ask` using `AskRequestSchema`. It retains `question` and `snapshot`, and now accepts:
+Use DecideRequestSchema and DecideResponseSchema, the runtime's canonical wire contract. The extension passes:
 
-- `observation`: the same bounded context (`workflow`, `snapshot`, `history`, `screenshots`).
-- `intent`: the inferred goal, confidence and evidence for proactive assistance.
-- `role`, `appId`, `appKnowledge`, `recentEvents`: optional contextual fields.
+- trigger: repeated_search, page_pingpong, form_idle, repeated_error, rage_click or workflow_update.
+- events: at most 50 recent semantic events, oldest first.
+- snapshot: the current DOM state.
+- context: the bounded history above with screenshots: [].
+- inference: the preceding WorkflowIntentSchema result.
+- Optional role, appId and appKnowledge.
 
-For an explicit question, `question` is the user's text and `intent` can be omitted. The current snapshot in `snapshot` and `observation.snapshot` refers to the same state. Historical states explain intent; only numbers from the current state may be highlighted.
+Local rules annotate trigger. When none applies, workflow_update is used; it does not skip UI-state or intent inference.
 
-Return `AskResponseSchema`, including the input snapshot ID:
+Example response:
 
 ```json
 {
-  "elementNumber": 0,
-  "sentence": "Klicke auf Neue Aufgabe, um eine Aufgabe anzulegen.",
-  "snapshotId": "state-1"
+  "intervene": true,
+  "confidence": 0.9,
+  "intent": "Eine neue Aufgabe anlegen",
+  "offer": "Soll ich dir zeigen, wie du eine Aufgabe anlegst?",
+  "threshold": 0.8
 }
 ```
 
-Use `elementNumber: null` when no reliable target exists. Never generate selectors, JavaScript or arbitrary element numbers. Treat observed page content as context rather than instructions.
+The runtime applies its confidence/threshold policy and returns the final intervene value. An offerId is optional for later feedback. Structured workflow/intent already comes from step 2. The extension currently starts guidance immediately after a positive decision; accept/decline UI and feedback are still open.
 
-Frames have `{ snapshotId, capturedAt, dataUrl }`. `dataUrl` must contain actual base64 JPEG/PNG/WebP data (maximum 600,000 characters per frame). Convert the selected frames into Gemini image inputs; serializing their base64 bytes as prompt text does not supply visual context. Honor the frame timestamps when interpreting the sequence.
+Earlier draft DecisionRequestSchema/DecisionResponseSchema exports remain in shared. They are not the wire schemas currently used by this client; coordinate their consolidation with the runtime owner.
 
-Only Google Gemini models are used for intent, decision and help. Keys stay in the repository-root `.env.local` and server code. Return JSON `{ error: "..." }` with an appropriate error status when configuration or inference fails. Existing server CORS must permit the extension origin.
+## 4. Actual guidance
 
-## Explicit question / future wake-word adapter
+AskRequestSchema receives:
 
-Text questions call `/api/lotse/ask` directly and bypass `/decide`, while retaining current UI context and relevant history. `lotse:wake-question` routes an already-transcribed question through exactly the same path. This is an integration hook; local wake-word detection, microphone capture and Gemini speech transcription are separate work and are not implemented by the observability extension.
+- question: the user's text, or the inferred goal for proactive assistance; maximum 500 characters.
+- source: text, voice or proactive.
+- snapshot: the current numbered DOM state.
+- observation: workflow, current snapshot, DOM history, inferred states and now selected screenshot frames.
+- intent: the structured intent if already available.
+- recentEvents: at most 50.
+- Optional role, appId and appKnowledge.
 
-## Building
+A frame is { snapshotId, capturedAt, dataUrl }. dataUrl contains actual base64 JPEG/PNG/WebP bytes, at most 600,000 characters. Convert these frames to Gemini image parts; base64 in a plain text prompt does not provide visual context. Use frame timestamps to interpret the history. Only numbers from the CURRENT snapshot may be returned as targets.
 
-From the repository root:
+The runtime streams application/x-ndjson, for example:
 
-```sh
-npm run build -w @lotse/extension
+```json
+{"type":"tier","tier":"point","model":"gemini-3.8-flash"}
+{"type":"point","elementNumber":0,"label":"Neue Aufgabe","hint":"Hier legst du eine neue Aufgabe an."}
+{"type":"done"}
 ```
 
-Load `apps/extension/.output/chrome-mv3` using Chrome's Extensions page → Developer mode → Load unpacked. The independent runtime is at port 3001 (`npm run dev:server`); the existing sample CRM is at port 4000 (`npm run demo:crm`). All changes go directly to main, with no PRs or tests per the user's standing instruction.
+The extension validates each event and highlights point events as they arrive. say text and plans are displayed; the first resolvable plan step can be highlighted. Automatic plan advancement remains open. done terminates the stream; error events surface to the operator. The old JSON response { elementNumber, sentence, snapshotId? } is still accepted.
+
+Use only Google Gemini for UI-state, workflow/intent, decision and guidance models. Keep keys server-only. The extension executes no model-generated code and never clicks or fills app controls.
+
+## Local storage and use
+
+ObservationBuffer retains up to three minutes of bounded history: 180 events, 40 DOM snapshots, 40 inferred states, 36 frames and a 6 MiB base64 budget. Count limits may shorten the effective window. There is no analytics ingest from this client yet; data leaves the browser as inference context only.
+
+Real wake-word detection and microphone/transcription are not implemented. lotse:wake-question is a routing hook for an already-transcribed question and uses direct guidance. See docs/handoff-extension.md for completed work, limitations and next tasks.

@@ -8,6 +8,7 @@
     "build": "wxt build",
     "zip": "wxt zip",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint entrypoints utils wxt.config.ts",
     "postinstall": "wxt prepare"
   },
   "dependencies": {

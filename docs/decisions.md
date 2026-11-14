@@ -32,6 +32,7 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** clear ownership for the 4-person team; one deployable server.
 
 ### D-07 · Observation = semantic events + numbered snapshot; screenshots only as fallback (2026-11-14)
+- **Status:** observation/screenshot policy superseded by D-23.
 - **Decision:** the extension sends events (click/route/search/error/idle with element role + label) and builds a numbered snapshot of interactive elements. Gemini answers with an element number.
 - **Why:** cheap, fast, privacy-friendlier, robust; screenshots are expensive and contain personal data.
 - **Consequence:** PostHog is **not** the live source (ingest latency; e.g. EBV-Portal masks all text, so its events lack labels). Optional later: tap `posthog.on('eventCaptured')` in apps that already have PostHog.
@@ -102,6 +103,16 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Decision:** `/api/lotse/decide` uses Google's Decisions API (`gemini-decision-1`, available for our key) — Boolean "needs help?" with calibrated confidence + Choice over the app's feature names, one call; offer text from a template. Lotse intervenes only if yes AND confidence ≥ the user's threshold. Threshold starts at 0.80 (range 0.60–0.95, constants `PROACTIVE_THRESHOLD` in `@lotse/shared`): 👎 +0.05, 👍 −0.02, "Nein" +0.02; manual override via `PUT /api/lotse/prefs`.
 - **Why:** proactive offers are only good if they rarely annoy; calibrated confidence makes the cut-off meaningful, feedback personalizes it.
 - **Consequence:** feedback per offer is stored (pseudonymous) → aggregated "helpful offers per feature" for the dashboard; the per-user threshold is personal and never shown to admins.
+
+### D-23 · Separate observability inferences and local visual history (2026-11-14)
+- **Decision:** follow the user's explicitly reconfirmed order: events/DOM to UI-state inference (`/state`), local chronological inferred-state/action buffer, workflow/intent inference (`/intent`), separate intervention decision (`/decide`), then actual guidance (`/ask`). State/intent/decision receive no screenshots. Selected local historical frames are attached only after a positive intervention decision or for an explicit question.
+- **Why:** the user wants explicit state, workflow and intent understanding with visual history available for actual help.
+- **Consequence:** refines D-08 and supersedes D-07's earlier screenshot policy and D-20's gate that waits for a rule before model calls. Local rules annotate the decision input; `workflow_update` allows inference without a rule. The extension retains bounded local history and validates snapshot IDs. Explicit questions bypass state/intent/decision and use existing context. Gemini endpoints remain user-owned; extension implementation and shared contracts are handed off in `docs/handoff-extension.md`.
+
+### D-24 · User's delivery and validation instructions (2026-11-14)
+- **Decision:** work on main and push directly; no pull requests or tests (including browser/AI smoke tests). Static typecheck, lint and extension builds validate this task.
+- **Why:** explicit standing user instruction.
+- **Consequence:** overrides D-15's PR workflow and older validation guidance. Existing teammate smoke scripts are preserved but not run. No claim of 20/20 demo reliability; the handoff records remaining runtime/voice/plan integration.
 
 ## Open questions
 

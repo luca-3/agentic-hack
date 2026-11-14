@@ -73,15 +73,29 @@ export const ObservedWorkflowSchema = z.object({
   events: z.array(LotseEventSchema).max(180),
 });
 export type ObservedWorkflow = z.infer<typeof ObservedWorkflowSchema>;
+export const UIStateInferenceSchema = z.object({
+  snapshotId: z.string().min(1),
+  capturedAt: z.number(),
+  summary: z.string().max(1_200),
+  action: z.string().max(500).optional(),
+});
+export type UIStateInference = z.infer<typeof UIStateInferenceSchema>;
+/** Events/DOM only; screenshots are deliberately absent from the state-inference request. */
+export const UIStateRequestSchema = z.object({
+  snapshot: ObservationSnapshotSchema,
+  events: z.array(LotseEventSchema).max(180),
+});
+export type UIStateRequest = z.infer<typeof UIStateRequestSchema>;
 export const ObservationContextSchema = z.object({
   workflow: ObservedWorkflowSchema,
   snapshot: ObservationSnapshotSchema,
   history: z.array(ObservationSnapshotSchema).max(12),
   screenshots: z.array(ScreenshotFrameSchema).max(4),
+  states: z.array(UIStateInferenceSchema).max(40).optional(),
 });
 export type ObservationContext = z.infer<typeof ObservationContextSchema>;
 export const StuckSignalSchema = z.object({
-  type: z.enum(["repeated_error", "unsuccessful_searches", "route_ping_pong", "form_idle"]),
+  type: z.enum(["repeated_error", "unsuccessful_searches", "route_ping_pong", "form_idle", "workflow_update"]),
   reason: z.string().max(500),
 });
 export type StuckSignal = z.infer<typeof StuckSignalSchema>;
@@ -91,19 +105,32 @@ export const InferredIntentSchema = z.object({
   evidence: z.array(z.string().max(200)).max(8),
 });
 export type InferredIntent = z.infer<typeof InferredIntentSchema>;
+export const WorkflowIntentSchema = z.object({
+  workflowName: z.string().max(200),
+  intent: InferredIntentSchema,
+});
+export type WorkflowIntent = z.infer<typeof WorkflowIntentSchema>;
+export const IntentRequestSchema = z.object({
+  context: ObservationContextSchema.extend({ states: z.array(UIStateInferenceSchema).min(1).max(40), screenshots: z.array(ScreenshotFrameSchema).max(0) }),
+  role: z.string().max(100).optional(),
+  appId: z.string().max(100).optional(),
+  appKnowledge: z.string().max(12_000).optional(),
+});
+export type IntentRequest = z.infer<typeof IntentRequestSchema>;
 
 /** POST /api/lotse/decide — Gemini interprets the workflow and decides whether to offer help. */
 export const DecisionRequestSchema = z.object({
-  context: ObservationContextSchema,
+  context: ObservationContextSchema.extend({ screenshots: z.array(ScreenshotFrameSchema).max(0) }),
   trigger: StuckSignalSchema,
+  inference: WorkflowIntentSchema.optional(),
   role: z.string().max(100).optional(),
   appId: z.string().max(100).optional(),
   appKnowledge: z.string().max(12_000).optional(),
 });
 export type DecisionRequest = z.infer<typeof DecisionRequestSchema>;
 export const DecisionResponseSchema = z.object({
-  workflowName: z.string().max(200),
-  intent: InferredIntentSchema,
+  workflowName: z.string().max(200).optional(),
+  intent: InferredIntentSchema.optional(),
   intervene: z.boolean(),
   reason: z.string().max(500),
 });
@@ -121,7 +148,7 @@ export type EventBatch = z.infer<typeof EventBatchSchema>;
 // ---------------------------------------------------------------------------
 
 /** Local rule in the extension that fired. Only then the server is asked. */
-export const StuckTriggerSchema = z.enum(["repeated_search", "page_pingpong", "form_idle", "repeated_error", "rage_click"]);
+export const StuckTriggerSchema = z.enum(["repeated_search", "page_pingpong", "form_idle", "repeated_error", "rage_click", "workflow_update"]);
 export type StuckTrigger = z.infer<typeof StuckTriggerSchema>;
 
 /** POST /api/lotse/decide — "should Lotse offer help now?" (cheap lite model). */
@@ -131,6 +158,9 @@ export const DecideRequestSchema = z.object({
   snapshot: PageSnapshotSchema.optional(),
   role: z.string().optional(),
   appId: z.string().optional(),
+  context: ObservationContextSchema.extend({ screenshots: z.array(ScreenshotFrameSchema).max(0) }).optional(),
+  inference: WorkflowIntentSchema.optional(),
+  appKnowledge: z.string().max(12_000).optional(),
 });
 export type DecideRequest = z.infer<typeof DecideRequestSchema>;
 
