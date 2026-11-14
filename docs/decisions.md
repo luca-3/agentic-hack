@@ -178,6 +178,11 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** the server delete is keyed by user/subject only, not by org, so one org's admin would wipe data the person produced in other orgs.
 - **Consequence:** people in several orgs can only delete their own data (/my-data). Proper fix: org-scope the server delete (server owner).
 
+### D-38 · Hosting: one Codesphere workspace, managed Postgres, self-run PostgREST + GoTrue (2026-11-14)
+- **Decision:** workspace "valo", one domain, path routing (`ci.valo.yml`): `/` dashboard, `/api` server, `/rest/v1` PostgREST v16.5, `/auth/v1` GoTrue v2.197.0 (same versions as local Supabase); DB = Codesphere Managed PostgreSQL 18 with Supabase roles recreated by `infra/codesphere/bootstrap.sql`; legacy HS256 anon/service_role JWTs (`make-jwts.mjs`). Steps: `docs/hosting-codesphere.md`.
+- **Why:** user chose Plan A — app code stays unchanged (supabase-js against `/rest/v1` + `/auth/v1`), no Supabase Cloud account needed.
+- **Consequence:** public repo → sign-up off (`GOTRUE_DISABLE_SIGNUP=true`, dashboard `/signup` fails there), demo passwords replaced after import (`reset-demo-passwords.sh`), `JWT_SECRET` ≥ 64 chars, server refuses `LOTSE_DEV_AUTH`, Postgres internal only; no Realtime/Storage/SMTP; the server's own pages (`/`, `/chat`) are not reachable under the domain; the extension needs the workspace host in `host_permissions` and a build-time server URL (extension owner).
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?

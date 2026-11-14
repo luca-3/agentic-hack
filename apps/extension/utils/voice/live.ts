@@ -74,9 +74,23 @@ export class LiveUtterance {
       .catch(() => undefined);
   }
 
-  /** The user says they're done (second hotkey press): stop capturing and transcribe what we have. */
+  /** True if any speech activity or partial transcript was captured so far. */
+  hasSpeech(): boolean {
+    return this.speechStarted || Boolean(this.interim.trim());
+  }
+
+  /** The user clicked/pressed again to stop: cancel immediately if silent, else finalize fast. */
   stop(): void {
-    this.endOfSpeech();
+    if (this.finished) return;
+    if (!this.hasSpeech() || (!this.ready && !this.interim.trim())) {
+      this.finish("");
+      return;
+    }
+    if (this.streamEnded) {
+      this.finish(this.interim);
+      return;
+    }
+    this.endOfSpeech(1_200);
   }
 
   /** Stop without a result (barge-in, voice switched off). */
@@ -143,19 +157,19 @@ export class LiveUtterance {
     if (typeof final === "string" && final.trim()) this.finish(final.trim());
   }
 
-  private endOfSpeech(): void {
+  private endOfSpeech(timeoutMs: number = VOICE_DEFAULTS.finalTranscriptTimeoutMs): void {
     if (this.streamEnded || this.finished) return;
     this.streamEnded = true;
     this.capturing = false;
-    if (this.ready) this.sendStreamEnd();
+    if (this.ready) this.sendStreamEnd(timeoutMs);
   }
 
-  private sendStreamEnd(): void {
+  private sendStreamEnd(timeoutMs: number = VOICE_DEFAULTS.finalTranscriptTimeoutMs): void {
     if (this.endSent) return;
     this.endSent = true;
     this.send({ realtimeInput: { audioStreamEnd: true } });
     this.timers.push(
-      setTimeout(() => this.finish(this.interim, this.interim ? undefined : "I didn't catch a question."), VOICE_DEFAULTS.finalTranscriptTimeoutMs),
+      setTimeout(() => this.finish(this.interim, this.interim ? undefined : "I didn't catch a question."), timeoutMs),
     );
   }
 

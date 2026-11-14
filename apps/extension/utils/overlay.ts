@@ -26,26 +26,27 @@ const STYLE = `
 .frame { position: fixed; display: none; border: 3px solid #FF8A3D; border-radius: 10px; pointer-events: none;
   /* Spotlight: the marked spot stays bright, everything around it is dimmed by 20 % (clicks still pass through). */
   box-shadow: 0 0 0 4px rgb(255 138 61 / .3), 0 0 0 200vmax rgb(6 18 25 / .2); transition: opacity .15s, box-shadow .25s; }
-.bubble { position: fixed; display: none; box-sizing: border-box; width: max-content; min-width: 180px; max-width: 320px; padding: 10px 12px; border-radius: 12px; background: #1e3a8a; color: #fff; font: 500 14px/1.4 system-ui, sans-serif; box-shadow: 0 8px 24px rgb(0 0 0 / .22); pointer-events: none; }
-.bubble.offer { background: #0f172a; }
+.bubble { position: fixed; display: none; box-sizing: border-box; width: max-content; min-width: 190px; max-width: 330px; padding: 12px 14px; border-radius: 16px; border: 1px solid #2E5572; background: #0F2A3D; color: #F2F6F9; font: 500 14px/1.45 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; box-shadow: 0 10px 28px rgb(6 18 25 / .32); pointer-events: none; }
+.bubble.offer { background: #0A1D2B; border-color: #FF8A3D; }
 .bubble.below::before, .bubble.above::after { content: ""; position: absolute; left: var(--arrow, 18px); border: 7px solid transparent; }
-.bubble.below::before { top: -14px; border-bottom-color: #1e3a8a; }
-.bubble.above::after { bottom: -14px; border-top-color: #1e3a8a; }
-.title { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; opacity: .75; margin-bottom: 2px; }
-.detail { margin-top: 4px; font-weight: 400; font-size: 13px; opacity: .92; white-space: pre-line; }
-.note { margin-top: 6px; font-size: 12px; color: #bbf7d0; }
-.buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 9px; }
-.buttons button { all: unset; box-sizing: border-box; pointer-events: auto; cursor: pointer; padding: 4px 10px; border-radius: 8px; background: rgb(255 255 255 / .16); color: #fff; font: 600 12px/1.5 system-ui, sans-serif; }
-.buttons button:hover { background: rgb(255 255 255 / .26); }
-.buttons button.primary { background: #fff; color: #1e3a8a; }
-.buttons button:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
-.cursor { position: fixed; left: 0; top: 0; opacity: 0; pointer-events: none; will-change: transform; filter: drop-shadow(0 2px 3px rgb(0 0 0 / .3)); }
+.bubble.below::before { top: -14px; border-bottom-color: #0F2A3D; }
+.bubble.above::after { bottom: -14px; border-top-color: #0F2A3D; }
+.title { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #9AB5C9; margin-bottom: 3px; }
+.detail { margin-top: 5px; font-weight: 400; font-size: 13px; color: #C3D4E0; white-space: pre-line; }
+.note { margin-top: 6px; font-size: 12px; color: #86D2DA; }
+.buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.buttons button { all: unset; box-sizing: border-box; pointer-events: auto; cursor: pointer; padding: 5px 13px; border-radius: 999px; border: 1px solid #6B8FAA; background: #1A3A52; color: #F2F6F9; font: 600 12.5px/1.4 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
+.buttons button:hover { background: #2E5572; }
+.buttons button.primary { background: #127A86; border-color: #127A86; color: #FFFFFF; }
+.buttons button.primary:hover { background: #0E646E; border-color: #0E646E; }
+.buttons button:focus-visible { outline: 2px solid #7B6AD0; outline-offset: 2px; }
+.cursor { position: fixed; left: 0; top: 0; opacity: 0; pointer-events: none; will-change: transform; filter: drop-shadow(0 2px 4px rgb(6 18 25 / .35)); }
 .cursor svg { display: block; }
-.tag { position: absolute; left: 18px; top: 16px; padding: 1px 7px; border-radius: 999px; background: #2563eb; color: #fff; font: 700 11px/1.5 system-ui, sans-serif; white-space: nowrap; }
+.tag { position: absolute; left: 18px; top: 16px; padding: 2px 8px; border-radius: 999px; background: #0F2A3D; border: 1px solid #FF8A3D; color: #F2F6F9; font: 700 11px/1.4 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; white-space: nowrap; }
 .chips { position: fixed; right: 12px; bottom: 12px; display: flex; gap: 6px; pointer-events: none; }
-.chip { padding: 6px 10px; border-radius: 20px; background: #1e3a8a; color: #fff; font: 12px/1.3 system-ui, sans-serif; }
-.chip.voice { background: #0f766e; }
-.chip.explore { background: #4338ca; }
+.chip { padding: 6px 12px; border-radius: 999px; background: #0F2A3D; border: 1px solid #2E5572; color: #F2F6F9; font: 600 12px/1.3 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
+.chip.voice { background: #127A86; border-color: #5FC4CE; }
+.chip.explore { background: #1A3A52; border-color: #FF8A3D; }
 @media (prefers-reduced-motion: reduce) { .cursor, .frame { transition: none !important; } }
 `;
 
@@ -214,7 +215,7 @@ export class LotseOverlay {
     this.bubble.append(this.titleEl, this.textEl, this.detailEl, this.noteEl, this.buttonsEl);
     this.cursor = div("cursor");
     this.cursor.setAttribute("aria-hidden", "true");
-    this.cursor.innerHTML = '<svg width="24" height="26" viewBox="0 0 24 26"><path d="M3 2 L3 21 L8.2 16.2 L11.6 23.6 L15 22 L11.6 14.8 L18.6 14.8 Z" fill="#2563eb" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="tag">Valo</span>';
+    this.cursor.innerHTML = '<svg width="24" height="26" viewBox="0 0 24 26"><path d="M3 2 L3 21 L8.2 16.2 L11.6 23.6 L15 22 L11.6 14.8 L18.6 14.8 Z" fill="#127A86" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="tag">Valo</span>';
     const chips = div("chips");
     this.exploreChip = div("chip explore");
     this.exploreChip.hidden = !this.exploreText;

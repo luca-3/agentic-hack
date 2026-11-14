@@ -1,0 +1,36 @@
+knowledge/corpus-funktionen.md: CORPUS functions, click paths and buttons for end users==>knowledge: internal app notes (not public)
+knowledge/corpus-funktionen.md==>an internal knowledge file
+Seitenleiste → Schlüssel → Suchfeld oben==>Seitenleiste → Beispiel A
+Schneller: CORPUS-Chat (Kreis unten rechts) fragen: „Wo ist der Schlüssel für …?“==>Beispiel-Hinweis.
+Schlüssel → Kachel des Schlüssels → Ausgeben → Name eintragen==>Seitenleiste → Beispiel B
+Braucht den Namen der Person bzw. Firma.==>Beispiel-Hinweis.
+Kreis unten rechts → Frage eintippen==>Seitenleiste → Beispiel C
+Beantwortet Fragen zu allen Modulen in Sekunden.==>Beispiel-Hinweis.
+Seitenleiste → Aufgaben → Neue Aufgabe==>Seitenleiste → Beispiel D
+Pflicht: Titel, Beschreibung, Status, Priorität, Fällig bis.==>Beispiel-Hinweis.
+Seitenleiste → Wochenzettel → Woche öffnen → Tage füllen → Speichern → Abgeben==>Seitenleiste → Beispiel E
+Abgabeschluss Freitag 19:00; abgegeben heißt gesperrt.==>Beispiel-Hinweis.
+Seitenleiste → Notizen → Neue Notiz==>Seitenleiste → Beispiel F
+Sichtbarkeit: Büro oder Alle.==>Beispiel-Hinweis.
+-- CORPUS features (derived from the CORPUS agent handbook; click paths to be verified on the local instance)==>-- CORPUS features (placeholder examples)
+CORPUS-Chat in 10 Minuten==>Beispiel-Schulung C
+Schlüsselverwaltung für Monteure==>Beispiel-Schulung B
+Wochenzettel richtig abgeben==>Beispiel-Schulung E
+Schlüssel finden==>Beispiel-Funktion A
+Schlüssel ausgeben==>Beispiel-Funktion B
+CORPUS-Chat fragen==>Beispiel-Funktion C
+Wochenzettel abgeben==>Beispiel-Funktion E
+Schlüsselausgabe – Ablauf==>Beispiel-Ablauf
+'Aufgabe anlegen', '/tasks'==>'Beispiel-Funktion D', '/beispiel'
+'Notiz anlegen', '/notes'==>'Beispiel-Funktion F', '/beispiel'
+regex:(0000000000a1', )'Aufgabe anlegen'==>\1'Beispiel-Funktion D'
+regex:(0000000000a1', )'Notiz anlegen'==>\1'Beispiel-Funktion F'
+{Aufgabe anlegen}==>{Beispiel-Funktion D}
+--  Notiz anlegen with 3 persons==>--  Beispiel-Funktion F with 3 persons
+'/keys'==>'/beispiel'
+'/wochenzettel'==>'/beispiel'
+-- "/keys"==>-- "/beispiel"
+Someone searches CORPUS manually for a key → Lotse speaks up and points to the right place.==>Someone searches CORPUS manually for a long time → Lotse speaks up and shows the way.
+Someone searches CORPUS manually for a key → Valo speaks up and points to the right place.==>Someone searches CORPUS manually for a long time → Valo speaks up and shows the way.
+creates a task in CORPUS by itself==>completes a step in CORPUS by itself
+(demo: create a task in CORPUS)==>(demo: complete a step in CORPUS)

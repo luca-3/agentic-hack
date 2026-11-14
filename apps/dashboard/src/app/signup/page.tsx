@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 const FEHLER: Record<string, string> = {
   name: "Please enter the organization's name.",
   email: "Please enter a valid email address.",
+  closed: "Sign-up is closed. Please ask an admin of your organization to invite you.",
   account: "The account could not be created. Does this email already exist? Then sign in instead.",
 };
 

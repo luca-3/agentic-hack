@@ -31,14 +31,7 @@ insert into public.apps (id, org_id, name, domains) values
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000f1', 'CORPUS', '{dev.fuller.de,localhost:3100}'),
   ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000f1', 'Erasmus-Förderhelfer', '{localhost:3200}');
 
--- CORPUS features (derived from the CORPUS agent handbook; click paths to be verified on the local instance)
-insert into public.app_features (app_id, name, route, click_path, description, required_roles) values
-  ('00000000-0000-0000-0000-0000000000a1', 'Schlüssel finden', '/keys', string_to_array('Seitenleiste → Schlüssel → Suchfeld oben', ' → '), 'Schneller: CORPUS-Chat (Kreis unten rechts) fragen: „Wo ist der Schlüssel für …?“', null),
-  ('00000000-0000-0000-0000-0000000000a1', 'Schlüssel ausgeben', '/keys', string_to_array('Schlüssel → Kachel des Schlüssels → Ausgeben → Name eintragen', ' → '), 'Braucht den Namen der Person bzw. Firma.', null),
-  ('00000000-0000-0000-0000-0000000000a1', 'CORPUS-Chat fragen', '/', string_to_array('Kreis unten rechts → Frage eintippen', ' → '), 'Beantwortet Fragen zu allen Modulen in Sekunden.', null),
-  ('00000000-0000-0000-0000-0000000000a1', 'Aufgabe anlegen', '/tasks', string_to_array('Seitenleiste → Aufgaben → Neue Aufgabe', ' → '), 'Pflicht: Titel, Beschreibung, Status, Priorität, Fällig bis.', null),
-  ('00000000-0000-0000-0000-0000000000a1', 'Wochenzettel abgeben', '/wochenzettel', string_to_array('Seitenleiste → Wochenzettel → Woche öffnen → Tage füllen → Speichern → Abgeben', ' → '), 'Abgabeschluss Freitag 19:00; abgegeben heißt gesperrt.', '{Monteur}'),
-  ('00000000-0000-0000-0000-0000000000a1', 'Notiz anlegen', '/notes', string_to_array('Seitenleiste → Notizen → Neue Notiz', ' → '), 'Sichtbarkeit: Büro oder Alle.', null);
+-- CORPUS: app + domains only; its feature list lives in the local DB (not in the repo).
 
 -- Erasmus helper features (placeholders — replace with the real screens)
 insert into public.app_features (app_id, name, route, click_path, description, required_roles) values
@@ -90,26 +83,26 @@ insert into public.app_features (app_id, name, route, click_path, description, r
   ('00000000-0000-0000-0000-0000000000a3', 'Daten importieren oder exportieren', '/import-export.html', '{"Verwaltung","Import/Export","Export starten"}', 'Kunden/Aufgaben/Angebote exportieren oder per Datei importieren (simuliert). In der Seitenleiste unter der einklappbaren Gruppe „Verwaltung“.', '{"Buchhaltung","Admin"}'),
   ('00000000-0000-0000-0000-0000000000a3', 'Benutzer über Verwaltung öffnen', '/einstellungen.html', '{"Verwaltung","Benutzer"}', 'Benutzerliste über die Seitenleistengruppe „Verwaltung“ → „Benutzer“ öffnen (führt zu Einstellungen → Benutzer & Rollen).', '{"Admin"}');
 
--- Training catalog
+-- Training catalog (Kundenwerk CRM feature names)
 insert into public.training_catalog (org_id, title, topics) values
-  ('00000000-0000-0000-0000-0000000000f1', 'CORPUS-Chat in 10 Minuten', '{CORPUS-Chat fragen,Schlüssel finden}'),
-  ('00000000-0000-0000-0000-0000000000f1', 'Schlüsselverwaltung für Monteure', '{Schlüssel finden,Schlüssel ausgeben}'),
-  ('00000000-0000-0000-0000-0000000000f1', 'Wochenzettel richtig abgeben', '{Wochenzettel abgeben}'),
-  ('00000000-0000-0000-0000-0000000000f1', 'Aufgaben anlegen und zuweisen', '{Aufgabe anlegen}');
+  ('00000000-0000-0000-0000-0000000000f1', 'Kunden finden und verwalten', '{Kunden suchen und filtern,Ansprechpartner eines Kunden ansehen}'),
+  ('00000000-0000-0000-0000-0000000000f1', 'Angebote schnell erstellen', '{Angebot erstellen,Angebote nach Status filtern}'),
+  ('00000000-0000-0000-0000-0000000000f1', 'Bankverbindung richtig ändern', '{Bankverbindung (IBAN) eines Kunden ändern}'),
+  ('00000000-0000-0000-0000-0000000000f1', 'Aufgaben anlegen und zuweisen', '{Neue Aufgabe anlegen,Mehrere Aufgaben einer Kollegin zuweisen}');
 
--- Insights (invented aggregates telling the demo story)
---  Schlüssel finden: many stuck, but the hint helps (low still_stuck) → training need
---  Wochenzettel abgeben: hint does NOT help (high still_stuck) → app problem
---  Notiz anlegen with 3 persons → below the min group of 5, stays invisible
+-- Insights (invented aggregates telling the demo story, Kundenwerk CRM)
+--  Angebot erstellen: many stuck, but the hint helps (low still_stuck) → training need
+--  Bankverbindung (IBAN) eines Kunden ändern: hint does NOT help (high still_stuck) → app problem
+--  Notiz zu einem Kunden hinzufügen with 3 persons → below the min group of 5, stays invisible
 insert into public.insights (org_id, app_id, feature, role, metric, value, persons) values
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a1', 'Schlüssel finden', null, 'stuck_rate', 0.62, 11),
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a1', 'Schlüssel finden', null, 'still_stuck_after_hint', 0.18, 9),
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a1', 'Schlüssel finden', null, 'question_count', 23, 11),
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a1', 'Wochenzettel abgeben', 'Monteur', 'stuck_rate', 0.48, 8),
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a1', 'Wochenzettel abgeben', 'Monteur', 'still_stuck_after_hint', 0.71, 7),
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a1', 'Aufgabe anlegen', null, 'abandoned_flow', 0.44, 9),
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a1', 'Aufgabe anlegen', null, 'still_stuck_after_hint', 0.22, 6),
-  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a1', 'Notiz anlegen', null, 'stuck_rate', 0.90, 3),
+  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a3', 'Angebot erstellen', null, 'stuck_rate', 0.62, 11),
+  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a3', 'Angebot erstellen', null, 'still_stuck_after_hint', 0.18, 9),
+  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a3', 'Angebot erstellen', null, 'question_count', 23, 11),
+  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a3', 'Bankverbindung (IBAN) eines Kunden ändern', 'Buchhaltung', 'stuck_rate', 0.48, 8),
+  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a3', 'Bankverbindung (IBAN) eines Kunden ändern', 'Buchhaltung', 'still_stuck_after_hint', 0.71, 7),
+  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a3', 'Neue Aufgabe anlegen', null, 'abandoned_flow', 0.44, 9),
+  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a3', 'Neue Aufgabe anlegen', null, 'still_stuck_after_hint', 0.22, 6),
+  ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a3', 'Notiz zu einem Kunden hinzufügen', null, 'stuck_rate', 0.90, 3),
   ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a2', 'Teilnehmende importieren', null, 'still_stuck_after_hint', 0.64, 5),
   ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000a2', 'Teilnehmende importieren', null, 'stuck_rate', 0.55, 5);
 

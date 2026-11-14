@@ -123,7 +123,8 @@ export async function organisationAnlegen(fd: FormData) {
     if (!EMAIL.test(email)) redirect("/signup?error=email");
     if (password.length < 8) redirect("/signup?error=password");
     const { error: signUpError } = await supabase.auth.signUp({ email, password });
-    if (signUpError) redirect("/signup?error=account");
+    // GoTrue with GOTRUE_DISABLE_SIGNUP=true (public hosting) answers code "signup_disabled".
+    if (signUpError) redirect(signUpError.code === "signup_disabled" || /signups? not allowed/i.test(signUpError.message) ? "/signup?error=closed" : "/signup?error=account");
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) redirect("/signup?error=account");
     ({ data: { user } } = await supabase.auth.getUser());

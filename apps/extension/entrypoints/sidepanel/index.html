@@ -5,189 +5,630 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Valo</title>
     <style>
-      /* Valo design (D-31 tokens): navy / petrol / beacon orange, sand-white cards, light + dark. */
-      :root { color-scheme: light dark;
-        --bg: #F2F6F9; --card: #FFFFFF; --line: #C3D4E0; --soft: #E1EAF0; --ink: #0F2A3D; --muted: #456E8C;
-        --primary: #127A86; --primary-ink: #FFFFFF; --beacon: #FF8A3D; --navy: #0F2A3D; --navy-2: #1A3A52; --focus: #5FC4CE;
-        --warn-bg: #FFF4E8; --warn-line: #F5C08A; --warn-ink: #8A4B12; --ok-bg: #E3F4F5; --ok-ink: #0D5C65; --danger-bg: #FDE8E8; --danger-ink: #9B1C1C;
-        font: 14px/1.5 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
-      @media (prefers-color-scheme: dark) { :root {
-        --bg: #061219; --card: #0A1D2B; --line: #1A3A52; --soft: #0F2A3D; --ink: #E1EAF0; --muted: #9AB5C9;
-        --primary: #1C9AA8; --navy: #0A1D2B; --navy-2: #0F2A3D;
-        --warn-bg: #2A1B0C; --warn-line: #7A4A1E; --warn-ink: #F5C08A; --ok-bg: #0C2A2E; --ok-ink: #8FD9E0; --danger-bg: #2B1111; --danger-ink: #F8B4B4; } }
+      /* Valo Admin design system (localhost:3000): Nachtblau shell (#0F2A3D), sand-white panel, petrol pill controls. */
+      :root {
+        color-scheme: light;
+        --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+        --shell: #0F2A3D;
+        --sh-pill: #1A3A52;
+        --sh-muted: #9AB5C9;
+        --sh-line: #6B8FAA;
+
+        --bg: #F7F5F0;
+        --panel: #FFFFFF;
+        --surface: #FFFFFF;
+        --surface-2: #F2F6F9;
+        --input: #FFFFFF;
+        --input-disabled: #F2F6F9;
+        --line: #C3D4E0;
+        --line-strong: #6B8FAA;
+        --text: #0F2A3D;
+        --muted: #456E8C;
+
+        --primary: #127A86;
+        --primary-hover: #0E646E;
+        --on-primary: #FFFFFF;
+        --primary-soft: #E3F1F3;
+        --primary-line: #9CCDD3;
+        --primary-text: #0F6A75;
+
+        --beacon: #FF8A3D;
+
+        --danger: #B3261E;
+        --danger-hover: #921E18;
+        --on-danger: #FFFFFF;
+        --danger-soft: #FAE6E3;
+        --danger-text: #8C1D17;
+        --danger-line: #D9918A;
+
+        --warn-soft: #FBEFD3;
+        --warn-text: #634500;
+        --warn-line: #C9A85C;
+
+        --ok-soft: #E1EEE2;
+        --ok-text: #22532A;
+        --ok-line: #8DB894;
+
+        --focus: #7B6AD0;
+        --priv-soft: #F4F1FB;
+        --priv-line: #C9BFEA;
+        --priv-accent: #7B6AD0;
+        --priv-text: #4B3F8C;
+        --priv-strong: #2E2660;
+
+        --ink-bg: #0F2A3D;
+        --ink-fg: #FFFFFF;
+        --ink-muted: #9AB5C9;
+
+        font: 14px/1.5 var(--font-sans);
+        color: var(--text);
+        background: var(--shell);
+      }
+
       * { box-sizing: border-box; }
       [hidden] { display: none !important; }
-      body { margin: 0; padding: 0 14px 18px; background: var(--bg); }
-      header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-        margin: 0 -14px 14px; padding: 12px 14px; background: linear-gradient(135deg, var(--navy-2), var(--navy)); color: #F2F6F9;
-        border-bottom: 3px solid var(--beacon); }
-      .brand { display: flex; align-items: center; gap: 9px; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        padding: 0 8px 10px;
+        background: var(--shell);
+        color: var(--text);
+      }
+      :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+      input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+
+      /* Top Shell Header */
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 10px 6px;
+        background: var(--shell);
+        color: #F2F5F6;
+        flex-shrink: 0;
+      }
+      .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
       .brand svg { width: 30px; height: 30px; flex-shrink: 0; }
       .brand svg .beam, .brand svg .lamp { fill: var(--beacon); }
-      .brand svg .tower { fill: #F2F6F9; }
-      .brand svg .sea { fill: none; stroke: #5FC4CE; stroke-width: 1.4; stroke-linecap: round; }
-      h1 { margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -.3px; }
-      h2 { margin: 0 0 8px; font-size: 14px; font-weight: 600; letter-spacing: .1px; }
-      p { margin: 8px 0; }
+      .brand svg .tower { fill: #F2F5F6; }
+      .brand svg .sea { fill: none; stroke: #F2F5F6; stroke-width: 1.4; stroke-linecap: round; }
+      h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.025em; color: #F2F5F6; }
+
       .chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-      .activity { padding: 3px 10px; border-radius: 999px; background: rgb(242 246 249 / .14); color: #C3D4E0; font-size: 12px; font-weight: 500; border: 1px solid rgb(242 246 249 / .2); }
-      .activity.active { background: rgb(18 122 134 / .35); color: #E3F4F5; border-color: #5FC4CE; }
-      .activity.voice { background: rgb(255 138 61 / .2); color: #FFD7BD; border-color: var(--beacon); }
-      section, details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgb(15 42 61 / .05); }
-      .muted { color: var(--muted); font-size: 12px; }
-      .actions { display: flex; flex-wrap: wrap; gap: 8px; }
-      button { padding: 8px 13px; border: 1px solid transparent; border-radius: 8px; background: var(--primary); color: var(--primary-ink); font: inherit; font-weight: 600; cursor: pointer; transition: filter .15s, transform .1s; }
-      button:hover:not(:disabled) { filter: brightness(1.08); }
-      button:active:not(:disabled) { transform: translateY(1px); }
-      button.secondary { background: var(--soft); color: var(--ink); border-color: var(--line); }
-      button.danger { background: var(--danger-bg); color: var(--danger-ink); }
-      button.small { padding: 4px 9px; font-size: 12px; }
-      button:disabled { opacity: .45; cursor: default; }
-      label { display: block; margin: 10px 0 5px; font-weight: 500; }
-      input[type="text"], input[type="email"], input[type="password"], textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; }
-      input[type="range"] { flex: 1; accent-color: var(--primary); }
-      input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; }
-      textarea { resize: vertical; }
-      #ask-button { flex: 1; }
-      #ask .row { margin-top: 8px; }
-      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
-      .stats div { padding: 9px 4px; border-radius: 8px; background: var(--soft); text-align: center; color: var(--muted); font-size: 11px; }
-      .stats strong { display: block; color: var(--ink); font: 600 19px/1.2 "IBM Plex Mono", ui-monospace, monospace; }
-      #status { white-space: pre-wrap; }
-      #notice, #image-status { color: var(--warn-ink); }
-      #notice:empty, #image-status:empty, #decision:empty, #prefs-message:empty, #last-question:empty { display: none; }
-      #events { padding-left: 18px; margin: 8px 0 0; font: 12px/1.45 "IBM Plex Mono", ui-monospace, monospace; overflow-wrap: anywhere; }
-      #events li { margin: 4px 0; color: var(--muted); }
-      summary { font-weight: 600; cursor: pointer; }
-      summary::marker { color: var(--primary); }
-      .toggle { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 6px 0; }
+      .activity {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: var(--sh-pill);
+        border: 1px solid var(--sh-line);
+        color: var(--sh-muted);
+        font-size: 12.5px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .activity::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: currentColor; }
+      .activity.active { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+      .activity.voice { background: #2A2019; border-color: var(--beacon); color: #FFD7BD; }
+
+      /* Main Rounded Panel */
+      .panel {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: var(--bg);
+        border-radius: 20px;
+        padding: 12px;
+      }
+
+      /* Cards & Collapsible Containers */
+      section, details {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px;
+        margin: 0;
+      }
+      h2 { margin: 0 0 6px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
+      h3 { margin: 0 0 6px; font-size: 13.5px; font-weight: 600; color: var(--text); }
+      .section-kicker {
+        display: block;
+        margin-bottom: 3px;
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      p { margin: 5px 0; font-size: 13.5px; }
+      .muted { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+
+      /* Pill Buttons */
+      .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
       .row { display: flex; align-items: center; gap: 8px; }
-      .callout { border-color: var(--primary); background: var(--ok-bg); }
-      .callout p { margin: 0 0 8px; }
-      .paused { border-color: var(--warn-line); background: var(--warn-bg); }
-      .paused h2 { color: var(--warn-ink); }
-      .admin-card { border-color: var(--primary); border-left-width: 4px; }
-      .badge-admin { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--ok-bg); color: var(--ok-ink); font-size: 11px; font-weight: 600; margin-left: 4px; }
+      button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 36px;
+        padding: 0 15px;
+        border-radius: 999px;
+        border: 1px solid var(--primary);
+        background: var(--primary);
+        color: var(--on-primary);
+        font: 600 13.5px/1 var(--font-sans);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      button:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+      button.secondary { background: var(--surface); border-color: var(--line-strong); color: var(--text); }
+      button.secondary:hover:not(:disabled) { background: var(--surface-2); }
+      button.danger { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
+      button.danger:hover:not(:disabled) { background: var(--danger-hover); border-color: var(--danger-hover); }
+      button.ghost { height: 26px; padding: 0 10px; font-size: 12px; background: transparent; border-color: transparent; color: var(--muted); }
+      button.ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+      button.small { height: 32px; padding: 0 12px; font-size: 12.5px; }
+      button:disabled { background: var(--input-disabled); border-color: var(--line); color: var(--muted); cursor: not-allowed; }
+
+      /* Primary Guidance Chat Card */
+      .chat-card {
+        flex: 1;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+        gap: 10px;
+      }
+      .chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      .chat-header h2 { margin: 0; font-size: 15px; }
+      .chat-log {
+        flex: 1;
+        min-height: 160px;
+        max-height: 56vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 2px 2px 4px;
+      }
+      .chat-empty {
+        margin: auto 0;
+        padding: 18px 14px;
+        border-radius: 12px;
+        border: 1px dashed var(--line-strong);
+        background: var(--surface-2);
+        text-align: center;
+      }
+      .chat-empty strong { display: block; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+
+      /* Chat Messages */
+      .msg { display: flex; flex-direction: column; max-width: 90%; gap: 3px; }
+      .msg.user { align-self: flex-end; align-items: flex-end; }
+      .msg.assistant { align-self: flex-start; align-items: flex-start; }
+
+      .msg-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        color: var(--muted);
+        padding: 0 4px;
+      }
+      .msg-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        border: 1px solid var(--primary-line);
+        color: var(--primary-text);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .msg.user .msg-tag {
+        background: var(--surface-2);
+        border-color: var(--line);
+        color: var(--text);
+      }
+
+      .msg-bubble {
+        padding: 9px 12px;
+        border-radius: 14px;
+        font-size: 13.5px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+      }
+      .msg.user .msg-bubble {
+        background: var(--ink-bg);
+        color: var(--ink-fg);
+        border-bottom-right-radius: 4px;
+      }
+      .msg.assistant .msg-bubble {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        color: var(--text);
+        border-bottom-left-radius: 4px;
+      }
+      .msg.assistant.error .msg-bubble {
+        background: var(--danger-soft);
+        border-color: var(--danger-line);
+        color: var(--danger-text);
+      }
+      .msg.assistant.pending .msg-bubble { color: var(--muted); font-style: italic; }
+
+      .msg-steps {
+        margin: 7px 0 0;
+        padding-left: 18px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .msg-steps li { margin: 3px 0; }
+
+      /* Chat Composer */
+      .composer {
+        display: grid;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+      }
+      .composer-row { display: flex; align-items: flex-end; gap: 6px; }
+      #question {
+        flex: 1;
+        min-height: 38px;
+        max-height: 110px;
+        padding: 8px 12px;
+        border: 1px solid var(--line-strong);
+        border-radius: 14px;
+        background: var(--input);
+        color: var(--text);
+        font: 13.5px/1.45 var(--font-sans);
+        resize: none;
+      }
+      #listen { width: 36px; height: 36px; padding: 0; font-size: 14px; flex-shrink: 0; }
+      #ask-button { height: 36px; padding: 0 14px; flex-shrink: 0; }
+      .composer-hint { margin: 0; font-size: 11.5px; color: var(--muted); }
+
+      /* Active Callouts */
+      .callout { border-color: var(--primary-line); background: var(--primary-soft); padding: 12px 14px; flex-shrink: 0; }
+      .callout h2 { color: var(--primary-text); font-size: 14px; margin-bottom: 4px; }
+      .callout p { margin: 0 0 6px; }
+      .paused { border-color: var(--warn-line); background: var(--warn-soft); padding: 12px 14px; flex-shrink: 0; }
+      .paused h2 { color: var(--warn-text); font-size: 14px; }
+
+      #notice {
+        margin: 0;
+        padding: 9px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--danger-line);
+        background: var(--danger-soft);
+        color: var(--danger-text);
+        font-size: 13px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+      #notice:empty, #image-status:empty, #decision:empty, #prefs-message:empty, #last-question:empty { display: none; }
+
+      /* Compact Collapsed Drawers (Explore app + Miscellaneous) */
+      details.compact-drawer {
+        padding: 10px 13px;
+        border-radius: 14px;
+        flex-shrink: 0;
+      }
+      details.admin-drawer {
+        border-color: var(--primary-line);
+        box-shadow: inset 3px 0 0 var(--primary);
+      }
+      summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text);
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+      }
+      summary::-webkit-details-marker { display: none; }
+      .summary-left { display: flex; align-items: center; gap: 7px; min-width: 0; }
+      summary svg[data-chev] { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
+      details[open] > summary svg[data-chev] { transform: rotate(90deg); }
+      .drawer-body { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+
+      /* Sub-blocks inside Miscellaneous */
+      .misc-stack { display: grid; gap: 14px; }
+      .misc-block { padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+      .misc-block:last-child { padding-bottom: 0; border-bottom: 0; }
+
+      label { display: block; margin: 8px 0 4px; font-size: 13px; font-weight: 600; color: var(--text); }
+      input[type="text"], input[type="email"], input[type="password"], textarea.field-area {
+        width: 100%;
+        padding: 8px 11px;
+        border: 1px solid var(--line-strong);
+        border-radius: 11px;
+        background: var(--input);
+        color: var(--text);
+        font: 13.5px/1.45 var(--font-sans);
+      }
+      input:disabled, textarea:disabled { background: var(--input-disabled); border-color: var(--line); color: var(--muted); }
+      input[type="range"] { flex: 1; accent-color: var(--primary); height: 20px; }
+      input[type="checkbox"] { width: 17px; height: 17px; margin: 0; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+
+      .badge-admin {
+        display: inline-flex;
+        align-items: center;
+        height: 20px;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: var(--ok-soft);
+        border: 1px solid var(--ok-line);
+        color: var(--ok-text);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0; }
+      .stats div {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 3px;
+        padding: 8px 7px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--muted);
+        font-size: 11.5px;
+        font-weight: 500;
+      }
+      .stats div.ink-tile { background: var(--ink-bg); border-color: var(--ink-bg); color: var(--ink-muted); }
+      .stats strong {
+        display: block;
+        color: var(--text);
+        font: 600 18px/1.05 var(--font-sans);
+        font-variant-numeric: tabular-nums;
+      }
+      .stats div.ink-tile strong { color: var(--ink-fg); }
+
+      .privacy-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 8px 0 0;
+        padding: 9px 11px;
+        border-radius: 12px;
+        border: 1px solid var(--priv-line);
+        background: var(--priv-soft);
+        color: var(--priv-text);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .privacy-box svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--priv-accent); margin-top: 1px; }
+      .privacy-box strong { color: var(--priv-strong); font-weight: 600; }
+      .privacy-box code { padding: 1px 4px; border-radius: 4px; background: #ECE8F7; color: var(--priv-strong); font: 11.5px var(--font-mono); }
+
+      .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; margin: 6px 0; cursor: pointer; }
+      #events { padding-left: 18px; margin: 6px 0 0; font: 11.5px/1.45 var(--font-mono); overflow-wrap: anywhere; }
+      #events li { margin: 3px 0; color: var(--muted); }
+      kbd {
+        display: inline-block;
+        padding: 1px 5px;
+        border-radius: 5px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--text);
+        font: 600 11px/1.35 var(--font-mono);
+      }
+
       .progress-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-      .spinner { width: 14px; height: 14px; border: 2px solid var(--soft); border-top-color: var(--beacon); border-radius: 50%; flex-shrink: 0; animation: lotse-spin .8s linear infinite; }
-      .progress-track { position: relative; height: 6px; border-radius: 999px; background: var(--soft); overflow: hidden; margin-top: 8px; }
-      .progress-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--primary), var(--beacon)); transition: width .25s ease; }
-      .progress-fill.indeterminate { width: 42%; animation: lotse-slide 1.25s ease-in-out infinite; }
-      @keyframes lotse-spin { to { transform: rotate(360deg); } }
-      @keyframes lotse-slide { 0% { transform: translateX(-110%); } 100% { transform: translateX(250%); } }
-      @media (prefers-reduced-motion: reduce) { .spinner, .progress-fill.indeterminate { animation: none; } .progress-fill.indeterminate { width: 100%; opacity: .65; } }
+      .spinner {
+        width: 13px;
+        height: 13px;
+        border: 2px solid var(--line);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        flex-shrink: 0;
+        animation: valo-spin .8s linear infinite;
+      }
+      @keyframes valo-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+
       #org-line:empty, #paused-reason:empty, #role-note:empty, #auto-line:empty, #explore-progress:empty { display: none; }
-      :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
     </style>
   </head>
   <body>
     <header>
-      <div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><g class="beam"><polygon points="14.5,10.6 2,7 2,8.9"/><polygon points="14.5,12.4 2,16.2 2,14.3"/><polygon points="25.5,10.6 38,7 38,8.9"/><polygon points="25.5,12.4 38,16.2 38,14.3"/></g><rect class="lamp" x="16.4" y="9" width="7.2" height="5" rx="0.6"/><g class="tower"><circle cx="20" cy="4.4" r="1.1"/><path d="M15 9.2 Q20 3.6 25 9.2 Z"/><path d="M15.4 9 h1.4 v5 h-1.4 Z M23.2 9 h1.4 v5 h-1.4 Z"/><rect x="13.8" y="14" width="12.4" height="2.3" rx="0.6"/><path fill-rule="evenodd" d="M15.6 16.3 H24.4 L26.9 32 H13.1 Z M19.1 19.6 h1.8 v3.4 h-1.8 Z M19.1 25.4 h1.8 v3.2 h-1.8 Z"/><path d="M8.5 34 Q11 30 13.6 31.4 L16.4 29.6 L20 31.2 L23.6 29.4 L26.4 31.2 Q29.5 30 31.5 34 Z"/></g><path class="sea" d="M5 37.2 q2.5 -1.4 5 0 t5 0 t5 0 t5 0 t5 0 t5 0"/></svg><h1>Valo</h1></div>
+      <div class="brand">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+          <g class="beam"><polygon points="14.5,10.6 2,7 2,8.9"/><polygon points="14.5,12.4 2,16.2 2,14.3"/><polygon points="25.5,10.6 38,7 38,8.9"/><polygon points="25.5,12.4 38,16.2 38,14.3"/></g>
+          <rect class="lamp" x="16.4" y="9" width="7.2" height="5" rx="0.6"/>
+          <g class="tower"><circle cx="20" cy="4.4" r="1.1"/><path d="M15 9.2 Q20 3.6 25 9.2 Z"/><path d="M15.4 9 h1.4 v5 h-1.4 Z M23.2 9 h1.4 v5 h-1.4 Z"/><rect x="13.8" y="14" width="12.4" height="2.3" rx="0.6"/><path fill-rule="evenodd" d="M15.6 16.3 H24.4 L26.9 32 H13.1 Z M19.1 19.6 h1.8 v3.4 h-1.8 Z M19.1 25.4 h1.8 v3.2 h-1.8 Z"/><path d="M8.5 34 Q11 30 13.6 31.4 L16.4 29.6 L20 31.2 L23.6 29.4 L26.4 31.2 Q29.5 30 31.5 34 Z"/></g>
+          <path class="sea" d="M5 37.2 q2.5 -1.4 5 0 t5 0 t5 0 t5 0 t5 0 t5 0"/>
+        </svg>
+        <h1>Valo</h1>
+      </div>
       <div class="chips"><span id="voice-state" class="activity voice" hidden></span><span id="activity" class="activity">Valo paused</span></div>
     </header>
-    <section id="paused-box" class="paused" aria-labelledby="paused-title" role="status" hidden>
-      <h2 id="paused-title">Valo is paused on this page</h2>
-      <p id="paused-reason" class="muted"></p>
-      <p class="muted">Valo observes nothing here, takes no screenshots and sends nothing. It resumes by itself on allowed pages.</p>
-    </section>
-    <section aria-labelledby="account-title">
-      <h2 id="account-title">Account</h2>
-      <form id="login">
-        <label for="email">Email</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="admin@demo.test" />
-        <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" maxlength="200" placeholder="demo1234" />
-        <div class="row" style="margin-top: 8px"><button id="login-button" type="submit">Sign in</button></div>
-        <p class="muted">Without signing in, Valo runs in dev mode with the demo role from “Demo context”. Demo admin: admin@demo.test / demo1234</p>
-      </form>
-      <div id="signed-in" class="row" hidden><p id="account-line" style="flex: 1"></p><span id="admin-badge" class="badge-admin" hidden>Admin</span><button id="logout" class="secondary small" type="button">Sign out</button></div>
-      <p id="org-line" class="muted"></p>
-    </section>
-    <section id="explore-box" class="admin-card" aria-labelledby="explore-title" hidden>
-      <h2 id="explore-title">Setup (admin)</h2>
-      <p class="muted">Explores the pages, tabs, menus and dialogs of this app domain once, without submitting any forms.</p>
-      <div class="actions">
-        <button id="explore-start" type="button">Explore app</button>
-        <button id="explore-stop" class="danger" type="button" disabled>Stop</button>
-      </div>
-      <div id="explore-bar-wrap" class="progress-track" hidden><div id="explore-bar" class="progress-fill"></div></div>
-      <div id="explore-status-row" class="progress-row">
-        <span id="explore-spinner" class="spinner" hidden aria-hidden="true"></span>
-        <p id="explore-progress" class="muted" style="margin: 0" role="status"></p>
-      </div>
-    </section>
-    <section id="offer-box" class="callout" aria-labelledby="offer-title" hidden>
-      <h2 id="offer-title">Valo can help</h2>
-      <p id="offer-text"></p>
-      <div class="actions"><button id="offer-yes" type="button">Show me</button><button id="offer-no" class="secondary" type="button">Not now</button></div>
-    </section>
-    <section id="plan-box" class="callout" aria-labelledby="plan-title" hidden>
-      <h2 id="plan-title">Guide</h2>
-      <p id="plan-step"></p>
-      <div class="actions"><button id="plan-back" class="secondary small" type="button">Back</button><button id="plan-next" class="small" type="button">Next</button><button id="plan-end" class="secondary small" type="button">End</button></div>
-    </section>
-    <section aria-labelledby="observe-title">
-      <h2 id="observe-title">Help while you work</h2>
-      <p class="muted">Valo starts by itself on your organization’s apps; “Pause” stops it until you start it again. Actions and screenshot history stay in your browser at first.</p>
-      <p id="auto-line" class="muted"></p>
-      <div class="actions"><button id="start" type="button">Start observing</button><button id="stop" class="secondary" type="button" disabled>Pause</button></div>
-      <div class="stats" aria-label="Local history">
-        <div><strong id="event-count">0</strong>Actions</div>
-        <div><strong id="snapshot-count">0</strong>UI states</div>
-        <div><strong id="frame-count">0</strong>Screenshots</div>
-        <div><strong id="state-count">0</strong>Understood</div>
-      </div>
-      <p class="muted">Privacy: <strong>pseudonymized, not anonymous</strong> before sending – page content and patterns (IBAN, email, phone, salutation + name, street) are replaced in the browser by placeholders such as <code>[Person-1]</code> and translated back before display; content areas in screenshots are painted over. A freely typed name that is not on the page is only caught by the patterns.</p>
-    </section>
-    <section aria-labelledby="question-title">
-      <h2 id="question-title">Ask directly</h2>
-      <form id="ask">
-        <label for="question">What do you want to do?</label>
-        <textarea id="question" rows="3" maxlength="500" placeholder="How do I change the IBAN?"></textarea>
-        <div class="row"><button id="ask-button" type="submit">Show next step</button><button id="listen" class="secondary" type="button" title="Ask by voice" aria-label="Ask by voice">🎙</button></div>
-      </form>
-      <p id="last-question" class="muted"></p>
-      <p class="muted"><span data-shortcut="ask">Alt+L</span> opens Valo. Questions work even when Valo is not observing. Valo only highlights – you do the clicking and typing.</p>
-    </section>
-    <p id="status" role="status">Valo is ready.</p>
-    <p id="notice" role="alert"></p>
-    <p id="image-status" class="muted"></p>
-    <section aria-labelledby="behaviour-title">
-      <h2 id="behaviour-title">Valo behavior</h2>
-      <label class="toggle"><input id="auto-activate" type="checkbox" checked />Automatically active on my organization’s apps</label>
-      <label class="toggle"><input id="show-orb" type="checkbox" checked />Show the status orb on the page</label>
-      <p id="orb-hidden-line" class="muted row" hidden><span id="orb-hidden-text"></span><button id="orb-unhide" class="secondary small" type="button">Show again</button></p>
-      <label class="toggle"><input id="proactive" type="checkbox" />Offer help proactively</label>
-      <label class="toggle"><input id="voice" type="checkbox" />Voice: wake word &amp; hotkey (<span data-shortcut="listen">Alt+Shift+L</span>)</label>
-      <label class="toggle"><input id="speak" type="checkbox" />Read answers aloud (voice questions only)</label>
-      <p id="snooze-line" class="muted"></p>
-      <div class="actions"><button id="snooze" class="secondary small" type="button">Quiet for 10 min</button><button id="resume" class="secondary small" type="button" hidden>Offer again</button></div>
-      <label for="threshold">Offer threshold: <strong id="threshold-value">–</strong></label>
-      <div class="row"><input id="threshold" type="range" min="0.6" max="0.95" step="0.01" value="0.8" aria-describedby="threshold-help" /><button id="threshold-save" class="secondary small" type="button">Apply</button></div>
-      <p id="threshold-help" class="muted">Higher = Valo offers help less often. 👍/👎 on offers adjust the threshold automatically.</p>
-      <p id="prefs-message" class="muted"></p>
-    </section>
-    <section aria-labelledby="workflow">
-      <h2 id="workflow">No workflow yet</h2>
-      <p id="intent" class="muted">The goal is identified when you might need help.</p>
-      <p id="decision" class="muted"></p>
-      <details><summary>Recent actions</summary><ul id="events"></ul><p id="analytics" class="muted"></p></details>
-    </section>
-    <details>
-      <summary>Demo context</summary>
-      <form id="settings">
-        <label class="toggle"><input id="screenshots" type="checkbox" checked />Record screenshot history</label>
-        <p class="muted">Selected screenshots are sent along with a question or a possible need for help, with content areas painted over.</p>
-        <label for="role">Role in the demo scenario</label><input id="role" type="text" maxlength="100" placeholder="e.g. Accounting" />
-        <p id="role-note" class="muted"></p>
-        <label for="knowledge">Knowledge about the app</label><textarea id="knowledge" rows="4" maxlength="12000" placeholder="Describe the features and the steps of the demo flow."></textarea>
-        <button type="submit">Apply context</button>
-      </form>
-    </details>
-    <section aria-labelledby="debug-title">
-      <h2 id="debug-title">Troubleshooting</h2>
-      <p class="muted">Copies the session context (settings, policy, recent server calls, hints, voice log, events) as text to paste into a message to the developers. No sign-in token, keys or screenshots; page content is pseudonymized.</p>
-      <div class="row"><button id="debug-copy" class="secondary small" type="button">Copy debug context</button><span id="debug-note" class="muted" role="status"></span></div>
-      <textarea id="debug-text" rows="6" readonly hidden aria-label="Debug context"></textarea>
-    </section>
+
+    <main class="panel">
+      <section id="paused-box" class="paused" aria-labelledby="paused-title" role="status" hidden>
+        <h2 id="paused-title">Valo is paused on this page</h2>
+        <p id="paused-reason" class="muted"></p>
+        <p class="muted">Valo observes nothing here and resumes automatically on allowed pages.</p>
+      </section>
+
+      <section id="offer-box" class="callout" aria-labelledby="offer-title" hidden>
+        <h2 id="offer-title">Valo can help</h2>
+        <p id="offer-text"></p>
+        <div class="actions"><button id="offer-yes" class="small" type="button">Show me</button><button id="offer-no" class="secondary small" type="button">Not now</button></div>
+      </section>
+
+      <section id="plan-box" class="callout" aria-labelledby="plan-title" hidden>
+        <h2 id="plan-title">Active guide</h2>
+        <p id="plan-step"></p>
+        <div class="actions"><button id="plan-back" class="secondary small" type="button">Back</button><button id="plan-next" class="small" type="button">Next</button><button id="plan-end" class="secondary small" type="button">End</button></div>
+      </section>
+
+      <!-- Primary Guidance Chat Interface -->
+      <section class="chat-card" aria-labelledby="question-title">
+        <div class="chat-header">
+          <h2 id="question-title">Guidance</h2>
+          <button id="chat-clear" class="ghost" type="button" hidden>Clear</button>
+        </div>
+
+        <div id="chat-log" class="chat-log" role="log" aria-live="polite">
+          <div id="chat-empty" class="chat-empty">
+            <strong>How can Valo guide you?</strong>
+            <span class="muted">Type a question below or ask by voice (<kbd data-shortcut="listen">Alt+Shift+L</kbd> / “Hey Jarvis”). Valo highlights the exact spot on the page.</span>
+          </div>
+        </div>
+
+        <form id="ask" class="composer">
+          <div class="composer-row">
+            <textarea id="question" rows="1" maxlength="500" aria-label="Ask Valo a question" placeholder="Ask a question …"></textarea>
+            <button id="listen" class="secondary" type="button" title="Ask by voice" aria-label="Ask by voice">🎙</button>
+            <button id="ask-button" type="submit">Send</button>
+          </div>
+          <p class="composer-hint"><kbd>Enter</kbd> sends · <kbd>Shift+Enter</kbd> new line · <kbd data-shortcut="ask">Alt+L</kbd> opens Valo</p>
+          <p id="last-question" hidden></p>
+        </form>
+      </section>
+
+      <p id="notice" role="alert"></p>
+
+      <!-- Admin-only collapsed area: Explore app (collapsed by default) -->
+      <details id="explore-box" class="compact-drawer admin-drawer" hidden>
+        <summary>
+          <span class="summary-left">Explore app <span class="badge-admin">Admin</span></span>
+          <svg data-chev viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </summary>
+        <div class="drawer-body">
+          <p class="muted" style="margin-top: 0">Walks pages, tabs, menus and dialogs of this app domain once without submitting forms, and adds missing features automatically.</p>
+          <div class="actions">
+            <button id="explore-start" class="small" type="button">Explore app</button>
+            <button id="explore-stop" class="danger small" type="button" disabled>Stop</button>
+          </div>
+          <div id="explore-status-row" class="progress-row" hidden>
+            <span id="explore-spinner" class="spinner" hidden aria-hidden="true"></span>
+            <p id="explore-progress" class="muted" style="margin: 0" role="status"></p>
+          </div>
+        </div>
+      </details>
+
+      <!-- Everything else collapsed under Miscellaneous (collapsed by default) -->
+      <details id="misc-box" class="compact-drawer">
+        <summary>
+          <span class="summary-left">Miscellaneous</span>
+          <svg data-chev viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </summary>
+        <div class="drawer-body misc-stack">
+          <div class="misc-block">
+            <span class="section-kicker">Organization</span>
+            <h3>Account</h3>
+            <form id="login">
+              <label for="email">Email</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="admin@demo.test" />
+              <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" maxlength="200" placeholder="demo1234" />
+              <div class="actions"><button id="login-button" class="small" type="submit">Sign in</button></div>
+              <p class="muted">Demo admin: <code>admin@demo.test</code> / <code>demo1234</code></p>
+            </form>
+            <div id="signed-in" class="row" style="flex-wrap: wrap" hidden>
+              <p id="account-line" style="flex: 1; margin: 0; font-weight: 600"></p>
+              <span id="admin-badge" class="badge-admin" hidden>Admin</span>
+              <button id="logout" class="secondary small" type="button">Sign out</button>
+            </div>
+            <p id="org-line" class="muted"></p>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Observation</span>
+            <h3>Local activity &amp; status</h3>
+            <p id="status" class="muted" role="status">Valo is ready.</p>
+            <p id="image-status" class="muted" style="color: var(--warn-text)"></p>
+            <p id="auto-line" class="muted"></p>
+            <div class="actions"><button id="start" class="small" type="button">Start observing</button><button id="stop" class="secondary small" type="button" disabled>Pause</button></div>
+            <div class="stats" aria-label="Local history">
+              <div class="ink-tile"><strong id="event-count">0</strong>Actions</div>
+              <div><strong id="snapshot-count">0</strong>UI states</div>
+              <div><strong id="frame-count">0</strong>Frames</div>
+              <div><strong id="state-count">0</strong>Inferred</div>
+            </div>
+            <div class="privacy-box">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 2.5l6 2.5v4.5c0 4-2.6 6.6-6 8-3.4-1.4-6-4-6-8V5z" stroke-linejoin="round"/><path d="M7.5 10l1.8 1.8 3.2-3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span><strong>Pseudonymized, not anonymous</strong> — page content &amp; patterns become <code>[Person-1]</code> locally; screenshot content areas are painted over.</span>
+            </div>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Preferences</span>
+            <h3>Valo behavior</h3>
+            <label class="toggle"><input id="auto-activate" type="checkbox" checked />Automatically active on my organization’s apps</label>
+            <label class="toggle"><input id="show-orb" type="checkbox" checked />Show the status orb on the page</label>
+            <p id="orb-hidden-line" class="muted row" hidden><span id="orb-hidden-text"></span><button id="orb-unhide" class="secondary small" type="button">Show again</button></p>
+            <label class="toggle"><input id="proactive" type="checkbox" />Offer help proactively</label>
+            <label class="toggle"><input id="voice" type="checkbox" />Voice: wake word &amp; hotkey (<span data-shortcut="listen">Alt+Shift+L</span>)</label>
+            <label class="toggle"><input id="speak" type="checkbox" />Read answers aloud (voice questions only)</label>
+            <p id="snooze-line" class="muted"></p>
+            <div class="actions"><button id="snooze" class="secondary small" type="button">Quiet for 10 min</button><button id="resume" class="secondary small" type="button" hidden>Offer again</button></div>
+            <label for="threshold">Offer threshold: <strong id="threshold-value">–</strong></label>
+            <div class="row"><input id="threshold" type="range" min="0.6" max="0.95" step="0.01" value="0.8" aria-describedby="threshold-help" /><button id="threshold-save" class="secondary small" type="button">Apply</button></div>
+            <p id="threshold-help" class="muted">Higher = fewer offers. 👍/👎 adjust automatically.</p>
+            <p id="prefs-message" class="muted"></p>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Live context</span>
+            <h3 id="workflow">No workflow yet</h3>
+            <p id="intent" class="muted">The goal is inferred from the observed history.</p>
+            <p id="decision" class="muted"></p>
+            <details style="padding: 8px 10px; margin-top: 8px; background: var(--surface-2); border-radius: 10px">
+              <summary style="font-size: 12.5px">Recent actions<svg data-chev viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+              <div><ul id="events"></ul><p id="analytics" class="muted"></p></div>
+            </details>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Development</span>
+            <h3>Demo context</h3>
+            <form id="settings">
+              <label class="toggle"><input id="screenshots" type="checkbox" checked />Record screenshot history</label>
+              <label for="role">Role in the demo scenario</label><input id="role" type="text" maxlength="100" placeholder="e.g. Accounting" />
+              <p id="role-note" class="muted"></p>
+              <label for="knowledge">Knowledge about the app</label><textarea id="knowledge" class="field-area" rows="3" maxlength="12000" placeholder="Describe the features and steps of the demo flow."></textarea>
+              <div class="actions"><button class="small" type="submit">Apply context</button></div>
+            </form>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Support</span>
+            <h3>Troubleshooting</h3>
+            <p class="muted" style="margin-top: 0">Copies the pseudonymized session context (no tokens, keys or screenshots).</p>
+            <div class="row" style="margin-top: 6px"><button id="debug-copy" class="secondary small" type="button">Copy debug context</button><span id="debug-note" class="muted" role="status"></span></div>
+            <textarea id="debug-text" class="field-area" rows="5" readonly hidden aria-label="Debug context" style="margin-top: 8px; font: 11.5px/1.4 var(--font-mono)"></textarea>
+          </div>
+        </div>
+      </details>
+    </main>
+
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

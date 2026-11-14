@@ -1,5 +1,5 @@
 import type { VoiceState } from "@lotse/shared";
-import type { LotseResult, LotseStatus, PageStatus } from "../background";
+import type { ChatEntry, LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
 import { applyShortcutLabels, isMac, shortcutLabels } from "../../utils/shortcuts";
 import "./presence"; // D-29 switches: "Automatically active", "Show the status orb"
@@ -11,6 +11,9 @@ const stopButton = get<HTMLButtonElement>("#stop");
 const askForm = get<HTMLFormElement>("#ask");
 const question = get<HTMLTextAreaElement>("#question");
 const askButton = get<HTMLButtonElement>("#ask-button");
+const chatLog = get<HTMLDivElement>("#chat-log");
+const chatEmpty = get<HTMLDivElement>("#chat-empty");
+const chatClear = get<HTMLButtonElement>("#chat-clear");
 const settingsForm = get<HTMLFormElement>("#settings");
 const screenshots = get<HTMLInputElement>("#screenshots");
 const role = get<HTMLInputElement>("#role");
@@ -24,16 +27,15 @@ const loginForm = get<HTMLFormElement>("#login");
 const email = get<HTMLInputElement>("#email");
 const password = get<HTMLInputElement>("#password");
 const loginButton = get<HTMLButtonElement>("#login-button");
-const exploreBox = get<HTMLElement>("#explore-box");
+const exploreBox = get<HTMLDetailsElement>("#explore-box");
 const exploreStart = get<HTMLButtonElement>("#explore-start");
 const exploreStop = get<HTMLButtonElement>("#explore-stop");
-const exploreBarWrap = get<HTMLDivElement>("#explore-bar-wrap");
-const exploreBar = get<HTMLDivElement>("#explore-bar");
 const exploreSpinner = get<HTMLSpanElement>("#explore-spinner");
 const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 ready", listening: "🎙 listening …", thinking: "… thinking", speaking: "🔊 speaking" };
 let settingsLoaded = false;
 let thresholdDirty = false;
 let offerId: string | null = null;
+let lastChatSig = "";
 
 async function send(message: LotseMessage): Promise<LotseResult> {
   return browser.runtime.sendMessage(message);
@@ -69,19 +71,14 @@ function renderAccount(status: LotseStatus) {
     exploreStart.disabled = exp.running;
     exploreStop.disabled = !exp.running;
     const activePhase = exp.phase === "crawling" || exp.phase === "analyzing";
-    exploreBarWrap.hidden = !activePhase;
     exploreSpinner.hidden = !activePhase;
-    exploreBar.classList.toggle("indeterminate", exp.phase === "analyzing");
     const elapsedSec = exp.phaseStartedAt ? Math.max(0, Math.floor((Date.now() - exp.phaseStartedAt) / 1_000)) : 0;
 
     if (exp.phase === "crawling") {
       const shownCount = Math.min(Math.max(exp.pageCount, 1), exp.maxPages);
-      const pct = Math.min(100, Math.max(4, Math.round((shownCount / exp.maxPages) * 100)));
-      exploreBar.style.width = `${pct}%`;
       const routeInfo = exp.currentRoute ? ` · ${exp.currentRoute}` : "";
       get("#explore-progress").textContent = `Page ${shownCount} of up to ${exp.maxPages}${routeInfo} (${elapsedSec} s)`;
     } else if (exp.phase === "analyzing") {
-      exploreBar.style.width = "";
       get("#explore-progress").textContent = `Analyzing (${elapsedSec} s) …`;
     } else if (exp.phase === "done" && exp.result) {
       get("#explore-progress").textContent = exp.result.features === 0
@@ -101,8 +98,79 @@ function renderAccount(status: LotseStatus) {
 const percent = (value: number) => value.toFixed(2);
 const clock = (timestamp: number) => new Date(timestamp).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
+function renderChat(entries: ChatEntry[]) {
+  const sig = JSON.stringify(entries);
+  if (sig === lastChatSig) return;
+  const previousCount = lastChatSig ? (JSON.parse(lastChatSig) as unknown[]).length : 0;
+  lastChatSig = sig;
+
+  chatClear.hidden = entries.length === 0;
+  if (entries.length === 0) {
+    chatEmpty.hidden = false;
+    chatLog.replaceChildren(chatEmpty);
+    return;
+  }
+  chatEmpty.hidden = true;
+
+  const nodes = entries.map((entry) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = `msg ${entry.role}${entry.error ? " error" : ""}${entry.pending ? " pending" : ""}`;
+
+    const meta = document.createElement("div");
+    meta.className = "msg-meta";
+    const who = document.createElement("span");
+    who.textContent = entry.role === "user" ? "You" : "Valo";
+    meta.append(who);
+
+    if (entry.role === "user" && entry.source === "voice") {
+      const tag = document.createElement("span");
+      tag.className = "msg-tag";
+      tag.textContent = "🎙 Voice";
+      meta.append(tag);
+    } else if (entry.role === "user" && entry.source === "proactive") {
+      const tag = document.createElement("span");
+      tag.className = "msg-tag";
+      tag.textContent = "Proactive";
+      meta.append(tag);
+    } else if (entry.role === "assistant" && entry.spoken) {
+      const tag = document.createElement("span");
+      tag.className = "msg-tag";
+      tag.textContent = "🔊 Spoken";
+      meta.append(tag);
+    }
+
+    const time = document.createElement("span");
+    time.textContent = clock(entry.ts);
+    meta.append(time);
+
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
+    bubble.textContent = entry.text;
+
+    if (entry.steps?.length) {
+      const list = document.createElement("ol");
+      list.className = "msg-steps";
+      for (const stepText of entry.steps) {
+        const li = document.createElement("li");
+        li.textContent = stepText;
+        list.append(li);
+      }
+      bubble.append(list);
+    }
+
+    wrapper.append(meta, bubble);
+    return wrapper;
+  });
+
+  chatLog.replaceChildren(...nodes);
+  if (entries.length >= previousCount) {
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+}
+
 function render(status: LotseStatus) {
   renderAccount(status);
+  renderChat(status.chat ?? []);
   get("#activity").textContent = status.recording ? "Valo active" : "Valo paused";
   get("#activity").classList.toggle("active", status.recording);
   const voiceChip = get("#voice-state");
@@ -117,7 +185,6 @@ function render(status: LotseStatus) {
   get("#state-count").textContent = String(status.stateCount);
   get("#status").textContent = status.message;
   get("#image-status").textContent = status.screenshotMessage;
-  get("#last-question").textContent = status.lastQuestion ? `${status.lastQuestion.source === "voice" ? "🎙" : "⌨"} “${status.lastQuestion.text}”` : "";
   get("#workflow").textContent = status.inference?.workflowName ?? (status.workflowId ? "Observing workflow" : "No workflow yet");
   get("#intent").textContent = status.inference?.intent.goal ?? "The goal is inferred from the observed history.";
   get("#decision").textContent = status.decision
@@ -146,7 +213,14 @@ function render(status: LotseStatus) {
   voice.checked = status.settings.voice;
   speakToggle.checked = status.settings.speak;
   speakToggle.disabled = !status.settings.voice;
-  get<HTMLButtonElement>("#listen").disabled = !status.settings.voice;
+  const listenBtn = get<HTMLButtonElement>("#listen");
+  const isListening = status.settings.voice && status.voiceState === "listening";
+  listenBtn.disabled = !status.settings.voice;
+  listenBtn.textContent = isListening ? "⏹" : "🎙";
+  listenBtn.classList.toggle("danger", isListening);
+  listenBtn.classList.toggle("secondary", !isListening);
+  listenBtn.title = isListening ? "Stop listening" : "Speak question";
+  listenBtn.setAttribute("aria-label", listenBtn.title);
   const snoozed = status.snoozedUntil !== null;
   get("#snooze-line").textContent = !status.settings.proactive ? "Valo won't offer help on its own." : snoozed ? `Paused until ${clock(status.snoozedUntil!)}.` : "";
   get("#snooze").hidden = snoozed || !status.settings.proactive;
@@ -178,13 +252,39 @@ async function act(message: LotseMessage) {
   try {
     const result = await send(message);
     if (result.ok) render(result.status);
-    else notice.textContent = result.error;
+    else if (message.type !== "lotse:ask") notice.textContent = result.error; // ask errors already appear in chat
   } catch {
     notice.textContent = contextInvalidated()
       ? RELOAD_HINT
       : "Valo is not reachable yet. Reload the extension.";
   }
 }
+
+function resizeQuestion() {
+  question.style.height = "auto";
+  question.style.height = `${Math.min(110, Math.max(38, question.scrollHeight))}px`;
+}
+
+question.addEventListener("input", resizeQuestion);
+question.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+    event.preventDefault();
+    if (!askButton.disabled && question.value.trim()) askForm.requestSubmit();
+  }
+});
+askForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const text = question.value.trim();
+  if (text) {
+    askButton.disabled = true;
+    question.value = "";
+    resizeQuestion();
+    void act({ type: "lotse:ask", question: text })
+      .then(() => refresh())
+      .finally(() => { askButton.disabled = false; });
+  }
+});
+chatClear.addEventListener("click", () => { void act({ type: "lotse:chat-clear" }); });
 
 loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -198,14 +298,6 @@ exploreStart.addEventListener("click", () => { void act({ type: "lotse:explore-s
 exploreStop.addEventListener("click", () => { void act({ type: "lotse:explore-stop" }); });
 startButton.addEventListener("click", () => { void act({ type: "lotse:start" }); });
 stopButton.addEventListener("click", () => { void act({ type: "lotse:stop" }); });
-askForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const text = question.value.trim();
-  if (text) {
-    askButton.disabled = true;
-    void act({ type: "lotse:ask", question: text }).finally(() => { askButton.disabled = false; });
-  }
-});
 settingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
   void act({ type: "lotse:update-settings", settings: { screenshots: screenshots.checked, role: role.value, appKnowledge: knowledge.value } });
@@ -250,7 +342,6 @@ async function copyDebug() {
       await navigator.clipboard.writeText(text);
       debugNote.textContent = `Copied ✓ (${Math.max(1, Math.round(text.length / 1024))} KB)`;
     } catch {
-      // The click's user activation can run out while the worker collects → let the user copy by hand.
       debugText.value = text;
       debugText.hidden = false;
       debugText.focus();

@@ -1,0 +1,71 @@
+schemaVersion: v0.2
+# Valo on Codesphere — one workspace "valo", one domain, path routing (docs/hosting-codesphere.md):
+#   /         dashboard  (Next.js)
+#   /api      server     (Next.js, /api/lotse/*, /api/knowledge/*)
+#   /rest/v1  postgrest  (stripPath)
+#   /auth/v1  gotrue     (stripPath)
+# Every service runs in its own container on port 3000; prepare's files (/home/user/app) are shared.
+# All configuration comes from Codesphere workspace variables — nothing secret in this repo (repo is public).
+# Security (docs/hosting-codesphere.md): GoTrue sign-up off (GOTRUE_DISABLE_SIGNUP=true in gotrue-env.sh),
+# server always NODE_ENV=production and refuses to start with LOTSE_DEV_AUTH, Postgres stays internal (no path).
+# Node 24.22.1 via fnm like ci.fuller-dashboard.yml (CVE-2026-111497); new workspace: `fnm install 24.22.1` once.
+
+prepare:
+  steps:
+    # NEXT_PUBLIC_* are inlined at build time → the workspace variables must be set before this runs.
+    - name: Build
+      command: fnm exec --using=24.22.1 -- bash -c "npm ci && npm run build -w @lotse/dashboard -w @lotse/server"
+    - name: PostgREST + GoTrue binaries
+      command: bash infra/codesphere/download-bins.sh
+    - name: psql
+      command: command -v psql || nix-env -iA nixpkgs.postgresql_18
+    # After the build on purpose: a failed migration does not hide a build error. Seeds are not applied.
+    - name: Database migration
+      command: bash infra/codesphere/migrate.sh
+
+test:
+  steps:
+    - name: Typecheck
+      command: fnm exec --using=24.22.1 -- npm run typecheck
+
+run:
+  dashboard:
+    steps:
+      - name: start dashboard
+        command: bash infra/codesphere/start-dashboard.sh
+    plan: 101
+    replicas: 1
+    isPublic: true
+    network:
+      path: /
+      stripPath: false
+  server:
+    steps:
+      - name: start server
+        command: bash infra/codesphere/start-server.sh
+    plan: 101
+    replicas: 1
+    isPublic: true
+    network:
+      path: /api
+      stripPath: false
+  postgrest:
+    steps:
+      - name: start postgrest
+        command: bash infra/codesphere/start-postgrest.sh
+    plan: 101
+    replicas: 1
+    isPublic: true
+    network:
+      path: /rest/v1
+      stripPath: true
+  gotrue:
+    steps:
+      - name: start gotrue
+        command: bash infra/codesphere/start-gotrue.sh
+    plan: 101
+    replicas: 1
+    isPublic: true
+    network:
+      path: /auth/v1
+      stripPath: true

@@ -74,14 +74,16 @@ async function handle(command: OffscreenCommand): Promise<OffscreenReply> {
     case "configure":
       return { ok: true, mic };
     case "listen":
+      // Toggle off reliably even if the service worker restarted while an utterance was already active.
+      if (utterance || mode === "listening") return stopUtterance();
       if (mic !== "granted") return { ok: false, mic, error: "Microphone access is not granted." };
       startUtterance(command.trigger);
       return { ok: true, mic };
     case "stop-listening":
-      utterance?.stop();
-      return { ok: true, mic };
+      return stopUtterance();
     case "cancel":
       utterance?.cancel();
+      setMode(mic === "granted" && config?.voice ? "idle" : "off");
       return { ok: true, mic };
     case "speak":
       return speak(command.text);
@@ -292,6 +294,19 @@ function startUtterance(trigger: ListenTrigger): void {
       setMode(mic === "granted" && config?.voice ? "idle" : "off");
     },
   });
+}
+
+function stopUtterance(): OffscreenReply {
+  const active = utterance;
+  if (!active) {
+    setMode(mic === "granted" && config?.voice ? "idle" : "off");
+    return { ok: true, mic, transcribing: false };
+  }
+  const hadSpeech = active.hasSpeech();
+  // Leave "listening" immediately so the orb and mic button respond instantaneously on click.
+  setMode(mic === "granted" && config?.voice ? "idle" : "off");
+  active.stop();
+  return { ok: true, mic, transcribing: hadSpeech && utterance !== null };
 }
 
 /** Short rising tone: "I'm listening". */
