@@ -289,11 +289,12 @@ export function findStuckSignal(context: ObservationContext | null): StuckSignal
   }
 
   // 3. Unsuccessful searches (≥ 2 empty searches, OR 1 empty search followed by hunting through ≥ 2 routes/tabs).
-  const searches = recent.filter((event) => event.type === "search");
-  const emptyResults = recent.filter((event) => event.type === "empty_results");
+  const searches = context.workflow.events.filter((event) => event.type === "search" && event.ts >= now - 90_000);
+  const emptyResults = context.workflow.events.filter((event) => event.type === "empty_results" && event.ts >= now - 90_000);
   const failedAttempts = searches.filter((search, index) => {
+    if (search.detail?.includes("results=0")) return true;
     const until = searches[index + 1]?.ts ?? now;
-    return emptyResults.some((result) => result.route === search.route && result.ts >= search.ts && result.ts <= until);
+    return emptyResults.some((result) => result.route === search.route && result.ts >= search.ts - 600 && result.ts <= until + 600);
   });
   if (failedAttempts.length >= 2) {
     return { type: "unsuccessful_searches", reason: `At least ${failedAttempts.length} search attempts returned no results.` };

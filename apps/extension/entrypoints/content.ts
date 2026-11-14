@@ -8,8 +8,8 @@ import { ORB_HOST_ID, setupOrb } from "../utils/orb";
 import { collectPagePrivacy, type WithPrivacy } from "../utils/pseudonymize";
 
 const INTERACTIVE = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
-const SIGNAL_ELEMENTS = '[role="alert"], [role="status"], .field-error, .error-message, .alert-error, .empty-state, .search-empty, .no-results, [data-empty-state], [aria-invalid="true"]';
-const EMPTY_RESULTS = /keine?\s+(?:such)?(?:ergebnisse|treffer)|nichts\s+gefunden|no\s+(?:search\s+)?results|nothing\s+found/i;
+const SIGNAL_ELEMENTS = '[role="alert"], [role="status"], [aria-live="polite"], .field-error, .error-message, .alert-error, .empty-state, .empty-row, .empty-row td, .result-count, .search-empty, .no-results, [data-empty-state], [aria-invalid="true"]';
+const EMPTY_RESULTS = /keine?\s+(?:such)?(?:ergebnisse|treffer)|nichts\s+gefunden|kein(?:e|en|er)?\s+[\p{L}-]+\s+(?:gefunden|vorhanden|für\s+diese|mit\s+diesem)|^0\s+(?:kunden|aufgaben|angebote|ergebnisse|treffer|einträge|datensätze|results|items|records|matches)\b|no\s+(?:matching\s+|search\s+)?(?:results|items|records|customers|tasks)\b|nothing\s+found/iu;
 const ERROR_MESSAGE = /fehler|ungültig|ungultig|erforderlich|fehlgeschlagen|keine\s+berechtigung|zugriff\s+verweigert|nicht\s+berechtigt|invalid|error|failed|required|permission\s+denied|access\s+denied|forbidden/i;
 const PERMISSION_ERROR = /keine\s+berechtigung|zugriff\s+verweigert|nicht\s+berechtigt|nur\s+für\s+die\s+rolle|permission\s+denied|access\s+denied|forbidden/i;
 const SEARCH_LABEL = /such|search|filtern|filter/i;
@@ -27,6 +27,7 @@ let idleSent = false;
 let previousErrors = new Set<string>();
 let previousEmpty = false;
 let lastSearchAt = 0;
+let lastSearchSig = "";
 let hoverTimer: ReturnType<typeof setTimeout> | undefined;
 let hoveredDisabledHint: { text: string; until: number } | null = null;
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -185,25 +186,25 @@ export default defineContentScript({
       if (event.isTrusted && !isLotseEvent(event) && !paused()) onGuidedChange(event);
       if (!observeUserEvent(event)) return;
       const element = interactiveTarget(event);
-      if (element && isSearch(element)) recordSearch(element);
+      if (element && isSearch(element)) recordSearch(element, false);
       scheduleState();
     });
     listen(document, "keydown", (event) => {
       if (event.isTrusted && (event as KeyboardEvent).key === "Escape" && mode !== null) onEscape();
       if (!observeUserEvent(event)) return;
       const element = interactiveTarget(event);
-      if ((event as KeyboardEvent).key === "Enter" && element && isSearch(element)) recordSearch(element);
+      if ((event as KeyboardEvent).key === "Enter" && element && isSearch(element)) recordSearch(element, true);
     });
     listen(document, "search", (event) => {
       if (!observeUserEvent(event)) return;
       const element = interactiveTarget(event);
-      if (element) recordSearch(element);
+      if (element) recordSearch(element, true);
     });
     listen(document, "submit", (event) => {
       if (!observeUserEvent(event)) return;
       const form = event.target instanceof HTMLFormElement ? event.target : null;
       const search = form?.querySelector<HTMLElement>('input[type="search"], [role="searchbox"]');
-      if (search) recordSearch(search);
+      if (search) recordSearch(search, true);
       else sendObservation(makeEvent("submit", form ?? undefined), buildSnapshot());
       after(650, () => captureState(true));
     });
@@ -381,8 +382,8 @@ function isSearch(element: HTMLElement) {
     Boolean(element.closest('[role="search"]')) || SEARCH_LABEL.test(accessibleName(element));
 }
 
-const REPEATED_CLICKS = { count: 5, disabledCount: 2, deadCount: 3, rageCount: 4, windowMs: 20_000, rageWindowMs: 5_000, cell: 24 } as const;
-let pointerHits: Array<{ key: string; ts: number; snapshotId: string | undefined }> = [];
+const REPEATED_CLICKS = { count: 5, disabledCount: 2, deadCount: 3, rageCount: 4, windowMs: 20_000, rageWindowMs: 6_000, radiusPx: 64 } as const;
+let pointerHits: Array<{ elementKey: string | null; route: string; x: number; y: number; ts: number; snapshotId: string | undefined }> = [];
 const repeatedClickFired = new Map<string, number>();
 
 function isControlDisabled(element: HTMLElement): boolean {
@@ -414,16 +415,21 @@ function resolveControlFromEvent(event: PointerEvent): HTMLElement | undefined {
  */
 function analyzePointerPress(event: PointerEvent): { type: "click" | "repeated_click" | "rage_click"; element?: HTMLElement; detail: string; disabledAttempt?: boolean } | null {
   const element = resolveControlFromEvent(event);
-  const spot = element
-    ? `${roleOf(element)}:${accessibleName(element)}`
-    : `pt:${Math.round(event.clientX / REPEATED_CLICKS.cell)},${Math.round(event.clientY / REPEATED_CLICKS.cell)}`;
-  const key = `${route()}|${spot}`;
+  const currentRoute = route();
+  const elementKey = element ? `${currentRoute}|${roleOf(element)}:${accessibleName(element)}` : null;
+  const x = event.clientX;
+  const y = event.clientY;
+  const fireKey = elementKey ?? `${currentRoute}|area:${Math.round(x / 64)},${Math.round(y / 64)}`;
   const now = Date.now();
   const snapId = currentSnapshot?.id;
   pointerHits = pointerHits.filter((hit) => now - hit.ts <= REPEATED_CLICKS.windowMs);
-  pointerHits.push({ key, ts: now, snapshotId: snapId });
+  pointerHits.push({ elementKey, route: currentRoute, x, y, ts: now, snapshotId: snapId });
 
-  const hits = pointerHits.filter((hit) => hit.key === key);
+  const sameSpot = (hit: (typeof pointerHits)[number]) =>
+    hit.route === currentRoute &&
+    ((elementKey !== null && hit.elementKey === elementKey) || Math.hypot(hit.x - x, hit.y - y) <= REPEATED_CLICKS.radiusPx);
+
+  const hits = pointerHits.filter(sameSpot);
   const count = hits.length;
   const disabled = Boolean(element && isControlDisabled(element));
   const reason = element && disabled ? disabledReason(element) : "";
@@ -431,11 +437,11 @@ function analyzePointerPress(event: PointerEvent): { type: "click" | "repeated_c
     hoveredDisabledHint = { text: `Locked (${accessibleName(element)}): ${reason}`.slice(0, 160), until: now + 15_000 };
   }
 
-  const cooldownMs = disabled ? 10_000 : REPEATED_CLICKS.windowMs;
-  const recentlyFired = now - (repeatedClickFired.get(key) ?? 0) < cooldownMs;
+  const cooldownMs = 8_000;
+  const recentlyFired = now - (repeatedClickFired.get(fireKey) ?? 0) < cooldownMs;
 
   if (disabled && count >= REPEATED_CLICKS.disabledCount && !recentlyFired) {
-    repeatedClickFired.set(key, now);
+    repeatedClickFired.set(fireKey, now);
     return {
       type: "repeated_click",
       element,
@@ -456,7 +462,7 @@ function analyzePointerPress(event: PointerEvent): { type: "click" | "repeated_c
 
   const rageHits = hits.filter((hit) => now - hit.ts <= REPEATED_CLICKS.rageWindowMs);
   if (rageHits.length >= REPEATED_CLICKS.rageCount && !recentlyFired) {
-    repeatedClickFired.set(key, now);
+    repeatedClickFired.set(fireKey, now);
     return {
       type: "rage_click",
       element,
@@ -467,7 +473,7 @@ function analyzePointerPress(event: PointerEvent): { type: "click" | "repeated_c
   const recentDead = hits.filter((hit) => now - hit.ts <= 15_000);
   const unchangedState = Boolean(snapId && recentDead.length >= REPEATED_CLICKS.deadCount && recentDead.every((hit) => hit.snapshotId === snapId));
   if (element && !disabled && !isEntry(element) && roleOf(element) !== "tab" && unchangedState && !recentlyFired) {
-    repeatedClickFired.set(key, now);
+    repeatedClickFired.set(fireKey, now);
     return {
       type: "repeated_click",
       element,
@@ -476,7 +482,7 @@ function analyzePointerPress(event: PointerEvent): { type: "click" | "repeated_c
   }
 
   if (count >= REPEATED_CLICKS.count && !recentlyFired) {
-    repeatedClickFired.set(key, now);
+    repeatedClickFired.set(fireKey, now);
     return {
       type: "repeated_click",
       element,
@@ -543,16 +549,34 @@ function scheduleState() {
   stateTimer = setTimeout(() => captureState(), 350);
 }
 
-function recordSearch(element: HTMLElement) {
+function recordSearch(element: HTMLElement, explicit = false) {
   clearTimeout(searchTimer);
-  if (!recording || paused() || Date.now() - lastSearchAt < 400) return;
-  lastSearchAt = Date.now();
-  const valueLen = element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement ? element.value.trim().length : 0;
+  if (!recording || paused()) return;
+  const rawVal = element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement ? element.value.trim() : "";
+  // Ignore cleared/empty search inputs so clearing the field doesn't count as a search attempt.
+  if (!rawVal && !explicit) return;
+  const sig = `${route()}|${accessibleName(element)}|${rawVal.length}`;
+  const now = Date.now();
+  // Avoid double-counting `input` debounce followed immediately by `change` on blur for the exact same query.
+  if (!explicit && sig === lastSearchSig && now - lastSearchAt < 1_500) return;
+  if (now - lastSearchAt < 300) return;
+  lastSearchAt = now;
+  lastSearchSig = sig;
+
+  const snapshot = buildSnapshot();
+  const immediateEmpty = signals().empty;
   const searchEvent = makeEvent("search", element);
-  if (valueLen > 0) searchEvent.detail = `searchLength=${valueLen}`;
-  sendObservation(searchEvent, buildSnapshot());
-  after(400, () => captureState(false, true));
-  after(900, () => captureState(false, true));
+  const details: string[] = [];
+  if (rawVal.length > 0) details.push(`searchLength=${rawVal.length}`);
+  if (immediateEmpty) details.push("results=0");
+  if (details.length) searchEvent.detail = details.join(";");
+  sendObservation(searchEvent, snapshot);
+  if (immediateEmpty) {
+    lastProblemAt = Date.now();
+    previousEmpty = true;
+    sendObservation({ ...makeEvent("empty_results", undefined, "No results"), detail: "results=0" }, snapshot);
+  }
+  after(450, () => captureState(false, true));
 }
 
 function captureState(repeatErrors = false, repeatEmpty = false) {

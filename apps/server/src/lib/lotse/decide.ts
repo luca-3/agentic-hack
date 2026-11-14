@@ -103,6 +103,17 @@ function offerFor(feature: Feature | undefined, req: DecideRequest): { intent: s
       offer: "There's an error message scrolled out of view above — want me to help?",
     };
   }
+  if (req.trigger === "repeated_search" && !feature) {
+    const goal = req.inference && req.inference.intent.confidence >= 0.45 ? cleanText(req.inference.intent.goal, 140) : "";
+    if (goal) {
+      const offer = `No search results — want me to show you how to reach “${goal}”?`;
+      return { intent: goal, offer: offer.length <= 140 ? offer : "No search results — want me to show you where to find it?" };
+    }
+    return {
+      intent: "What can I search for here and where do I find functions or records?",
+      offer: "Nothing coming up in search? Want me to show you where to find it?",
+    };
+  }
   if (feature) {
     const offer = `Want me to show you where to find “${feature.name}”?`;
     return { intent: feature.name, offer: offer.length <= 140 ? offer : "Want me to show you where to find it?" };
@@ -125,10 +136,16 @@ export async function decide(req: DecideRequest, features: Feature[], ctx: Ctx):
   const [verdict, threshold] = await Promise.all([decideRaw(req, features, ctx), getThreshold(ctx.caller.key)]);
   // Strong deterministic evidence boosts floor confidence while still honoring the user's adaptive threshold.
   if (req.trigger === "repeated_click" || req.trigger === "rage_click") {
-    verdict.p = Math.max(verdict.p, 0.9);
+    verdict.p = Math.max(verdict.p, 0.92);
+    verdict.modelOk = true;
+  } else if (req.trigger === "repeated_search" || req.trigger === "repeated_error") {
+    verdict.p = Math.max(verdict.p, 0.88);
+    verdict.modelOk = true;
+  } else if (req.trigger === "page_pingpong") {
+    verdict.p = Math.max(verdict.p, 0.85);
     verdict.modelOk = true;
   } else if (req.events.some((e) => e.type === "error" && (e.detail?.includes("permission=true") || e.detail?.includes("offscreen=true")))) {
-    verdict.p = Math.max(verdict.p, 0.86);
+    verdict.p = Math.max(verdict.p, 0.88);
     verdict.modelOk = true;
   }
   const confidence = round(verdict.p);

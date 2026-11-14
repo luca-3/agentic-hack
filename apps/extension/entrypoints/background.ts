@@ -73,7 +73,8 @@ const HANDLED = new Set<string>([
 ]);
 const ANALYTICS_TYPES = new Set<LotseEvent["type"]>(["click", "route", "search", "error", "idle", "submit", "empty_results", "rage_click", "repeated_click"]);
 const URGENT_EVENTS = new Set<LotseEvent["type"]>(["repeated_click", "rage_click", "error", "empty_results", "idle"]);
-const OFFER_COOLDOWN_MS = 120_000; // D-20: at most one proactive offer per two minutes
+const OFFER_COOLDOWN_MS = 120_000; // D-20: passive workflow_update cooldown (2 min)
+const EXPLICIT_TRIGGER_COOLDOWN_MS = 8_000; // explicit stuck rules (rage click, ≥2 empty searches, errors) only guard double-firing
 const SNOOZE_MS = 10 * 60_000; // "Nein" → ten minutes of quiet
 const OFFER_TTL_MS = 75_000;
 const PLAN_TTL_MS = 30 * 60_000;
@@ -97,6 +98,7 @@ let lastCaptureAt = 0;
 let capturing = false;
 let trailingCaptureTimer: ReturnType<typeof setTimeout> | undefined;
 let lastDecisionAt = 0;
+let lastOfferRoute = "";
 let generation = 0;
 let requestController: AbortController | null = null;
 let persistenceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -558,12 +560,15 @@ function queueInference(delayMs = 1_000) {
 }
 
 /** User controls (D-20/D-22): switch, snooze, one open offer, cooldown, no offers during a guided plan. */
-function proactiveHold(): string | null {
+function proactiveHold(explicitSignal = false, currentRoute = ""): string | null {
   if (!settings.proactive) return "Proactive help is off. Valo keeps observing.";
   if (Date.now() < snoozeUntil) return `Proactive help paused until ${clock(snoozeUntil)}.`;
   if (pendingOffer && Date.now() - pendingOffer.shownAt < OFFER_TTL_MS) return "Valo is waiting for your answer to the help offer.";
   if (pendingOffer) { pendingOffer = null; if (prefetch && !prefetch.live) prefetch = null; }
-  if (Date.now() - lastDecisionAt < OFFER_COOLDOWN_MS) return "Valo is holding back after the last hint.";
+  const cooldown = explicitSignal
+    ? (currentRoute && currentRoute !== lastOfferRoute ? 2_000 : EXPLICIT_TRIGGER_COOLDOWN_MS)
+    : OFFER_COOLDOWN_MS;
+  if (Date.now() - lastDecisionAt < cooldown) return "Valo is holding back after the last hint.";
   if (plan && plan.tabId === recordingTab) return "Valo is walking you through a guide right now.";
   return null;
 }
@@ -615,11 +620,12 @@ async function maybeIntervene() {
       if (!findStuckSignal(buffer.getContext({ includeScreenshots: false }))) { queueInference(); return; }
       snapshot = intentSnapshot;
     }
-    const hold = proactiveHold();
-    if (hold) { message = hold; lastInferenceKey = key; return; }
-    message = "Valo is checking whether help makes sense …";
     const decideContext = buffer.getContext({ includeScreenshots: false }) ?? textContext;
     const signal = findStuckSignal(decideContext);
+    const currentRoute = new URL(snapshot.url).pathname;
+    const hold = proactiveHold(signal !== null, currentRoute);
+    if (hold) { message = hold; return; }
+    message = "Valo is checking whether help makes sense …";
     const hasRage = decideContext.workflow.events.slice(-10).some((e) => e.type === "rage_click");
     const trigger = signal?.type === "unsuccessful_searches"
       ? "repeated_search"
@@ -638,7 +644,7 @@ async function maybeIntervene() {
     lastInferenceKey = key;
     if (result.threshold !== undefined) threshold = result.threshold;
     if (!result.intervene) { message = "Valo keeps observing."; return; }
-    const holdAfter = proactiveHold();
+    const holdAfter = proactiveHold(signal !== null, currentRoute);
     if (holdAfter) { message = holdAfter; return; }
     if (buffer.workflow?.id !== context.workflow.id) { queueInference(); return; }
     const latest = await snapshotOf(tabId);
@@ -654,6 +660,7 @@ async function maybeIntervene() {
     if (!shown?.ok) { message = "Valo is holding the offer back because a hint is visible right now."; return; }
     pendingOffer = { id: offerId, text, question, tabId, shownAt: Date.now(), intent: understood.intent };
     lastDecisionAt = Date.now();
+    lastOfferRoute = currentRoute;
     message = "Valo offers help: " + text;
     schedulePersistence();
     // Screenshots are attached only now, after the explicit intervention decision.
