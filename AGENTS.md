@@ -25,7 +25,7 @@ npm workspaces (`apps/*`, `packages/*`). Each app runs on its own; they only tal
 | Extension | `apps/extension` | `@lotse/extension` | 3002 (WXT dev server) | extension dev | extension code | HTTP to server (`/api/lotse/*`), types from `@lotse/shared` |
 | Server / runtime | `apps/server` | `@lotse/server` | 3001 | server dev | all Gemini calls, agent, event/hint tables | HTTP API; reads org/knowledge tables |
 | Dashboard | `apps/dashboard` | `@lotse/dashboard` | 3000 | dashboard colleague (org creation, onboarding of organizations, central knowledge base, user management) | migrations for orgs/members/apps/app_features/knowledge tables | writes those tables; embeds knowledge via a server endpoint (planned `POST /api/knowledge/ingest`) |
-| Shared contract | `packages/shared`, `supabase/migrations` | `@lotse/shared` | – | everyone | zod schemas/types, DB schema | change via small PR + tell the others |
+| Shared contract | `packages/shared`, `supabase/migrations` | `@lotse/shared` | – | everyone | zod schemas/types, DB schema | coordinate changes directly on main |
 
 Rules:
 - **Don't edit another area's folder** without telling its owner.
@@ -76,7 +76,7 @@ npm run db:types        # regenerate packages/shared/src/database.types.ts
 
 One workspace only: `npm run <script> -w @lotse/server` (or `@lotse/dashboard`, `@lotse/extension`, `@lotse/shared`).
 
-**Before saying you're done:** `npm run typecheck && npm run lint` must pass. Run `npm run build` when you touched pages, layouts, data fetching or the extension. If you changed AI code, exercise it (`npm run ai:check` or a real request to `/api/chat` / `/api/lotse/ask`).
+**Before saying you're done:** `npm run typecheck` and `npm run lint` must pass. Run `npm run build` when you touched pages, layouts, data fetching or the extension. Per the user's standing instruction, do not create or run tests, including live AI smoke tests (`ai:check`). Type checking, linting and builds are the validation steps.
 
 ## Where things live
 
@@ -147,6 +147,7 @@ scripts/                                doctor, db:env, ai:check
 
 ## Git
 
-- Small, focused commits with clear messages; short-lived branches, merge to `main` often.
+- Small, focused commits with clear messages, directly on `main`.
+- Push completed changes directly to `origin/main`; the user explicitly authorized this workflow. Do not create pull requests.
 - Commit `AGENTS.md` changes made by `next dev` (managed block above).
-- Don't push or force-push unless the human asks.
+- Never force-push.
