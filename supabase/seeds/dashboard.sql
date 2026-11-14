@@ -29,7 +29,7 @@ insert into public.org_members (org_id, user_id, role, is_admin, email) values
 -- Apps. CORPUS: dev.fuller.de (dev environment, example data) or a local test instance on :3100 (this app uses :3000).
 insert into public.apps (id, org_id, name, domains) values
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000f1', 'CORPUS', '{dev.fuller.de,localhost:3100}'),
-  ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000f1', 'Erasmus-Förderhelfer', '{localhost:3200}');
+  ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000f1', 'Erasmus-Förderhelfer', '{localhost:3200,ebv-portal.vercel.app}');
 
 -- CORPUS: app + domains only; its feature list lives in the local DB (not in the repo).
 
