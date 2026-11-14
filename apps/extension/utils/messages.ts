@@ -26,7 +26,10 @@ export type ContentCommand =
   | { type: "lotse:plan-show"; plan: PlanView; resume?: boolean }
   | { type: "lotse:plan-control"; action: PlanCommand }
   | { type: "lotse:show-offer"; offerId: string; offer: string }
-  | { type: "lotse:hide-offer" };
+  | { type: "lotse:hide-offer" }
+  | { type: "lotse:explore-run"; reachedVia: string[]; maxRemaining: number; deadlineAt: number; seenGlobalKeys: string[]; startOrigin: string; blockedRoutes: string[] }
+  | { type: "lotse:explore-abort" }
+  | { type: "lotse:explore-chip"; text: string };
 
 /** content script / side panel → background */
 export type WorkerCommand =
@@ -42,6 +45,8 @@ export type WorkerCommand =
   | { type: "lotse:get-policy" } // content script asks for the policy of its own host
   | { type: "lotse:paused"; paused: boolean } // content script entered/left a blocked route (no page data)
   | { type: "lotse:login"; email: string; password: string } // side panel → Supabase email/password login
-  | { type: "lotse:logout" };
+  | { type: "lotse:logout" }
+  | { type: "lotse:explore-start" }
+  | { type: "lotse:explore-stop" };
 
 export type LotseMessage = ExtensionMessage | ContentCommand | WorkerCommand;

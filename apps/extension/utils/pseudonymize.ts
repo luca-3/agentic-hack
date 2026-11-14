@@ -337,8 +337,8 @@ export function pseudonymizeText(text: string): string {
   return out;
 }
 
-/** Keys whose string values are ids, enums or image data — never rewritten (a digit run in base64 is not a number). */
-const RAW_KEY = /^(?:id|.*Id|dataUrl|type|role|elementRole|source|model|trigger|feedback|kind|rule|severity|code|tier)$/;
+/** Keys whose string values are ids, routes, enums or image data — never rewritten (a digit run in base64 is not a number). */
+const RAW_KEY = /^(?:id|.*Id|appHost|route|dataUrl|type|role|elementRole|source|model|trigger|feedback|kind|rule|severity|code|tier)$/;
 
 function mapStrings(value: unknown, fn: (text: string) => string, key = ""): unknown {
   if (typeof value === "string") return RAW_KEY.test(key) ? value : fn(value);

@@ -1,5 +1,6 @@
 import type { InteractiveElement, LotseEvent, ObservationSnapshot } from "@lotse/shared";
 import { routeBlocked } from "@lotse/shared/route"; // zod-free: keeps the schemas out of every page
+import { abortPageExplore, exploreCurrentPage } from "../utils/explore-dom";
 import { findElementByLabel, hasPlaceholder, labelScore, prettyRoute, routeMatches } from "../utils/match";
 import type { LotseMessage, PagePolicy, PlanCommand, PlanView } from "../utils/messages";
 import { LotseOverlay, type OverlayAction, type OverlayButton, type OverlayView } from "../utils/overlay";
@@ -74,6 +75,23 @@ export default defineContentScript({
         case "lotse:hide-offer": if (mode === "offer") resetGuidance(); sendResponse({ ok: true }); break;
         case "lotse:clear": resetGuidance(); sendResponse({ ok: true }); break;
         case "lotse:voice-state": overlay.setVoiceState(message.state); sendResponse({ ok: true }); break;
+        case "lotse:explore-chip": overlay.setExploreText(message.text); sendResponse({ ok: true }); break;
+        case "lotse:explore-abort": abortPageExplore(); overlay.setExploreText(""); sendResponse({ ok: true }); break;
+        case "lotse:explore-run":
+          if (blocked) { sendResponse(refuse); break; }
+          exploreCurrentPage({
+            reachedVia: message.reachedVia,
+            maxRemaining: message.maxRemaining,
+            deadlineAt: message.deadlineAt,
+            seenGlobalKeys: message.seenGlobalKeys,
+            startOrigin: message.startOrigin,
+            blockedRoutes: message.blockedRoutes,
+            hostId: HOST_ID,
+          }).then(
+            (res) => sendResponse({ ok: true, ...res }),
+            (err: unknown) => sendResponse({ ok: false, error: err instanceof Error ? err.message : "Erkundungsfehler" }),
+          );
+          return true;
         case "lotse:start": {
           recording = true;
           previousRoute = route();
@@ -216,6 +234,7 @@ export default defineContentScript({
 
     ctx.onInvalidated(() => {
       recording = false;
+      abortPageExplore();
       clearPendingTimers();
       clearTimeout(planTimer);
       clearTimeout(hideTimer);
