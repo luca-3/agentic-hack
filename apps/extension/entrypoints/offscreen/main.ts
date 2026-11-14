@@ -327,7 +327,7 @@ function beep(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Spoken answers (POST /api/lotse/tts → audio/wav)
+// Spoken answers (POST /api/lotse/tts?stream=1 → raw PCM chunks, played as they arrive; WAV as fallback)
 // ---------------------------------------------------------------------------
 
 async function speak(text: string): Promise<OffscreenReply> {
@@ -337,14 +337,19 @@ async function speak(text: string): Promise<OffscreenReply> {
   speech = controller;
   notifyWorker({ type: "speaking", speaking: true });
   try {
-    const response = await fetch(`${config.serverUrl}/api/lotse/tts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", [LOTSE_HEADERS.session]: config.sessionId },
-      body: JSON.stringify({ text }),
-      signal: controller.signal,
-    });
+    const request = (stream: boolean) =>
+      fetch(`${config!.serverUrl}/api/lotse/tts${stream ? "?stream=1" : ""}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", [LOTSE_HEADERS.session]: config!.sessionId },
+        body: JSON.stringify({ text }),
+        signal: controller.signal,
+      });
+    let response = await request(true);
+    if (!response.ok && response.status !== 204 && !controller.signal.aborted) response = await request(false); // streaming failed → complete WAV
     if (response.status === 204) return { ok: true, mic };
     if (!response.ok) throw new Error(`Speech output failed (HTTP ${response.status}).`);
+    const type = response.headers.get("content-type") ?? "";
+    if (type.startsWith("audio/l16") && response.body) return await playPcmStream(response.body, pcmRate(type), controller.signal);
     return await play(await response.blob(), controller.signal);
   } catch (error) {
     return { ok: false, mic, error: controller.signal.aborted ? "stopped" : errorText(error) };
@@ -353,6 +358,67 @@ async function speak(text: string): Promise<OffscreenReply> {
       speech = null;
       notifyWorker({ type: "speaking", speaking: false });
     }
+  }
+}
+
+const pcmRate = (type: string) => Number(/rate=(\d+)/.exec(type)?.[1] ?? 24_000) || 24_000;
+/** Small lead before the first chunk so network jitter between chunks does not cause gaps. */
+const PCM_LEAD_S = 0.1;
+
+/** Plays 16-bit little-endian mono PCM while it streams in; resolves when the last chunk has played (or on abort). */
+async function playPcmStream(body: ReadableStream<Uint8Array>, rate: number, signal: AbortSignal): Promise<OffscreenReply> {
+  const ctx = new AudioContext();
+  const sources: AudioBufferSourceNode[] = [];
+  const reader = body.getReader();
+  const onAbort = () => {
+    reader.cancel().catch(() => undefined);
+    for (const source of sources) {
+      try { source.stop(); } catch { /* not started yet */ }
+    }
+  };
+  signal.addEventListener("abort", onAbort, { once: true });
+  let next = 0;
+  let carry: Uint8Array | null = null;
+  try {
+    await ctx.resume().catch(() => undefined);
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done || signal.aborted) break;
+      if (!value?.length) continue;
+      let bytes = value;
+      if (carry) {
+        bytes = new Uint8Array(carry.length + value.length);
+        bytes.set(carry);
+        bytes.set(value, carry.length);
+      }
+      const even = bytes.length - (bytes.length % 2);
+      carry = even < bytes.length ? bytes.slice(even) : null;
+      const samples = even / 2;
+      if (!samples) continue;
+      const view = new DataView(bytes.buffer, bytes.byteOffset, even);
+      const buffer = ctx.createBuffer(1, samples, rate);
+      const channel = buffer.getChannelData(0);
+      for (let i = 0; i < samples; i++) channel[i] = view.getInt16(i * 2, true) / 32768;
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      next = Math.max(next, ctx.currentTime + PCM_LEAD_S);
+      source.start(next);
+      next += buffer.duration;
+      sources.push(source);
+    }
+    if (!signal.aborted && next > ctx.currentTime) {
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, (next - ctx.currentTime) * 1000 + 50);
+        signal.addEventListener("abort", () => { clearTimeout(timer); resolve(); }, { once: true });
+      });
+    }
+    return signal.aborted ? { ok: false, mic, error: "stopped" } : { ok: true, mic };
+  } catch (error) {
+    return { ok: false, mic, error: signal.aborted ? "stopped" : errorText(error) };
+  } finally {
+    signal.removeEventListener("abort", onAbort);
+    void ctx.close().catch(() => undefined);
   }
 }
 

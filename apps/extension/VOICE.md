@@ -9,7 +9,7 @@ Alt+Shift+L · ⌘⇧K (lotse-listen) ┴→ offscreen document: beep, mic audio
    → end of utterance: ~1 s silence (Silero VAD) · 10 s cap · second Alt+Shift+L (⌘⇧K)
    → final transcript → service worker strips "Hey Valo," / "Hey Daddy," / "Hey Jarvis," → onTranscript(text)
    → background.ts: explicit question, source "voice" → /api/lotse/ask → point / plan (the real answer)
-   → only for a `say` event: speak(text) → POST /api/lotse/tts → Gemini TTS (WAV) → played offscreen
+   → only for a `say` event: speak(text) → POST /api/lotse/tts?stream=1 → Gemini TTS streamed as raw PCM → played offscreen chunk by chunk (first audio ≈ 0.8 s; WAV fallback)
 ```
 
 Only Google Gemini for speech: no Web Speech API, no other recognizer or TTS fallback. Before the wake word or hotkey fires, **no audio leaves the device** (wake word runs locally in WebAssembly).
@@ -26,7 +26,7 @@ Only Google Gemini for speech: no Web Speech API, no other recognizer or TTS fal
 | `utils/voice/live.ts` | offscreen | One utterance: token → WebSocket → buffered PCM16 → `audioStreamEnd` → transcript. |
 | `utils/voice/pcm-worklet.js` | audio thread | AudioWorklet: 1280-sample (80 ms) frames. Plain file, copied to `/voice/pcm-worklet.js`. |
 | `entrypoints/mic-permission/` | normal tab | One-time microphone prompt (Chrome can't prompt in side panel / offscreen). |
-| `apps/server/src/app/api/lotse/tts/route.ts`, `apps/server/src/lib/voice/tts.ts` | server | `POST /api/lotse/tts { text }` → `audio/wav` (204 when nothing to say). |
+| `apps/server/src/app/api/lotse/tts/route.ts`, `apps/server/src/lib/voice/tts.ts` | server | `POST /api/lotse/tts { text }` → `audio/wav` (204 when nothing to say); `?stream=1` → `audio/l16; rate=24000` streamed (first chunk ≈ 0.8 s instead of ≈ 3 s). |
 
 ## API for `background.ts`
 

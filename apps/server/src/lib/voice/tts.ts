@@ -1,4 +1,5 @@
 import "server-only";
+import { GoogleGenAI } from "@google/genai";
 import { generateSpeech } from "ai";
 import { google } from "@/lib/ai/google";
 
@@ -64,4 +65,38 @@ export async function synthesizeSpeech(text: string, abortSignal?: AbortSignal):
     abortSignal,
   });
   return { audio: result.audio.uint8Array, mediaType: result.audio.mediaType || "audio/wav" };
+}
+
+/** Raw PCM format of streamed speech (what Gemini TTS streams: 16-bit little-endian mono). */
+export const STREAM_MEDIA_TYPE = "audio/l16; rate=24000; channels=1";
+
+let genaiClient: GoogleGenAI | undefined;
+function genai(): GoogleGenAI {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+  genaiClient ??= new GoogleGenAI({ apiKey, httpOptions: { apiVersion: "v1beta" } }); // speechConfig is a v1beta field
+  return genaiClient;
+}
+
+/**
+ * Streamed speech: Gemini TTS via streamGenerateContent → raw PCM chunks (80 ms each) as soon as they exist.
+ * Measured 2026-11-14: first chunk after ~0.7–1.0 s instead of ~3 s for the complete WAV (generateSpeech).
+ * Plain text only — Gemini TTS sometimes speaks style prefixes aloud, so no instruction is prepended here.
+ */
+export async function* streamSpeech(text: string, abortSignal?: AbortSignal): AsyncGenerator<Uint8Array> {
+  const stream = await genai().models.generateContentStream({
+    model: TTS_MODEL,
+    contents: [{ role: "user", parts: [{ text }] }],
+    config: {
+      responseModalities: ["AUDIO"],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_VOICE } }, languageCode: speechLanguage(text) },
+      abortSignal,
+    },
+  });
+  for await (const chunk of stream) {
+    for (const part of chunk.candidates?.[0]?.content?.parts ?? []) {
+      const data = part.inlineData?.data;
+      if (data) yield Uint8Array.from(Buffer.from(data, "base64"));
+    }
+  }
 }
