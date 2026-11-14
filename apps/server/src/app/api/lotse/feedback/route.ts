@@ -2,6 +2,7 @@ import { z } from "zod";
 import { OfferFeedbackRequestSchema } from "@lotse/shared";
 import { corsHeaders, preflight } from "@/lib/cors";
 import { errorJson, guard, GuardError, readJson } from "@/lib/lotse/guard";
+import { noteOfferFeedback } from "@/lib/lotse/memory";
 import { applyFeedback } from "@/lib/lotse/prefs";
 
 export const OPTIONS = preflight;
@@ -13,7 +14,9 @@ export async function POST(request: Request) {
     const caller = await guard(request, "prefs");
     const parsed = OfferFeedbackRequestSchema.safeParse(await readJson(request));
     if (!parsed.success) throw new GuardError("bad_request", z.prettifyError(parsed.error), 400);
-    return Response.json(await applyFeedback(caller.key, parsed.data), { headers: { ...cors, "Cache-Control": "no-store" } });
+    const prefs = await applyFeedback(caller.key, parsed.data);
+    void noteOfferFeedback(caller.key, parsed.data); // 👎 → negative evidence for agent memory on that intent (D-28)
+    return Response.json(prefs, { headers: { ...cors, "Cache-Control": "no-store" } });
   } catch (e) {
     return errorJson(e, cors);
   }

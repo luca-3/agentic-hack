@@ -12,6 +12,12 @@ const options = (taskType: TaskType) => ({
 
 type Scope = { orgId: string; appId?: string | null; sourceId?: string | null };
 
+/** One embedding (768 dims). RETRIEVAL_QUERY for searches, RETRIEVAL_DOCUMENT for stored texts. */
+export async function embedText(value: string, taskType: TaskType = "RETRIEVAL_QUERY"): Promise<number[]> {
+  const { embedding } = await embed({ model: embeddingModel, value, providerOptions: options(taskType) });
+  return embedding;
+}
+
 /** Embed texts and store them in public.documents, scoped to one org (and optionally app + source). */
 export async function addDocuments(
   docs: { content: string; metadata?: Record<string, unknown> }[],
@@ -48,13 +54,15 @@ export async function addDocuments(
  */
 export async function searchDocuments(
   query: string,
-  { orgId, appId = null, limit = 5, minSimilarity = 0.5 }: { orgId: string; appId?: string | null; limit?: number; minSimilarity?: number },
+  {
+    orgId,
+    appId = null,
+    limit = 5,
+    minSimilarity = 0.5,
+    embedding: precomputed,
+  }: { orgId: string; appId?: string | null; limit?: number; minSimilarity?: number; embedding?: number[] },
 ) {
-  const { embedding } = await embed({
-    model: embeddingModel,
-    value: query,
-    providerOptions: options("RETRIEVAL_QUERY"),
-  });
+  const embedding = precomputed ?? (await embedText(query, "RETRIEVAL_QUERY"));
 
   const { data, error } = await createAdminClient().rpc("match_documents", {
     query_embedding: JSON.stringify(embedding),

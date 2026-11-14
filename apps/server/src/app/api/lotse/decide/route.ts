@@ -4,6 +4,7 @@ import { corsHeaders, preflight } from "@/lib/cors";
 import { decide } from "@/lib/lotse/decide";
 import { capSnapshot, chargeBudget, errorJson, guard, GuardError, readJson } from "@/lib/lotse/guard";
 import { contextHeader, resolveContext } from "@/lib/lotse/context";
+import { activeMemories, memoryLines, rankMemories } from "@/lib/lotse/memory";
 
 export const OPTIONS = preflight;
 
@@ -24,7 +25,10 @@ export async function POST(request: Request) {
     // app → org → features (Choice options) + role (org_members beats the client role)
     const ctx = await resolveContext(request, caller, { appId: parsed.data.appId, role: parsed.data.role, url: snapshot?.url });
     const req = { ...parsed.data, snapshot, events, role: ctx.role };
-    const { response, tokens } = await decide(req, ctx.app.features, { caller, appId: ctx.appId, orgId: ctx.app.orgId });
+    // Agent memory (D-28): learned hints matching the inferred goal / page (no fallback: irrelevant hints only add noise).
+    const goal = [req.inference?.workflowName, req.inference?.intent.goal, snapshot?.title, req.triggerReason].filter(Boolean).join(" ");
+    const memory = memoryLines(rankMemories(await activeMemories(ctx.knowledgeOrgId, ctx.app.dashboardAppId), goal, { limit: 4, role: ctx.role }));
+    const { response, tokens } = await decide(req, ctx.app.features, { caller, appId: ctx.appId, orgId: ctx.app.orgId, memory });
     chargeBudget(caller, tokens);
     return Response.json(response, { headers: { ...cors, ...contextHeader(ctx), "Cache-Control": "no-store" } });
   } catch (e) {

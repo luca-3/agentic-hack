@@ -3,9 +3,15 @@ import type { LotseEvent } from "@lotse/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cleanText, type Caller } from "./guard";
 
-/** One row in public.agent_usage per LLM call. Logging never breaks a request. */
+/**
+ * One row in public.agent_usage per LLM call. Logging never breaks a request.
+ * route: runtime stages (ask/state/intent/decide), the learning loop (explore = feature drafts, learn = its Gemini
+ * drafts if any), memory = topic labels for agent memory / knowledge gaps (gaps.ts), insights = insights pipeline.
+ */
+export type UsageRoute = "ask" | "state" | "intent" | "decide" | "explore" | "learn" | "memory" | "insights";
+
 export interface UsageRecord {
-  route: "ask" | "state" | "intent" | "decide";
+  route: UsageRoute;
   tier?: string;
   model: string;
   inputTokens?: number;

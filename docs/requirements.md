@@ -47,8 +47,9 @@ Status: `open` · `in progress` · `done`.
 | **Learn (D-25, D-26)** ||||
 | R-LRN-1 | Admin-started exploration of an app → feature suggestions + design findings (`/api/lotse/explore`) | Demo | server + dashboard done, extension open |
 | R-LRN-2 | Continuous learning every 10 min + "Jetzt auswerten": insights from real usage, agent errors, stale click paths, unknown features (`/api/lotse/learn`) | Demo | done (server + dashboard) |
-| R-LRN-3 | Knowledge gaps from unanswered questions (pseudonymized topic only) | Pitch | open (server logging needed) |
+| R-LRN-3 | Knowledge gaps from unanswered questions (pseudonymized topic only) | Pitch | server done (`knowledge_gaps`, `GET /api/lotse/memory`, D-28); learn suggestions + dashboard open |
 | R-LRN-4 | Pseudonymize in the browser before sending (`[Kunde-1]` …) | Demo | done (extension `utils/pseudonymize.ts`; not browser-tested) |
+| R-LRN-5 | Agent memory: Lotse learns from usage over weeks (what people mean, role hints, pitfalls, answered gaps), labeled as `<agent_memory>`, active only at ≥ 5 persons without 👎 or by admin (`agent_memory`, `/api/lotse/memory`, D-28) | Demo | server done; dashboard review UI open |
 | **Insights** ||||
 | R-INS-1 | Aggregated pain points per feature and role (stuck rate, abandoned flows, frequent questions) | Pitch (seed data) | done (dashboard) |
 | R-INS-2 | Training suggestions ("Rolle X hängt bei Y → Schulung Z") | Pitch | done (dashboard) |

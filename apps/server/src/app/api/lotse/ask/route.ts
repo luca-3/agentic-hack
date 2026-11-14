@@ -4,6 +4,8 @@ import { runGuidance, type RunResult } from "@/lib/lotse/agent";
 import { corsHeaders, preflight } from "@/lib/cors";
 import { capSnapshot, chargeBudget, guard, GuardError, readJson, toGuardError, type Caller } from "@/lib/lotse/guard";
 import { contextHeader, resolveContext } from "@/lib/lotse/context";
+import { afterAsk } from "@/lib/lotse/gaps";
+import { activeMemories, rankMemories } from "@/lib/lotse/memory";
 import { chooseTier, TIERS } from "@/lib/lotse/orchestrator";
 import { logUsage } from "@/lib/lotse/usage";
 
@@ -34,7 +36,12 @@ export async function POST(request: Request) {
   // app → org → features + role (org_members beats the client role); never throws, falls back to the fixture.
   const ctx = await resolveContext(request, caller, { appId: body.appId, role: body.role, url: snapshot.url });
   const { app, appId, role } = ctx;
-  const decision = await chooseTier({ question: body.question, snapshot, features: app.features, role });
+  // Agent memory (D-28): active, learned hints of this org/app (cached), ranked for the question — same access as the KB.
+  const [decision, memories] = await Promise.all([
+    chooseTier({ question: body.question, snapshot, features: app.features, role }),
+    activeMemories(ctx.knowledgeOrgId, app.dashboardAppId),
+  ]);
+  const memory = rankMemories(memories, `${body.question} ${body.intent?.goal ?? ""}`, { limit: 6, role });
   if (decision.classifier) {
     void logUsage({ route: "ask", tier: "classify", ...decision.classifier, caller, appId, orgId: app.orgId });
   }
@@ -56,6 +63,7 @@ export async function POST(request: Request) {
       source: body.source,
       observation: body.observation,
       intent: body.intent,
+      memory,
       decision,
       signal: request.signal,
     });
@@ -77,6 +85,19 @@ export async function POST(request: Request) {
       caller,
       appId,
       orgId: app.orgId,
+    });
+    // Learning (background, after the answer): knowledge gap or agent-memory evidence — never the question text.
+    void afterAsk({
+      question: body.question,
+      source: body.source,
+      features: app.features,
+      role,
+      decision,
+      run,
+      caller,
+      appId,
+      orgId: ctx.knowledgeOrgId,
+      dashboardAppId: app.dashboardAppId ?? null,
     });
 
     if (run.status === "timeout") yield { type: "error", code: "timeout", message: "Lotse hat zu lange gebraucht — bitte nochmal versuchen." };
