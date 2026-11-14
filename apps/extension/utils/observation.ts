@@ -33,7 +33,8 @@ export type SerializedObservationBuffer = {
   states: UIStateInference[];
 };
 
-const userActions = new Set<LotseEvent["type"]>(["click", "route", "search", "focus", "submit"]);
+const userActions = new Set<LotseEvent["type"]>(["click", "route", "search", "focus", "submit", "repeated_click", "rage_click"]);
+const BACKTRACK_LABEL = /^(?:zurück|zurueck|back|abbrechen|cancel|schließen|schliessen|dialog schließen)$/i;
 
 /** A local rolling buffer. No network, user identity or application cookies are accessed here. */
 export class ObservationBuffer {
@@ -155,10 +156,7 @@ export class ObservationBuffer {
     const currentFrames = frames.filter((frame) => frame.capturedAt >= this.workflow!.startedAt);
     const priorFrame = frames.filter((frame) => frame.capturedAt < this.workflow!.startedAt).at(-1);
     const relevantFrames = priorFrame ? [priorFrame, ...currentFrames] : currentFrames;
-    const screenshots = !includeScreenshots || count === 0 ? [] : relevantFrames.length <= count ? relevantFrames :
-      count === 1 ? relevantFrames.slice(-1) : Array.from({ length: count }, (_, index) =>
-        relevantFrames[Math.round(index * (relevantFrames.length - 1) / (count - 1))])
-        .filter((frame): frame is ScreenshotFrame => frame !== undefined);
+    const screenshots = !includeScreenshots || count === 0 ? [] : selectEventMatchedFrames(relevantFrames, events, snapshot.id, count);
     const currentStates = this.states.filter((item) => item.capturedAt >= this.workflow!.startedAt);
     const baseline = this.states.filter((item) => item.capturedAt < this.workflow!.startedAt).at(-1);
     const states = (baseline ? [baseline, ...currentStates] : currentStates).slice(-40);
@@ -203,35 +201,142 @@ export class ObservationBuffer {
   }
 }
 
-/** Cheap candidates only. The Gemini endpoint makes the actual intervention decision. */
+/** Prioritizes screenshots captured at key workflow events/state transitions (errors, blocked clicks, searches, routes) plus the latest UI state. */
+function selectEventMatchedFrames(frames: ScreenshotFrame[], events: LotseEvent[], currentSnapshotId: string, maxCount: number): ScreenshotFrame[] {
+  if (frames.length <= maxCount) return frames;
+  if (maxCount === 1) return frames.slice(-1);
+
+  const priorityBySnapshot = new Map<string, number>();
+  for (const ev of events) {
+    if (!ev.snapshotId) continue;
+    const weight =
+      ev.type === "repeated_click" || ev.type === "rage_click" || ev.type === "error" || ev.type === "empty_results"
+        ? 3
+        : ev.type === "submit" || ev.type === "search"
+          ? 2
+          : ev.type === "route" || ev.type === "click"
+            ? 1
+            : 0;
+    priorityBySnapshot.set(ev.snapshotId, Math.max(priorityBySnapshot.get(ev.snapshotId) ?? 0, weight));
+  }
+
+  const latest = frames.at(-1)!;
+  const chosen = new Set<ScreenshotFrame>([latest]);
+  const currentStateFrame = [...frames].reverse().find((f) => f.snapshotId === currentSnapshotId);
+  if (currentStateFrame && chosen.size < maxCount) chosen.add(currentStateFrame);
+
+  // Pick highest-signal earlier transition frames with distinct snapshotIds first, newest wins on ties.
+  const usedStates = new Set([...chosen].map((f) => f.snapshotId));
+  const candidates = frames
+    .slice(0, -1)
+    .map((frame, idx) => ({ frame, idx, score: priorityBySnapshot.get(frame.snapshotId) ?? 0 }))
+    .sort((a, b) => b.score - a.score || b.idx - a.idx);
+
+  for (const { frame, score } of candidates) {
+    if (chosen.size >= maxCount) break;
+    if (score > 0 && !usedStates.has(frame.snapshotId)) {
+      chosen.add(frame);
+      usedStates.add(frame.snapshotId);
+    }
+  }
+  // Fill any remaining slot with the earliest baseline frame, then evenly spaced frames.
+  if (chosen.size < maxCount && frames[0]) chosen.add(frames[0]);
+  for (let i = 0; chosen.size < maxCount && i < frames.length; i++) {
+    const pick = frames[Math.round((i * (frames.length - 1)) / (maxCount - 1))];
+    if (pick) chosen.add(pick);
+  }
+  return [...chosen].sort((a, b) => a.capturedAt - b.capturedAt).slice(-maxCount);
+}
+
+/** Cheap candidates that enrich `/decide`. The Gemini Decisions endpoint makes the calibrated intervention decision. */
 export function findStuckSignal(context: ObservationContext | null): StuckSignal | null {
   if (!context) return null;
-  const recent = context.workflow.events.filter((event) => event.ts >= Date.now() - 60_000);
-  // D-30 explicit trigger (highest priority): ≥ 5 presses on the same spot, detected in the content script.
-  const pressed = recent.filter((event) => event.type === "repeated_click" && event.ts >= Date.now() - 30_000).pop();
-  if (pressed) {
-    const label = pressed.elementLabel ? `"${pressed.elementLabel}"` : "the same spot";
-    return pressed.detail?.includes("disabled=true")
-      ? { type: "repeated_click", reason: `Clicked the disabled element ${label} at least 5 times.` }
-      : { type: "repeated_click", reason: `Clicked ${label} at least 5 times.` };
+  const now = Date.now();
+  const recent = context.workflow.events.filter((event) => event.ts >= now - 60_000);
+
+  // 1. Repeated / disabled / dead / rage clicks (highest priority, D-30 + disabled-button & dead-click awareness).
+  const repeated = recent.filter((event) => (event.type === "repeated_click" || event.type === "rage_click") && event.ts >= now - 30_000).pop();
+  if (repeated) {
+    const label = repeated.elementLabel ? `"${repeated.elementLabel}"` : "the same spot";
+    const reasonMatch = /reason=([^;]+)/.exec(repeated.detail ?? "")?.[1];
+    if (repeated.detail?.includes("disabled=true")) {
+      return {
+        type: "repeated_click",
+        reason: `Clicked disabled control ${label} multiple times${reasonMatch ? ` (${reasonMatch})` : ""}.`,
+      };
+    }
+    if (repeated.detail?.includes("deadClick=true")) {
+      return { type: "repeated_click", reason: `Clicked ${label} repeatedly with no UI state change.` };
+    }
+    return { type: "repeated_click", reason: `Repeatedly clicked ${label}.` };
   }
+
+  // Single click on a disabled control followed immediately by an error or hesitation.
+  const disabledClick = recent.filter((e) => e.type === "click" && e.detail?.includes("disabled=true") && e.ts >= now - 25_000).pop();
+
+  // 2. Errors: permission blockade, off-screen error banner + retry, or ≥ 2 validation/UI errors in the workflow.
   const errors = recent.filter((event) => event.type === "error");
-  if (errors.some((event) => event.elementLabel && errors.filter((other) => other.elementLabel === event.elementLabel && other.route === event.route).length >= 2)) {
-    return { type: "repeated_error", reason: "The same visible error occurred at least twice." };
+  const permissionErr = errors.find((e) => e.detail?.includes("permission=true"));
+  if (permissionErr) {
+    return { type: "repeated_error", reason: `Blocked by missing role/permission: ${permissionErr.elementLabel ?? "permission denied"}.` };
   }
+  const offscreenErr = errors.find((e) => e.detail?.includes("offscreen=true"));
+  if (offscreenErr && recent.some((e) => (e.type === "submit" || e.type === "click") && e.ts > offscreenErr.ts)) {
+    return { type: "repeated_error", reason: `Form error appeared outside viewport (${offscreenErr.elementLabel ?? "validation error"}) while user kept trying.` };
+  }
+  if (errors.length >= 2 || (errors.length >= 1 && disabledClick)) {
+    return { type: "repeated_error", reason: `Encountered ${errors.length} visible error(s) in the current workflow.` };
+  }
+
+  // 3. Unsuccessful searches (≥ 2 empty searches, OR 1 empty search followed by hunting through ≥ 2 routes/tabs).
   const searches = recent.filter((event) => event.type === "search");
   const emptyResults = recent.filter((event) => event.type === "empty_results");
   const failedAttempts = searches.filter((search, index) => {
-    const until = searches[index + 1]?.ts ?? Date.now();
+    const until = searches[index + 1]?.ts ?? now;
     return emptyResults.some((result) => result.route === search.route && result.ts >= search.ts && result.ts <= until);
   });
-  if (failedAttempts.length >= 3) return { type: "unsuccessful_searches", reason: "At least three search attempts showed empty results." };
-  const routes = context.workflow.routeSequence.slice(-5);
-  if (routes.length === 5 && routes[0] !== routes[1] && routes.every((route, index) => route === routes[index % 2])) {
-    return { type: "route_ping_pong", reason: "Repeatedly switched between the same two routes." };
+  if (failedAttempts.length >= 2) {
+    return { type: "unsuccessful_searches", reason: `At least ${failedAttempts.length} search attempts returned no results.` };
   }
-  if (recent.some((event) => event.type === "idle" && event.elementLabel === "Form idle")) {
-    return { type: "form_idle", reason: "No action in a focused form for 30 seconds." };
+  const lastEmpty = emptyResults.at(-1);
+  if (lastEmpty && lastEmpty.ts >= now - 35_000) {
+    const navAfterEmpty = recent.filter(
+      (e) => e.ts > lastEmpty.ts && (e.type === "route" || (e.type === "click" && (e.elementRole === "tab" || e.elementRole === "link"))),
+    );
+    if (navAfterEmpty.length >= 2) {
+      return { type: "unsuccessful_searches", reason: "Search returned no results, followed by navigating across pages/tabs to find the feature." };
+    }
+  }
+
+  // 4. Route ping-pong (A→B→A→B), in-page tab ping-pong / tab hunting, or repeated Back/Cancel in wizards/dialogs.
+  const routes = context.workflow.routeSequence.slice(-4);
+  if (routes.length === 4 && routes[0] !== routes[1] && routes.every((r, index) => r === routes[index % 2])) {
+    return { type: "route_ping_pong", reason: "Switched back and forth between the same two pages." };
+  }
+  const recent35s = recent.filter((e) => e.ts >= now - 35_000);
+  const tabClicks = recent35s.filter((e) => e.type === "click" && e.elementRole === "tab" && e.elementLabel);
+  if (tabClicks.length >= 3) {
+    const labels = tabClicks.map((t) => t.elementLabel!);
+    const uniqueTabs = new Set(labels);
+    const hasFormWork = recent35s.some((e) => e.type === "submit" || (e.type === "focus" && e.elementRole === "textbox"));
+    if (!hasFormWork && (labels.length > uniqueTabs.size || uniqueTabs.size >= 4)) {
+      return { type: "route_ping_pong", reason: `Switched across tabs (${labels.slice(-4).join(" → ")}) without finding the target action.` };
+    }
+  }
+  const backtracks = recent.filter((e) => e.type === "click" && e.elementLabel && BACKTRACK_LABEL.test(e.elementLabel.trim()));
+  if (backtracks.length >= 2) {
+    return { type: "route_ping_pong", reason: "Repeatedly clicked Back/Cancel in a multi-step flow or dialog." };
+  }
+
+  // 5. Form idle or post-problem hesitation.
+  const idleEvent = recent.filter((event) => event.type === "idle" && event.ts >= now - 45_000).pop();
+  if (idleEvent) {
+    return {
+      type: "form_idle",
+      reason: idleEvent.detail?.includes("afterProblem=true")
+        ? "User paused for 20s after hitting a blocked control, error, or empty search."
+        : "No action in an active form or dialog for 18 seconds.",
+    };
   }
   return null;
 }
