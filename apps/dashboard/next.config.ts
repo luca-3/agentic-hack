@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   transpilePackages: ["@lotse/shared"],
+  // Old English routes → German routes of the Valo design.
+  redirects: async () =>
+    [
+      ["/login", "/anmelden"],
+      ["/onboarding", "/registrieren"],
+      ["/insights", "/erkenntnisse"],
+      ["/trainings", "/schulungen"],
+    ].map(([source, destination]) => ({ source, destination, permanent: false })),
   turbopack: {
     rules: {
       "*.css": {

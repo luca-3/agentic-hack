@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,15 +15,16 @@ export type OrgContext = {
 };
 
 /**
- * Signed-in user + their org. Redirects to /login without a session, to /onboarding without a membership.
+ * Signed-in user + their org. Redirects to /anmelden without a session, to /registrieren without a membership.
  * RLS does the real access control; this only picks the org and the admin flag for the UI.
+ * cache(): header, sidebar and page share one lookup per request.
  */
-export async function getOrgContext(): Promise<OrgContext> {
+export const getOrgContext = cache(async (): Promise<OrgContext> => {
   await connection(); // always request-time (Supabase auth reads the clock → would break prerendering)
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
-  if (!claims?.sub) redirect("/login");
+  if (!claims?.sub) redirect("/anmelden");
 
   const { data: member } = await supabase
     .from("org_members")
@@ -30,7 +32,7 @@ export async function getOrgContext(): Promise<OrgContext> {
     .eq("user_id", claims.sub)
     .limit(1)
     .maybeSingle();
-  if (!member) redirect("/onboarding"); // signed in, no org yet → create one
+  if (!member) redirect("/registrieren"); // signed in, no org yet → create one
 
   const org = member.orgs as unknown as { name: string } | null;
   return {
@@ -42,7 +44,7 @@ export async function getOrgContext(): Promise<OrgContext> {
     role: member.role,
     isAdmin: member.is_admin,
   };
-}
+});
 
 /** For Server Actions that change org data: signed in AND org admin, otherwise throw. */
 export async function requireAdmin(): Promise<OrgContext> {

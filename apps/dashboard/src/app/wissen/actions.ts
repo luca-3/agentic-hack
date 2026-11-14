@@ -64,4 +64,5 @@ export async function wissenLoeschen(fd: FormData) {
   const { error } = await supabase.from("knowledge_sources").delete().eq("id", text(fd, "id"));
   if (error) throw new Error(error.message);
   revalidatePath("/wissen");
+  redirect("/wissen?ok=geloescht");
 }

@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Shell, karte } from "@/components/Shell";
+import { Shell } from "@/components/Shell";
+import { Card, Footnote, StatTile } from "@/components/ui";
 import { bewerte, type InsightRow } from "@/lib/insights";
 import { getOrgContext } from "@/lib/org";
 
 export default function DashboardHome() {
   return (
-    <Shell title="Übersicht" intro="Lotse arbeitet die Leute ein — das Dashboard zeigt, wo die Apps sie verlieren.">
+    <Shell href="/" title="Übersicht" intro="Wir finden Schwachstellen in der Oberfläche, nicht in Menschen.">
       <Inhalt />
     </Shell>
   );
@@ -22,23 +23,35 @@ async function Inhalt() {
     supabase.from("insights").select("app_id, feature, role, metric, value, persons"),
   ]);
   const bewertet = bewerte((rows ?? []) as InsightRow[]);
-
-  const kacheln = [
-    { href: "/insights", wert: isAdmin ? bewertet.filter((f) => f.verdict === "app").length : "–", text: "Stellen, an denen die App sich ändern sollte" },
-    { href: "/insights", wert: isAdmin ? bewertet.filter((f) => f.verdict === "schulung").length : "–", text: "Stellen mit Schulungsbedarf" },
-    { href: "/apps", wert: `${apps} / ${features}`, text: "Apps / Funktionen im App-Wissen" },
-    { href: "/team", wert: members, text: "Personen in der Organisation" },
-    { href: "/trainings", wert: trainings, text: "Schulungen im Katalog" },
-  ];
+  const anzahl = (v: "improve" | "train") => (isAdmin ? String(bewertet.filter((f) => f.verdict === v).length) : "–");
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {kacheln.map((k) => (
-        <Link key={k.text} href={k.href} className={`${karte} hover:bg-zinc-50 dark:hover:bg-zinc-900`}>
-          <p className="text-3xl font-semibold">{k.wert}</p>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{k.text}</p>
-        </Link>
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-6 gap-4">
+        <StatTile tone="ink" className="col-span-3" href="/erkenntnisse?filter=improve" value={anzahl("improve")} text="Stellen, an denen die App sich ändern sollte" cta="Zu den Erkenntnissen" />
+        <StatTile className="col-span-3" href="/erkenntnisse?filter=train" value={anzahl("train")} text="Stellen mit Schulungsbedarf" cta="Zu den Erkenntnissen" />
+        <StatTile className="col-span-2" href="/apps" value={`${apps} / ${features}`} text="Apps / Funktionen im App-Wissen" cta="Zu Apps & Funktionen" />
+        <StatTile className="col-span-2" href="/team" value={String(members)} text="Personen in der Organisation" cta="Zum Team" />
+        <StatTile className="col-span-2" href="/schulungen" value={String(trainings)} text="Schulungen im Katalog" cta="Zu den Schulungen" />
+      </div>
+      {bewertet.length === 0 && (
+        <Card className="grid gap-4">
+          <div>
+            <h2 className="m-0 text-xl font-semibold">Noch keine Daten</h2>
+            <p className="mt-1 mb-0 text-muted">Erkenntnisse erscheinen, sobald mindestens 5 Personen eine Funktion genutzt haben. So geht es los:</p>
+          </div>
+          <ol className="m-0 grid list-none grid-cols-3 gap-4 p-0">
+            {[["App eintragen", "/apps", "Zu Apps & Funktionen"], ["Wissen hinzufügen", "/wissen", "Zum Wissen"], ["Team einladen", "/team", "Zum Team"]].map(([t, h, l], i) => (
+              <li key={h} className="grid justify-items-start gap-2 rounded-[10px] border border-line p-[18px]">
+                <span className="text-xs font-semibold text-muted">Schritt {i + 1}</span>
+                <span className="font-semibold">{t}</span>
+                <Link href={h} className="font-semibold">{l}</Link>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+      <Footnote>Gruppen unter 5 Personen bleiben unsichtbar.</Footnote>
+    </>
   );
 }

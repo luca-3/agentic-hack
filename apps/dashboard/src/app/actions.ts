@@ -12,14 +12,14 @@ const liste = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolea
 export async function anmelden(fd: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email: text(fd, "email"), password: text(fd, "password") });
-  if (error) redirect("/login?fehler=anmeldung");
+  if (error) redirect("/anmelden?fehler=anmeldung");
   redirect("/");
 }
 
 export async function abmelden() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect("/anmelden");
 }
 
 export async function appAnlegen(fd: FormData) {
@@ -29,6 +29,7 @@ export async function appAnlegen(fd: FormData) {
   const { error } = await supabase.from("apps").insert({ org_id: orgId, name, domains: liste(text(fd, "domains")) });
   if (error) throw new Error(error.message);
   revalidatePath("/apps");
+  redirect("/apps?ok=neu");
 }
 
 export async function domainsSpeichern(fd: FormData) {
@@ -36,6 +37,7 @@ export async function domainsSpeichern(fd: FormData) {
   const { error } = await supabase.from("apps").update({ domains: liste(text(fd, "domains")) }).eq("id", text(fd, "appId"));
   if (error) throw new Error(error.message);
   revalidatePath("/apps");
+  redirect("/apps?ok=gespeichert");
 }
 
 /** Replaces the whole feature list of an app with pasted JSON (format of demo-crm/lotse-features.json). */
@@ -76,8 +78,9 @@ export async function schulungAnlegen(fd: FormData) {
   const url = text(fd, "url") || null;
   const { error } = await supabase.from("training_catalog").insert({ org_id: orgId, title, topics: liste(text(fd, "topics")), url });
   if (error) throw new Error(error.message);
-  revalidatePath("/trainings");
-  revalidatePath("/insights");
+  revalidatePath("/schulungen");
+  revalidatePath("/erkenntnisse");
+  redirect("/schulungen?ok=1");
 }
 
 export async function mitgliedSpeichern(fd: FormData) {
@@ -92,6 +95,7 @@ export async function mitgliedSpeichern(fd: FormData) {
     .eq("user_id", memberId);
   if (error) throw new Error(error.message);
   revalidatePath("/team");
+  redirect("/team?ok=gespeichert");
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -104,21 +108,21 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function organisationAnlegen(fd: FormData) {
   const orgName = text(fd, "orgName");
   const role = text(fd, "role") || "Büro";
-  if (!orgName) redirect("/onboarding?fehler=name");
+  if (!orgName) redirect("/registrieren?fehler=name");
 
   const supabase = await createClient();
   let { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     const email = text(fd, "email").toLowerCase();
     const password = String(fd.get("password") ?? "");
-    if (!EMAIL.test(email)) redirect("/onboarding?fehler=email");
-    if (password.length < 8) redirect("/onboarding?fehler=passwort");
+    if (!EMAIL.test(email)) redirect("/registrieren?fehler=email");
+    if (password.length < 8) redirect("/registrieren?fehler=passwort");
     const { error: signUpError } = await supabase.auth.signUp({ email, password });
-    if (signUpError) redirect("/onboarding?fehler=konto");
+    if (signUpError) redirect("/registrieren?fehler=konto");
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) redirect("/onboarding?fehler=konto");
+    if (signInError) redirect("/registrieren?fehler=konto");
     ({ data: { user } } = await supabase.auth.getUser());
-    if (!user) redirect("/onboarding?fehler=konto");
+    if (!user) redirect("/registrieren?fehler=konto");
   }
 
   const admin = createAdminClient();
@@ -134,7 +138,7 @@ export async function organisationAnlegen(fd: FormData) {
     await admin.from("orgs").delete().eq("id", org.id);
     throw new Error(memberError.message);
   }
-  redirect("/");
+  redirect("/registrieren?ok=1");
 }
 
 /** Admin invites a person: creates the auth user with a start password (or reuses an existing one) and adds them to the org. */
