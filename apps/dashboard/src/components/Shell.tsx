@@ -7,6 +7,7 @@ const NAV = [
   { href: "/", label: "Übersicht" },
   { href: "/insights", label: "Erkenntnisse" },
   { href: "/apps", label: "Apps & Funktionen" },
+  { href: "/wissen", label: "Wissen" },
   { href: "/trainings", label: "Schulungen" },
   { href: "/team", label: "Team" },
 ] as const;

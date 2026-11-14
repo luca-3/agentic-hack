@@ -303,3 +303,35 @@ export const FeatureSchema = z.object({
 });
 export type Feature = z.infer<typeof FeatureSchema>;
 export const FeatureListSchema = z.array(FeatureSchema);
+
+/* ── Knowledge base (dashboard uploads, server embeds + searches) ───────────────────────────────
+ * Auth for both endpoints: header `Authorization: Bearer <Supabase access token of the signed-in user>`.
+ * Ingest: caller must be admin of the source's org. Search: caller must be a member of the org.
+ */
+export const KNOWLEDGE_LIMITS = { maxChunks: 200, maxChunkChars: 2000, maxQueryChars: 500 } as const;
+
+/** POST /api/knowledge/ingest — embed the chunks of an existing knowledge_sources row. */
+export const KnowledgeIngestRequestSchema = z.object({
+  sourceId: z.string().uuid(),
+  chunks: z.array(z.string().min(1).max(KNOWLEDGE_LIMITS.maxChunkChars)).min(1).max(KNOWLEDGE_LIMITS.maxChunks),
+});
+export type KnowledgeIngestRequest = z.infer<typeof KnowledgeIngestRequestSchema>;
+export const KnowledgeIngestResponseSchema = z.object({ inserted: z.number().int() });
+export type KnowledgeIngestResponse = z.infer<typeof KnowledgeIngestResponseSchema>;
+
+/** POST /api/knowledge/search — semantic search in the caller's org (optionally one app). */
+export const KnowledgeSearchRequestSchema = z.object({
+  query: z.string().min(1).max(KNOWLEDGE_LIMITS.maxQueryChars),
+  appId: z.string().uuid().optional(),
+  limit: z.number().int().min(1).max(10).optional(),
+});
+export type KnowledgeSearchRequest = z.infer<typeof KnowledgeSearchRequestSchema>;
+export const KnowledgeHitSchema = z.object({
+  id: z.number().int(),
+  content: z.string(),
+  sourceId: z.string().nullable(),
+  similarity: z.number(),
+});
+export type KnowledgeHit = z.infer<typeof KnowledgeHitSchema>;
+export const KnowledgeSearchResponseSchema = z.object({ hits: z.array(KnowledgeHitSchema) });
+export type KnowledgeSearchResponse = z.infer<typeof KnowledgeSearchResponseSchema>;
