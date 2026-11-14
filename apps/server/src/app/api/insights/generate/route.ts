@@ -32,7 +32,7 @@ const fail = (code: string, message: string, status: number, headers: Record<str
  */
 export async function POST(request: Request) {
   const headers = corsHeaders(request.headers.get("origin"));
-  if (process.env.LOTSE_DISABLED === "1") return fail("disabled", "Lotse ist gerade deaktiviert.", 503, headers);
+  if (process.env.LOTSE_DISABLED === "1") return fail("disabled", "Valo ist gerade deaktiviert.", 503, headers);
 
   const hasToken = /^Bearer\s+\S+/i.test(request.headers.get("authorization") ?? "");
   const auth = hasToken ? await userFromRequest(request) : null;

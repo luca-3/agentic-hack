@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lotse</title>
+    <title>Valo</title>
     <style>
       :root { color-scheme: light; font: 14px/1.5 system-ui, sans-serif; color: #172554; background: #f5f7fb; }
       * { box-sizing: border-box; }
@@ -63,13 +63,13 @@
   </head>
   <body>
     <header>
-      <h1>Lotse</h1>
-      <div class="chips"><span id="voice-state" class="activity voice" hidden></span><span id="activity" class="activity">Lotse pausiert</span></div>
+      <h1>Valo</h1>
+      <div class="chips"><span id="voice-state" class="activity voice" hidden></span><span id="activity" class="activity">Valo pausiert</span></div>
     </header>
     <section id="paused-box" class="paused" aria-labelledby="paused-title" role="status" hidden>
-      <h2 id="paused-title">Lotse pausiert auf dieser Seite</h2>
+      <h2 id="paused-title">Valo pausiert auf dieser Seite</h2>
       <p id="paused-reason" class="muted"></p>
-      <p class="muted">Lotse beobachtet hier nichts, macht keine Bilder und sendet nichts. Auf freigegebenen Seiten geht es von selbst weiter.</p>
+      <p class="muted">Valo beobachtet hier nichts, macht keine Bilder und sendet nichts. Auf freigegebenen Seiten geht es von selbst weiter.</p>
     </section>
     <section aria-labelledby="account-title">
       <h2 id="account-title">Konto</h2>
@@ -77,7 +77,7 @@
         <label for="email">E-Mail</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="admin@demo.test" />
         <label for="password">Passwort</label><input id="password" type="password" autocomplete="current-password" maxlength="200" placeholder="demo1234" />
         <div class="row" style="margin-top: 8px"><button id="login-button" type="submit">Anmelden</button></div>
-        <p class="muted">Ohne Anmeldung arbeitet Lotse im Dev-Modus mit der Demo-Rolle aus „Demo-Kontext“. Demo-Admin: admin@demo.test / demo1234</p>
+        <p class="muted">Ohne Anmeldung arbeitet Valo im Dev-Modus mit der Demo-Rolle aus „Demo-Kontext“. Demo-Admin: admin@demo.test / demo1234</p>
       </form>
       <div id="signed-in" class="row" hidden><p id="account-line" style="flex: 1"></p><span id="admin-badge" class="badge-admin" hidden>Admin</span><button id="logout" class="secondary small" type="button">Abmelden</button></div>
       <p id="org-line" class="muted"></p>
@@ -98,7 +98,7 @@
       <a id="explore-dashboard-link" class="link-btn" href="http://localhost:3000/lernen" target="_blank" rel="noreferrer" hidden>Im Dashboard unter „Lernen“ öffnen ↗</a>
     </section>
     <section id="offer-box" class="callout" aria-labelledby="offer-title" hidden>
-      <h2 id="offer-title">Lotse bietet Hilfe an</h2>
+      <h2 id="offer-title">Valo bietet Hilfe an</h2>
       <p id="offer-text"></p>
       <div class="actions"><button id="offer-yes" type="button">Ja, zeig's mir</button><button id="offer-no" class="secondary" type="button">Nein</button></div>
     </section>
@@ -109,7 +109,7 @@
     </section>
     <section aria-labelledby="observe-title">
       <h2 id="observe-title">Hilfe während der Arbeit</h2>
-      <p class="muted">Lotse startet auf den Apps deiner Organisation von selbst; „Pausieren“ hält es an, bis du wieder startest. Aktionen und Bildverlauf bleiben zunächst in deinem Browser.</p>
+      <p class="muted">Valo startet auf den Apps deiner Organisation von selbst; „Pausieren“ hält es an, bis du wieder startest. Aktionen und Bildverlauf bleiben zunächst in deinem Browser.</p>
       <p id="auto-line" class="muted"></p>
       <div class="actions"><button id="start" type="button">Beobachtung starten</button><button id="stop" class="secondary" type="button" disabled>Pausieren</button></div>
       <div class="stats" aria-label="Lokaler Verlauf">
@@ -127,24 +127,24 @@
         <div class="row"><button id="ask-button" type="submit">Nächsten Schritt zeigen</button><button id="listen" class="secondary" type="button" title="Frage sprechen" aria-label="Frage sprechen">🎙</button></div>
       </form>
       <p id="last-question" class="muted"></p>
-      <p class="muted">Alt+L öffnet Lotse. Fragen funktionieren auch ohne laufende Beobachtung. Lotse markiert nur – klicken und tippen machst du.</p>
+      <p class="muted"><span data-shortcut="ask">Alt+L</span> öffnet Valo. Fragen funktionieren auch ohne laufende Beobachtung. Valo markiert nur – klicken und tippen machst du.</p>
     </section>
-    <p id="status" role="status">Lotse ist bereit.</p>
+    <p id="status" role="status">Valo ist bereit.</p>
     <p id="notice" role="alert"></p>
     <p id="image-status" class="muted"></p>
     <section aria-labelledby="behaviour-title">
-      <h2 id="behaviour-title">Lotse-Verhalten</h2>
+      <h2 id="behaviour-title">Valo-Verhalten</h2>
       <label class="toggle"><input id="auto-activate" type="checkbox" checked />Automatisch aktiv auf den Apps meiner Organisation</label>
       <label class="toggle"><input id="show-orb" type="checkbox" checked />Status-Kreis auf der Seite anzeigen</label>
       <p id="orb-hidden-line" class="muted row" hidden><span id="orb-hidden-text"></span><button id="orb-unhide" class="secondary small" type="button">Wieder einblenden</button></p>
       <label class="toggle"><input id="proactive" type="checkbox" />Proaktiv Hilfe anbieten</label>
-      <label class="toggle"><input id="voice" type="checkbox" />Sprache: Wake Word &amp; Hotkey</label>
+      <label class="toggle"><input id="voice" type="checkbox" />Sprache: Wake Word &amp; Hotkey (<span data-shortcut="listen">Alt+Shift+L</span>)</label>
       <label class="toggle"><input id="speak" type="checkbox" />Antworten vorlesen (nur bei Sprachfragen)</label>
       <p id="snooze-line" class="muted"></p>
       <div class="actions"><button id="snooze" class="secondary small" type="button">10 Min. Ruhe</button><button id="resume" class="secondary small" type="button" hidden>Wieder anbieten</button></div>
       <label for="threshold">Schwelle für Angebote: <strong id="threshold-value">–</strong></label>
       <div class="row"><input id="threshold" type="range" min="0.6" max="0.95" step="0.01" value="0.8" aria-describedby="threshold-help" /><button id="threshold-save" class="secondary small" type="button">Übernehmen</button></div>
-      <p id="threshold-help" class="muted">Höher = Lotse bietet seltener Hilfe an. 👍/👎 auf Angebote passen die Schwelle automatisch an.</p>
+      <p id="threshold-help" class="muted">Höher = Valo bietet seltener Hilfe an. 👍/👎 auf Angebote passen die Schwelle automatisch an.</p>
       <p id="prefs-message" class="muted"></p>
     </section>
     <section aria-labelledby="workflow">

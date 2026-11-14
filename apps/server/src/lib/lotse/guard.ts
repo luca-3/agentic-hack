@@ -100,7 +100,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export function checkBudget(caller: Caller) {
   const b = budgets.get(caller.key);
   if (b && b.day === today() && b.tokens >= LIMITS.dailyTokens) {
-    throw new GuardError("budget_exceeded", "Tageslimit für Lotse erreicht.", 429);
+    throw new GuardError("budget_exceeded", "Tageslimit für Valo erreicht.", 429);
   }
 }
 
@@ -119,7 +119,7 @@ const LLM_KINDS = new Set<GuardKind>(["ask", "state", "intent", "decide"]);
 
 /** Kill switch + auth + rate limit (+ budget for LLM routes). Throws GuardError. */
 export async function guard(request: Request, kind: GuardKind): Promise<Caller> {
-  if (process.env.LOTSE_DISABLED === "1") throw new GuardError("disabled", "Lotse ist gerade deaktiviert.", 503);
+  if (process.env.LOTSE_DISABLED === "1") throw new GuardError("disabled", "Valo ist gerade deaktiviert.", 503);
   const caller = await authenticate(request);
   rateLimit(kind, caller);
   if (LLM_KINDS.has(kind)) checkBudget(caller);

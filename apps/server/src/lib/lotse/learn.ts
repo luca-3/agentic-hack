@@ -136,7 +136,7 @@ function agentErrors(app: AppRow, failures: Row[], downs: Row[]): SuggestionInpu
       appId: app.id,
       source: "learn",
       kind: "agent_error",
-      title: status === "timeout" ? `Lotse antwortet zu langsam (${route})` : `Lotse-Fehler bei ${route}`,
+      title: status === "timeout" ? `Valo antwortet zu langsam (${route})` : `Valo-Fehler bei ${route}`,
       detail: `${list.length}× ${status === "timeout" ? "Zeitüberschreitung" : "Fehler"} in den letzten 24 Stunden.`,
       payload: { route, status, lastError: safeError(last.error) },
       fingerprint: `agent_error:${app.id}:${route}:${status}`,

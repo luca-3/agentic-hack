@@ -9,7 +9,7 @@ import { activeMemories, memoryLines, rankMemories } from "@/lib/lotse/memory";
 export const OPTIONS = preflight;
 
 /**
- * POST /api/lotse/decide — stage 3 of the staged pipeline (D-23): "should Lotse offer help now?" → DecideResponse.
+ * POST /api/lotse/decide — stage 3 of the staged pipeline (D-23): "should Valo offer help now?" → DecideResponse.
  * Consumes trigger, events, snapshot, image-free context (incl. inferred states) and the /intent result.
  * Gemini Decisions API (gemini-decision-1, ~0.6 s) with lite-model fallback; per-user adaptive threshold (D-22).
  */

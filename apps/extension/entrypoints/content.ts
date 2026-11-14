@@ -29,13 +29,13 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined;
 let stateTimer: ReturnType<typeof setTimeout> | undefined;
 const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
 
-// App policy (D-27): on a blocked route — or while the policy is unknown — Lotse reads nothing from the page,
+// App policy (D-27): on a blocked route — or while the policy is unknown — Valo reads nothing from the page,
 // builds no snapshot, sends no observation and shows no highlight, even while recording.
 let policy: PagePolicy | null = null;
 let policyAt = 0;
 let pausedNow = true;
 
-// Guidance state (read-only: Lotse only marks, the user acts — D-17).
+// Guidance state (read-only: Valo only marks, the user acts — D-17).
 type Mode = "point" | "plan" | "say" | "offer" | "feedback" | "done" | null;
 let mode: Mode = null;
 let plan: PlanView | null = null;
@@ -62,7 +62,7 @@ export default defineContentScript({
     const onMessage = (message: LotseMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
       // Fail closed: nothing that reads or marks the page runs on a paused page.
       const blocked = paused();
-      const refuse = { ok: false, paused: true, error: "Lotse pausiert auf dieser Seite." };
+      const refuse = { ok: false, paused: true, error: "Valo pausiert auf dieser Seite." };
       switch (message.type) {
         case "lotse:policy": applyPolicy(message.policy); sendResponse({ ok: true }); break;
         case "lotse:snapshot": sendResponse(blocked ? refuse : withPrivacy(buildSnapshot())); break;
@@ -611,7 +611,7 @@ function pointView(): OverlayView {
 }
 
 function sayView(): OverlayView {
-  return { title: "Lotse", text: answerSay, note: feedbackNote(), buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen (Esc)" }] };
+  return { title: "Valo", text: answerSay, note: feedbackNote(), buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen (Esc)" }] };
 }
 
 function legacyHighlight(elementNumber: number, sentence: string, snapshotId?: string) {
@@ -664,17 +664,17 @@ function completePoint() {
 
 function showFeedbackCard() {
   mode = "feedback";
-  overlay.show({ title: "Lotse", text: "War der Hinweis hilfreich?", buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen" }] }, null);
+  overlay.show({ title: "Valo", text: "War der Hinweis hilfreich?", buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen" }] }, null);
   autoHide(12_000);
 }
 
 function showOffer(offerId: string, text: string) {
-  if (mode === "point" || mode === "plan") return { ok: false, error: "Lotse zeigt gerade schon einen Hinweis." };
+  if (mode === "point" || mode === "plan") return { ok: false, error: "Valo zeigt gerade schon einen Hinweis." };
   clearTimeout(hideTimer);
   offer = { offerId, text };
   mode = "offer";
   overlay.show({
-    title: "Lotse", text, tone: "offer",
+    title: "Valo", text, tone: "offer",
     buttons: [{ action: "yes", label: "Ja, zeig's mir", primary: true }, { action: "no", label: "Nein" }],
   }, null);
   autoHide(60_000);
@@ -874,7 +874,7 @@ function onOverlayAction(action: OverlayAction) {
       else if (mode === "point") overlay.update(pointView());
       else if (mode === "say") overlay.update(sayView());
       else if (mode === "feedback" || mode === "done") {
-        overlay.update({ title: "Lotse", text: "Danke für dein Feedback!", buttons: [{ action: "close", label: "✕", title: "Schließen" }] });
+        overlay.update({ title: "Valo", text: "Danke für dein Feedback!", buttons: [{ action: "close", label: "✕", title: "Schließen" }] });
         autoHide(1_500);
       }
       break;

@@ -113,7 +113,7 @@ async function structured<S extends z.ZodType>(opts: {
 // Stage 1: UI state
 // ---------------------------------------------------------------------------
 
-const STATE_SYSTEM = `You are the UI-state stage of Lotse, an observer for business web apps. Describe the CURRENT screen state from the numbered interactive elements, the visible status/error messages and the user's recent semantic events.
+const STATE_SYSTEM = `You are the UI-state stage of Valo, an observer for business web apps. Describe the CURRENT screen state from the numbered interactive elements, the visible status/error messages and the user's recent semantic events.
 - summary: 1–2 short sentences: which screen or dialog is open, its relevant state (e.g. an error is shown, a search returned no results, a form is open, saving is disabled) and what the user can do next. Max 300 characters.
 - action: the user's most recent action that led to this state, at most 12 words (e.g. "Nach Kunde gesucht, keine Treffer"). Omit it if there is none.
 - Write in the language of the page (German if unsure). Describe only what the data shows; never invent elements, values or causes.
@@ -183,7 +183,7 @@ export async function inferState(
 // Stage 2: workflow + intent
 // ---------------------------------------------------------------------------
 
-const INTENT_SYSTEM = `You are the workflow/intent stage of Lotse, an observer for business web apps. From the chronological UI states and actions (inferred earlier), the route sequence, the recent events and the app's feature list, infer which workflow the user is performing and what they want to achieve.
+const INTENT_SYSTEM = `You are the workflow/intent stage of Valo, an observer for business web apps. From the chronological UI states and actions (inferred earlier), the route sequence, the recent events and the app's feature list, infer which workflow the user is performing and what they want to achieve.
 - workflowName: short name of the workflow, at most 6 words. If a feature in <features> matches, use its exact name.
 - goal: the user's concrete goal in one short sentence (max 160 characters), e.g. "Die IBAN eines Kunden ändern". If unclear, give the most plausible goal and lower the confidence.
 - confidence: 0–1, how sure you are. Below 0.5 for short, ambiguous or exploratory sequences.

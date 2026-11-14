@@ -123,8 +123,8 @@ export class OrbView {
       + '<span class="ring"></span><span class="ring r2"></span>'
       + '<button class="orb" type="button" aria-haspopup="menu" aria-describedby="lotse-orb-tip"></button>'
       + '<span class="badge" hidden></span>'
-      + '<button class="more" type="button" aria-label="Lotse-Menü" aria-haspopup="menu" aria-expanded="false">⋯</button>'
-      + '<div class="tip" id="lotse-orb-tip" role="tooltip" hidden></div><div class="menu" role="menu" aria-label="Lotse" hidden></div>'
+      + '<button class="more" type="button" aria-label="Valo-Menü" aria-haspopup="menu" aria-expanded="false">⋯</button>'
+      + '<div class="tip" id="lotse-orb-tip" role="tooltip" hidden></div><div class="menu" role="menu" aria-label="Valo" hidden></div>'
       + '<div class="sr" role="status" aria-live="polite"></div></div>';
     const $ = <T extends Element>(selector: string) => this.shadow.querySelector<T>(selector)!;
     this.wrap = $(".wrap");

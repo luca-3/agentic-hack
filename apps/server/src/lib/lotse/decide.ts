@@ -10,7 +10,7 @@ import { createOffer, getThreshold } from "./prefs";
 import { logUsage } from "./usage";
 
 /**
- * POST /api/lotse/decide logic — stage 3 of the staged pipeline (D-23): "should Lotse offer help now?".
+ * POST /api/lotse/decide logic — stage 3 of the staged pipeline (D-23): "should Valo offer help now?".
  * Input: trigger (local rule or workflow_update), recent events, snapshot, the image-free observation context incl. the
  * inferred UI states, and the workflow/intent from /intent.
  * Primary: ONE Gemini Decisions API call (gemini-decision-1) with two questions over the same state:
@@ -94,7 +94,7 @@ type Ctx = { caller: Caller; appId: string; orgId: string | null; /** memoryLine
 /** Model verdict before the user's threshold is applied. p = P(user needs help now). */
 type Verdict = { p: number; feature?: Feature; tokens?: number; modelOk: boolean };
 
-/** Applies the subject's adaptive threshold (D-22) and stores an offer when Lotse intervenes. */
+/** Applies the subject's adaptive threshold (D-22) and stores an offer when Valo intervenes. */
 export async function decide(req: DecideRequest, features: Feature[], ctx: Ctx): Promise<{ response: DecideResponse; tokens?: number }> {
   const [verdict, threshold] = await Promise.all([decideRaw(req, features, ctx), getThreshold(ctx.caller.key)]);
   // D-30: ≥ 5 presses on the same spot is an explicit trigger → strong evidence (the user's adaptive threshold still applies).
@@ -137,7 +137,7 @@ async function decideRaw(req: DecideRequest, features: Feature[], ctx: Ctx): Pro
         needsHelp: {
           type: "boolean",
           instructions:
-            "The user works in a business web app. Lotse observed their current workflow: uiStates are model-inferred UI states " +
+            "The user works in a business web app. Valo observed their current workflow: uiStates are model-inferred UI states " +
             "in order, workflow is the inferred goal, recentEvents are semantic events. trigger names a local heuristic " +
             "(repeated_search, page_pingpong, form_idle, repeated_error, rage_click, repeated_click = pressed the same element ≥ 5 times, " +
             "detail says if it is disabled and why) or is workflow_update when no heuristic fired. repeated_click is strong evidence. " +

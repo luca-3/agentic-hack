@@ -89,7 +89,7 @@ export async function startListening(trigger: ListenTrigger = "button"): Promise
     const reply = await sendToOffscreen({ type: "listen", trigger });
     if (!reply.ok) {
       if (reply.mic === "needed" || reply.mic === "denied") await requestMicPermission();
-      else report(reply.error ?? "Lotse kann gerade nicht zuhören.");
+      else report(reply.error ?? "Valo kann gerade nicht zuhören.");
     }
   } catch (error) {
     report(errorText(error));
@@ -166,7 +166,7 @@ function onWorkerEvent(event: WorkerEvent, tabId?: number): void {
       if (tabId !== undefined) setTimeout(() => void browser.tabs.remove(tabId).catch(() => undefined), 1_500);
       break;
     case "mic-denied":
-      report("Ohne Mikrofon-Freigabe kann Lotse nicht zuhören.");
+      report("Ohne Mikrofon-Freigabe kann Valo nicht zuhören.");
       break;
   }
 }
@@ -257,7 +257,7 @@ async function ensureOffscreen(): Promise<void> {
     .createDocument({
       url: OFFSCREEN_PATH.slice(1),
       reasons: ["USER_MEDIA", "AUDIO_PLAYBACK"],
-      justification: "Lotse erkennt das Wake-Word lokal, nimmt danach die gesprochene Frage auf und spielt kurze gesprochene Antworten ab.",
+      justification: "Valo erkennt das Wake-Word lokal, nimmt danach die gesprochene Frage auf und spielt kurze gesprochene Antworten ab.",
     })
     .catch((error: unknown) => {
       if (!/single offscreen document/i.test(errorText(error))) throw error;

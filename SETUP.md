@@ -59,7 +59,7 @@ Docker Desktop: *Settings → Resources*. Colima: `colima stop && colima start -
 | --- | --- | --- |
 | Server | `npm run dev:server` | <http://localhost:3001> shows a green dot; <http://localhost:3001/chat> is the playground |
 | Dashboard | `npm run dev:dashboard` | <http://localhost:3000> shows the placeholder cards |
-| Extension | `npm run dev:extension` (needs the server running) | Chrome opens with "Lotse (dev)"; open the side panel via the toolbar icon |
+| Extension | `npm run dev:extension` (needs the server running) | Chrome opens with "Valo (dev)"; open the side panel via the toolbar icon |
 | Demo target | `npm run demo:crm` | <http://localhost:4000> — ask the extension a question here |
 
 Useful URLs: Supabase Studio <http://127.0.0.1:57323> · Mailpit (auth emails) <http://127.0.0.1:57324>

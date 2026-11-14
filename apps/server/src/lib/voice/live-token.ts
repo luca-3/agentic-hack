@@ -21,7 +21,7 @@ const TRANSCRIPTION_CONFIG = {
   inputAudioTranscription: {
     languageCodes: ["de-DE", "en-US"],
     // Biases recognition towards product/domain words that show up in demo questions.
-    customVocabulary: ["Lotse", "Hey Lotse", "IBAN", "CRM", "Bankverbindung"],
+    customVocabulary: ["Valo", "Hey Valo", "IBAN", "CRM", "Bankverbindung"],
   },
 };
 

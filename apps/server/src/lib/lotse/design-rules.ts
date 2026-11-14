@@ -53,7 +53,7 @@ export function designFindings(pages: ExploredPage[]): DesignResult[] {
         add(
           { rule: "unlabeled_icon", route, elementLabel: label, severity: "high" },
           `Symbol-Knopf ohne verständlichen Namen ${where}`,
-          `Ein Knopf zeigt nur ein Symbol und heißt ${quote(label)} — Screenreader und Lotse wissen nicht, was er tut.`,
+          `Ein Knopf zeigt nur ein Symbol und heißt ${quote(label)} — Screenreader und Valo wissen nicht, was er tut.`,
         );
       }
 

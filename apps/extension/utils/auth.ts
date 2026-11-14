@@ -35,8 +35,8 @@ async function save(next: AuthSession | null) {
 async function authConfig(): Promise<AuthConfigResponse> {
   if (config) return config;
   const response = await fetch(`${LOTSE_DEFAULTS.serverUrl}/api/lotse/auth-config`, { signal: AbortSignal.timeout(8_000) })
-    .catch(() => { throw new Error("Der Lotse-Server ist nicht erreichbar. Starte npm run dev:server."); });
-  if (!response.ok) throw new Error("Die Anmeldung ist auf dem Lotse-Server nicht eingerichtet.");
+    .catch(() => { throw new Error("Der Valo-Server ist nicht erreichbar. Starte npm run dev:server."); });
+  if (!response.ok) throw new Error("Die Anmeldung ist auf dem Valo-Server nicht eingerichtet.");
   config = AuthConfigResponseSchema.parse(await response.json());
   return config;
 }

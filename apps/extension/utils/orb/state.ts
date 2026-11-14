@@ -37,11 +37,11 @@ export const ACTIVATION_KEY = "lotse:activation";
 /** chrome.storage.local — hosts a policy marked as org app, so the orb can still say "nicht verbunden" there offline. */
 export const APP_HOSTS_KEY = "lotse:app-hosts";
 
-/** What the service worker knows about Lotse in one tab. The orb adds voice and transient states on top. */
+/** What the service worker knows about Valo in one tab. The orb adds voice and transient states on top. */
 export type OrbBase = "offline" | "signed-out" | "blocked" | "paused" | "idle" | "active";
 export type OrbMode = OrbBase | "listening" | "thinking" | "speaking" | "offer" | "error";
 export type OrbStatus = {
-  visible: boolean; // org app page (policy autoStart / remembered app host) or Lotse records this tab
+  visible: boolean; // org app page (policy autoStart / remembered app host) or Valo records this tab
   base: OrbBase;
   detail: string; // reason / context line for the tooltip
   offer: string | null; // open proactive offer in this tab
@@ -74,15 +74,15 @@ export function orbMode(status: OrbStatus, localError: string | null): OrbMode {
 }
 
 export const ORB_TITLE: Record<OrbMode, string> = {
-  active: "Lotse ist aktiv",
-  idle: "Lotse ist bereit",
-  paused: "Lotse pausiert",
-  blocked: "Lotse pausiert auf dieser Seite",
-  offline: "Lotse nicht verbunden",
+  active: "Valo ist aktiv",
+  idle: "Valo ist bereit",
+  paused: "Valo pausiert",
+  blocked: "Valo pausiert auf dieser Seite",
+  offline: "Valo nicht verbunden",
   "signed-out": "Nicht angemeldet",
-  listening: "Lotse hört zu …",
-  thinking: "Lotse denkt nach …",
-  speaking: "Lotse spricht",
-  offer: "Lotse hat einen Vorschlag",
+  listening: "Valo hört zu …",
+  thinking: "Valo denkt nach …",
+  speaking: "Valo spricht",
+  offer: "Valo hat einen Vorschlag",
   error: "Das hat nicht geklappt",
 };

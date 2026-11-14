@@ -1,4 +1,4 @@
-# Lotse-Testszenarien – Kundenwerk CRM
+# Valo-Testszenarien – Kundenwerk CRM
 
 Start: `python3 -m http.server 4000 --directory demo-crm` → http://localhost:4000.
 Vor jedem Durchlauf: **Demo-Daten zurücksetzen** (Link unten in der Seitenleiste) und dann die Rolle über **Rolle** in der Kopfzeile setzen.
@@ -22,16 +22,16 @@ Labels in „…“ sind die exakten sichtbaren Texte bzw. accessible names.
 - **Startseite:** `kunde.html?id=hoffmann-feinkost#zahlungsdaten`
 - **Klickpfad:** „Bankverbindung bearbeiten“ → „IBAN“ = `DE88 6005 0101 0002 3456` (zu kurz) → „Speichern“ → Fehler → korrekte IBAN `DE02 1203 0000 0000 2020 51` → „Speichern“
 - **Endzustand:** Nach Korrektur Toast „Bankverbindung für Hoffmann Feinkost GmbH gespeichert.“
-- **Stuck-Variante:** Nutzer klickt 2× „Speichern“ mit derselben falschen IBAN → zweimal die Inline-Fehlermeldung „Ungültige IBAN: Eine deutsche IBAN beginnt mit „DE“ und hat 22 Zeichen …“ (bzw. bei Tippfehler in der Prüfziffer: „Ungültige IBAN: Die Prüfziffer stimmt nicht …“). Lotse sollte das Format erklären und auf das Feld „IBAN“ zeigen.
+- **Stuck-Variante:** Nutzer klickt 2× „Speichern“ mit derselben falschen IBAN → zweimal die Inline-Fehlermeldung „Ungültige IBAN: Eine deutsche IBAN beginnt mit „DE“ und hat 22 Zeichen …“ (bzw. bei Tippfehler in der Prüfziffer: „Ungültige IBAN: Die Prüfziffer stimmt nicht …“). Valo sollte das Format erklären und auf das Feld „IBAN“ zeigen.
 
-## 3. Aufgabe anlegen (Lotse kann selbst ausführen)
+## 3. Aufgabe anlegen (Valo kann selbst ausführen)
 
 - **Frage:** „Wie lege ich eine Aufgabe für den Rückruf bei Becker Maschinenbau an?“
 - **Rolle:** Vertrieb
 - **Startseite:** `index.html`
 - **Klickpfad:** Seitenleiste „Aufgaben“ → „Neue Aufgabe“ (öffnet Dialog) → „Titel“ = `Rückruf wegen Wartungsvertrag` → „Kunde“ = „Becker Maschinenbau AG“ → „Fällig am“ = morgen → „Priorität“ = „Hoch“ → „Aufgabe speichern“
 - **Endzustand:** Dialog geschlossen, neue Zeile in der Aufgabenliste (grün hinterlegt), Toast „Aufgabe „Rückruf wegen Wartungsvertrag“ wurde angelegt.“; Aufgabe erscheint auch im Tab „Übersicht“ von Becker (Offene Aufgaben +1).
-- **Stuck-Variante:** Nutzer öffnet `kunde.html?id=becker-maschinenbau`, klickt alle Tabs durch und sucht dort nach „Aufgabe“; oder öffnet den Dialog, klickt „Aufgabe speichern“ ohne Titel → zweimal „Bitte geben Sie einen Titel ein.“. Abkürzung, die Lotse zeigen kann: Button „Aufgabe anlegen“ oben im Kundendetail (öffnet den Dialog mit vorausgewähltem Kunden).
+- **Stuck-Variante:** Nutzer öffnet `kunde.html?id=becker-maschinenbau`, klickt alle Tabs durch und sucht dort nach „Aufgabe“; oder öffnet den Dialog, klickt „Aufgabe speichern“ ohne Titel → zweimal „Bitte geben Sie einen Titel ein.“. Abkürzung, die Valo zeigen kann: Button „Aufgabe anlegen“ oben im Kundendetail (öffnet den Dialog mit vorausgewähltem Kunden).
 
 ## 4. Standard-Zahlungsziel finden (bewusst versteckt)
 
@@ -57,7 +57,7 @@ Labels in „…“ sind die exakten sichtbaren Texte bzw. accessible names.
 - **Rolle:** Vertrieb
 - **Startseite:** `kunde.html?id=weber-elektrotechnik`
 - **Klickpfad (versucht):** Tab „Zahlungsdaten“ → „Bankverbindung bearbeiten“ (aria-disabled, wirkt ausgegraut)
-- **Erwarteter Endzustand:** Klick zeigt die Fehlermeldung „Keine Berechtigung: Zahlungsdaten können nur von den Rollen Buchhaltung oder Admin geändert werden. Ihre Rolle: Vertrieb.“ und einen Fehler-Toast. **Lotse soll keinen Weg vortäuschen**, sondern erklären, dass die Rolle Buchhaltung/Admin nötig ist (z. B. „Bitte wende dich an die Buchhaltung, Sabine Vogt“).
+- **Erwarteter Endzustand:** Klick zeigt die Fehlermeldung „Keine Berechtigung: Zahlungsdaten können nur von den Rollen Buchhaltung oder Admin geändert werden. Ihre Rolle: Vertrieb.“ und einen Fehler-Toast. **Valo soll keinen Weg vortäuschen**, sondern erklären, dass die Rolle Buchhaltung/Admin nötig ist (z. B. „Bitte wende dich an die Buchhaltung, Sabine Vogt“).
 - **Stuck-Variante:** Nutzer klickt 2–3× auf „Bankverbindung bearbeiten“ → dieselbe Fehlermeldung mehrfach; danach sucht er „Bankverbindung“ in der Globalen Suche.
 
 ## 7. Rollen-Blockade: Einstellungen nicht sichtbar
@@ -66,7 +66,7 @@ Labels in „…“ sind die exakten sichtbaren Texte bzw. accessible names.
 - **Rolle:** Vertrieb (oder Buchhaltung)
 - **Startseite:** `index.html`
 - **Klickpfad:** Keiner – der Menüpunkt „Einstellungen“ fehlt in der Seitenleiste. Direkter Aufruf von `einstellungen.html` zeigt „Zugriff verweigert: Die Einstellungen sind nur für die Rolle Admin verfügbar.“
-- **Erwarteter Endzustand:** Lotse erklärt, dass nur Admins das Standard-Zahlungsziel ändern dürfen. Ein kundenspezifisches Zahlungsziel ist im Tab „Zahlungsdaten“ des Kunden nur sichtbar.
+- **Erwarteter Endzustand:** Valo erklärt, dass nur Admins das Standard-Zahlungsziel ändern dürfen. Ein kundenspezifisches Zahlungsziel ist im Tab „Zahlungsdaten“ des Kunden nur sichtbar.
 - **Stuck-Variante:** Nutzer öffnet das Benutzermenü (Name + Rolle oben rechts), klickt „Hilfe“ (Icon-Button, Toast „nicht verfügbar“), dann Ping-Pong zwischen Dashboard und Kunden.
 
 ## 8. Aufgabe erledigen (Kurzfall)
@@ -100,7 +100,7 @@ Rollen jetzt: **Vertrieb**, **Vertriebsleitung**, **Buchhaltung**, **Admin**. Ne
 - **Startseite:** `angebote.html`
 - **Klickpfad:** „Angebote“ → Link „ANG-2026-044“ (Status „Zur Freigabe“). Als Vertrieb: „Versenden“ ist **deaktiviert** (Tooltip „Versenden ist erst möglich, wenn das Angebot freigegeben wurde.“), „Freigeben“ ist gesperrt (aria-disabled, Tooltip; Klick → „Keine Berechtigung: Angebote können nur von den Rollen Vertriebsleitung oder Admin freigegeben werden. Ihre Rolle: Vertrieb.“). Rolle → „Vertriebsleitung“ → Dashboard-Hinweis „Angebote zur Freigabe öffnen“ → „ANG-2026-044“ → „Freigeben“ → „Versenden“.
 - **Endzustand:** Toasts „Angebot ANG-2026-044 wurde freigegeben.“ und „Angebot ANG-2026-044 wurde an Becker Maschinenbau AG versendet.“; Statusleiste steht auf „Versendet“, „Statusverlauf“ zeigt drei Einträge.
-- **Stuck-Variante:** Vertrieb klickt 2–3× auf „Freigeben“ (gleiche Fehlermeldung) oder fährt über den deaktivierten „Versenden“-Button. Lotse soll erklären, dass die Vertriebsleitung (Katrin Albers) freigeben muss – nicht einen Umweg erfinden.
+- **Stuck-Variante:** Vertrieb klickt 2–3× auf „Freigeben“ (gleiche Fehlermeldung) oder fährt über den deaktivierten „Versenden“-Button. Valo soll erklären, dass die Vertriebsleitung (Katrin Albers) freigeben muss – nicht einen Umweg erfinden.
 
 ## 11. Rabatt auf eine Position – „Speichern“ vs. „Speichern & schließen“
 
@@ -127,7 +127,7 @@ Rollen jetzt: **Vertrieb**, **Vertriebsleitung**, **Buchhaltung**, **Admin**. Ne
 - **Startseite:** `kunde.html?id=mueller-logistik`
 - **Klickpfad:** Tab „Ansprechpartner“ → in der Zeile „Anke Brandt“ das Drei-Punkte-Icon „Weitere Aktionen“ → „Hauptansprechpartner festlegen“
 - **Endzustand:** Toast „Anke Brandt ist jetzt Hauptansprechpartner für Müller Logistik GmbH.“; Badge „Hauptansprechpartner“ bei Anke Brandt; „Übersicht“ → „Hauptkontakt“ = Anke Brandt.
-- **Stuck-Variante:** Nutzer klickt auf den Namen/die E-Mail in der Tabelle, sucht in „Übersicht“ (dort steht „Hauptkontakt“, aber ohne Bearbeiten-Button) oder öffnet das falsche „Weitere Aktionen“ (alle drei Icon-Buttons heißen gleich – Lotse muss die richtige Zeile treffen).
+- **Stuck-Variante:** Nutzer klickt auf den Namen/die E-Mail in der Tabelle, sucht in „Übersicht“ (dort steht „Hauptkontakt“, aber ohne Bearbeiten-Button) oder öffnet das falsche „Weitere Aktionen“ (alle drei Icon-Buttons heißen gleich – Valo muss die richtige Zeile treffen).
 
 ## 14. Zwei-Faktor-Authentifizierung aktivieren (3-Schritt-Dialog, Abhängigkeit zum Profil)
 
@@ -136,7 +136,7 @@ Rollen jetzt: **Vertrieb**, **Vertriebsleitung**, **Buchhaltung**, **Admin**. Ne
 - **Startseite:** `index.html`
 - **Klickpfad:** „Benutzermenü“ → „Mein Konto“ → Tab „Sicherheit“ → „Zwei-Faktor aktivieren“ → Schritt 1 „Authenticator-App“ → „Weiter“ → Schritt 2 „Bestätigungscode“ = `123456` → „Weiter“ → Schritt 3 „Ich habe die Wiederherstellungscodes gespeichert“ anhaken → „Aktivieren“
 - **Endzustand:** Toast „Zwei-Faktor-Authentifizierung ist jetzt aktiviert.“; Status „Aktiviert (Authenticator-App)“, Button „Zwei-Faktor deaktivieren“.
-- **Stuck-Variante:** (a) Nutzer wählt „SMS an Mobilnummer“ → „Für SMS ist eine Mobilnummer erforderlich. Bitte tragen Sie zuerst unter Profil → Mobil eine Nummer ein …“ (Seed hat keine Mobilnummer) – Lotse muss auf Tab „Profil“ → „Mobil“ verweisen oder die App-Methode empfehlen. (b) Falscher Code zweimal → „Der Code ist ungültig …“. (c) In Schritt 3 „Aktivieren“ ohne Häkchen → „Bitte bestätigen Sie, dass Sie die Wiederherstellungscodes gespeichert haben.“
+- **Stuck-Variante:** (a) Nutzer wählt „SMS an Mobilnummer“ → „Für SMS ist eine Mobilnummer erforderlich. Bitte tragen Sie zuerst unter Profil → Mobil eine Nummer ein …“ (Seed hat keine Mobilnummer) – Valo muss auf Tab „Profil“ → „Mobil“ verweisen oder die App-Methode empfehlen. (b) Falscher Code zweimal → „Der Code ist ungültig …“. (c) In Schritt 3 „Aktivieren“ ohne Häkchen → „Bitte bestätigen Sie, dass Sie die Wiederherstellungscodes gespeichert haben.“
 
 ## 15. Profil speichern – Fehler steht nur oben im langen Formular
 
@@ -145,7 +145,7 @@ Rollen jetzt: **Vertrieb**, **Vertriebsleitung**, **Buchhaltung**, **Admin**. Ne
 - **Startseite:** `konto.html#profil`
 - **Klickpfad:** Feld „Telefon“ = `+49 30 555 0188` → nach unten scrollen → „Speichern“
 - **Endzustand:** Toast „Profil gespeichert.“
-- **Stuck-Variante:** Nutzer tippt `030/555-0188 Durchwahl 2` (Buchstaben) oder leert „Nachname“ und klickt mehrfach „Speichern“ → der Fehlerkasten „Das Profil konnte nicht gespeichert werden (… Fehler): Telefon: Ungültiges Format …“ erscheint **nur oben** (role=alert), das Feld selbst ist nicht markiert und die Seite scrollt nicht. Alternativ klickt der Nutzer „Speichern & schließen“ und wundert sich, dass er auf dem Dashboard landet. Lotse soll auf den Fehlerkasten oben und dann auf das Feld „Telefon“ zeigen.
+- **Stuck-Variante:** Nutzer tippt `030/555-0188 Durchwahl 2` (Buchstaben) oder leert „Nachname“ und klickt mehrfach „Speichern“ → der Fehlerkasten „Das Profil konnte nicht gespeichert werden (… Fehler): Telefon: Ungültiges Format …“ erscheint **nur oben** (role=alert), das Feld selbst ist nicht markiert und die Seite scrollt nicht. Alternativ klickt der Nutzer „Speichern & schließen“ und wundert sich, dass er auf dem Dashboard landet. Valo soll auf den Fehlerkasten oben und dann auf das Feld „Telefon“ zeigen.
 
 ## 16. Mehrere Aufgaben auf einmal erledigen (deaktivierter Button mit Tooltip, zwei Checkboxen pro Zeile)
 

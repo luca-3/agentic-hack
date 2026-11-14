@@ -14,7 +14,7 @@ One-day hackathon project ({Tech: Europe} Agentic AI Hack, co-hosted by Google D
 
 Human docs: `README.md` (overview), `SETUP.md` (setup, workflow, troubleshooting).
 
-**Product context — read first:** we are building **Lotse** (Chrome extension + dashboard + agent runtime, voice-native, Gemini). The agent wiki in `docs/` holds requirements, architecture, decisions and research: start at `docs/README.md`. Follow `docs/decisions.md`; when you make or change a product/architecture decision, append it there (next D-number) and update requirement status in `docs/requirements.md`.
+**Product context — read first:** we are building **Valo** (Chrome extension + dashboard + agent runtime, voice-native, Gemini). The agent wiki in `docs/` holds requirements, architecture, decisions and research: start at `docs/README.md`. Follow `docs/decisions.md`; when you make or change a product/architecture decision, append it there (next D-number) and update requirement status in `docs/requirements.md`.
 
 ## Monorepo — three areas + shared contract
 

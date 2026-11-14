@@ -1,5 +1,5 @@
 /**
- * Lotse's in-page overlay (content script only): Shadow-DOM host with an animated agent cursor, a highlight frame,
+ * Valo's in-page overlay (content script only): Shadow-DOM host with an animated agent cursor, a highlight frame,
  * a hint bubble with optional buttons, and status chips. Pointer events pass through everything except the bubble's
  * buttons; the overlay never clicks or fills app controls (D-17). Works inside native modal dialogs (top layer) by
  * moving the host into the topmost open modal dialog.
@@ -19,7 +19,7 @@ type OverlayOptions = {
 type Point = { x: number; y: number };
 
 const GLIDE_MS = 600;
-const VOICE_TEXT: Partial<Record<VoiceState, string>> = { listening: "🎙 Lotse hört zu …", thinking: "… Lotse denkt nach", speaking: "🔊 Lotse spricht" };
+const VOICE_TEXT: Partial<Record<VoiceState, string>> = { listening: "🎙 Valo hört zu …", thinking: "… Valo denkt nach", speaking: "🔊 Valo spricht" };
 const STYLE = `
 :host { all: initial; }
 [hidden] { display: none !important; }
@@ -212,7 +212,7 @@ export class LotseOverlay {
     this.bubble.append(this.titleEl, this.textEl, this.detailEl, this.noteEl, this.buttonsEl);
     this.cursor = div("cursor");
     this.cursor.setAttribute("aria-hidden", "true");
-    this.cursor.innerHTML = '<svg width="24" height="26" viewBox="0 0 24 26"><path d="M3 2 L3 21 L8.2 16.2 L11.6 23.6 L15 22 L11.6 14.8 L18.6 14.8 Z" fill="#2563eb" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="tag">Lotse</span>';
+    this.cursor.innerHTML = '<svg width="24" height="26" viewBox="0 0 24 26"><path d="M3 2 L3 21 L8.2 16.2 L11.6 23.6 L15 22 L11.6 14.8 L18.6 14.8 Z" fill="#2563eb" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="tag">Valo</span>';
     const chips = div("chips");
     this.exploreChip = div("chip explore");
     this.exploreChip.hidden = !this.exploreText;
@@ -228,7 +228,7 @@ export class LotseOverlay {
   }
 
   private syncChip() {
-    this.recordingChip.textContent = this.paused ? "⏸ Lotse pausiert auf dieser Seite" : "● Lotse zeichnet lokal auf";
+    this.recordingChip.textContent = this.paused ? "⏸ Valo pausiert auf dieser Seite" : "● Valo zeichnet lokal auf";
     this.recordingChip.hidden = this.chipsHidden || !(this.recording || this.pausedVisible);
   }
 

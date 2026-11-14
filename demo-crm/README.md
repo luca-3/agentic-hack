@@ -1,6 +1,6 @@
-# Kundenwerk CRM (Demo-Ziel für Lotse)
+# Kundenwerk CRM (Demo-Ziel für Valo)
 
-Statische Demo-CRM-Web-App (HTML/CSS/Vanilla-JS, kein Build, keine Abhängigkeiten, keine Netzwerk-Requests) als Testziel für die Lotse-Extension. Alle Daten sind fiktiv; IBANs sind Testwerte.
+Statische Demo-CRM-Web-App (HTML/CSS/Vanilla-JS, kein Build, keine Abhängigkeiten, keine Netzwerk-Requests) als Testziel für die Valo-Extension. Alle Daten sind fiktiv; IBANs sind Testwerte.
 
 ## Starten
 
@@ -43,7 +43,7 @@ Umschalten über **Rolle** in der Kopfzeile (wird in `localStorage` gespeichert)
 | Buchhaltung | Kunden, Aufgaben, Zahlungsdaten bearbeiten, Import/Export. „Angebot erstellen“ und Angebotsbearbeitung gesperrt. Keine Einstellungen. |
 | Admin | Alles inkl. Einstellungen, Benutzer, API-Token |
 
-Gesperrte Buttons sind `aria-disabled="true"` (klickbar, zeigen dann eine Fehlermeldung „Keine Berechtigung …“), damit Lotse den Klick und den Fehler sieht. Ausnahmen mit echtem `disabled` + Tooltip (`role="tooltip"`, per `aria-describedby`): „Versenden“ (erst nach Freigabe) und „Ausgewählte als erledigt markieren“ (erst nach Auswahl).
+Gesperrte Buttons sind `aria-disabled="true"` (klickbar, zeigen dann eine Fehlermeldung „Keine Berechtigung …“), damit Valo den Klick und den Fehler sieht. Ausnahmen mit echtem `disabled` + Tooltip (`role="tooltip"`, per `aria-describedby`): „Versenden“ (erst nach Freigabe) und „Ausgewählte als erledigt markieren“ (erst nach Auswahl).
 
 Bewusste Stolperfallen: „Speichern“ vs. „Speichern & schließen“ (Profil, Angebotsdetail), Fehler nur oben im Profil-Formular, Felder erst nach Schalter sichtbar (Tägliche Zusammenfassung, Ruhezeiten, Abwesenheit → Vertretung, Wiederholung → Wiederholen bis, Import → Überschreiben-Warnung), zwei Checkboxen pro Aufgabenzeile („Auswählen: …“ vs. „Erledigt: …“), drei gleichnamige „Weitere Aktionen“-Buttons.
 
@@ -53,9 +53,9 @@ Bewusste Stolperfallen: „Speichern“ vs. „Speichern & schließen“ (Profil
 - **Demo-Daten zurücksetzen** (Link unten in der Seitenleiste) stellt den Seed wieder her und setzt die Rolle auf Vertrieb.
 - Fälligkeitsdaten sind relativ zum Tag des Seedings (heute, überfällig, morgen …).
 
-## Für Lotse
+## Für Valo
 
 - `SCENARIOS.md` – 16 Testszenarien inkl. „stuck“-Varianten (9–16: mehrstufig, verschachtelte Dialoge, Rollen-Blockaden, ähnliche Buttons, versteckt bis Schalter).
 - `lotse-features.json` – Feature-Liste (Route, Klickpfad mit echten Labels, Rollen). `<Kundenname>` / `<Aufgabentitel>` / `<Angebotsnummer>` / `<Vertragsname>` / `<Unteraufgabe>` sind Platzhalter für datenabhängige Labels. 39 Features (13 ursprüngliche unverändert + 26 neue).
-- Keine speziellen Lotse-Attribute; alle Bedienelemente sind native `<button>`, `<a>`, `<input>`/`<select>` mit `<label for>` oder `aria-label` (Icon-Buttons: „Navigation einklappen“, „Suchen“, „Hilfe“, „Benachrichtigungen“, „Dialog schließen“, „Aufgabe löschen: …“, „Befehlspalette öffnen“, „Weitere Aktionen“, „Dokument löschen: …“, „Position n entfernen“).
+- Keine speziellen Valo-Attribute; alle Bedienelemente sind native `<button>`, `<a>`, `<input>`/`<select>` mit `<label for>` oder `aria-label` (Icon-Buttons: „Navigation einklappen“, „Suchen“, „Hilfe“, „Benachrichtigungen“, „Dialog schließen“, „Aufgabe löschen: …“, „Befehlspalette öffnen“, „Weitere Aktionen“, „Dokument löschen: …“, „Position n entfernen“).
 - Globale Suche findet nur Kunden, Aufgaben und Angebote – Begriffe wie „IBAN“ oder „Zahlungsziel“ ergeben „Keine Ergebnisse“ (gewollt für Stuck-Tests).

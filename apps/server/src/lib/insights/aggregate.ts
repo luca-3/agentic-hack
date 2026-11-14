@@ -61,7 +61,7 @@ export interface FeatureAggregate {
   declined: number;
   thumbsUp: number;
   thumbsDown: number;
-  /** Help offers on this feature that were not declined ("Fragen an Lotse"). */
+  /** Help offers on this feature that were not declined ("Fragen an Valo"). */
   questions: number;
   questionPersons: number;
   /** Persons who got a (not declined) hint on this feature. */

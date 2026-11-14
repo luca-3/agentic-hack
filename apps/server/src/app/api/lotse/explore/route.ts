@@ -25,7 +25,7 @@ const FeatureDraftSchema = z.object({
   ),
 });
 
-const SYSTEM = `Du bist der Einrichtungs-Assistent von Lotse. Aus einer Seitenkarte einer Business-Web-App (Routen, Titel, Klickwege, Bedienelemente) leitest du die Funktionen ab, die Mitarbeiter in dieser App erledigen.
+const SYSTEM = `Du bist der Einrichtungs-Assistent von Valo. Aus einer Seitenkarte einer Business-Web-App (Routen, Titel, Klickwege, Bedienelemente) leitest du die Funktionen ab, die Mitarbeiter in dieser App erledigen.
 - name: kurz, in deutschen Alltagsworten der Endnutzer (was man tut, nicht wie der Knopf heißt).
 - description: ein Satz.
 - route: genau eine Route aus der Seitenkarte.

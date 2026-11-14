@@ -100,8 +100,8 @@ export async function POST(request: Request) {
       dashboardAppId: app.dashboardAppId ?? null,
     });
 
-    if (run.status === "timeout") yield { type: "error", code: "timeout", message: "Lotse hat zu lange gebraucht — bitte nochmal versuchen." };
-    else if (run.status === "error") yield { type: "error", code: "internal", message: "Lotse konnte die Frage gerade nicht beantworten." };
+    if (run.status === "timeout") yield { type: "error", code: "timeout", message: "Valo hat zu lange gebraucht — bitte nochmal versuchen." };
+    else if (run.status === "error") yield { type: "error", code: "internal", message: "Valo konnte die Frage gerade nicht beantworten." };
     else
       yield {
         type: "done",

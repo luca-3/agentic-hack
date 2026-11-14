@@ -3,7 +3,7 @@
 Decision D-16: **one brain on the server**. Voice is only input/output:
 
 ```
-wake word "Hey Lotse" / hotkey Alt+L (command "lotse-listen")
+wake word "Hey Jarvis" (custom "Hey Valo" model later) / hotkey Alt+Shift+L, macOS ⌘⇧K (command "lotse-listen")
   → offscreen doc records mic → Gemini Live *transcription* (token from us, audio goes straight to Google)
   → final transcript → background → POST /api/lotse/ask { source: "voice" }
   → agent mostly just points; only a `say` event is spoken (≤ 2 short sentences, often nothing)
@@ -22,7 +22,7 @@ Server code: `src/app/api/lotse/live-token/route.ts`, `src/lib/voice/live-token.
   ```
 - `429` `{ error: "rate_limited" }` + `Retry-After` (8 tokens/min per session, 60/min global, in-memory). `502` if minting failed.
 - Token properties: **single use** (one WebSocket), must be **opened within 60 s**, session cut off after **2 min**. Model and the whole Live config are **locked server-side** — whatever the client puts into `setup` beyond `model` is ignored/rejected (checked: asking for `gemini-3.8-live` + audio output fails).
-- Locked config: transcription only, `languageCodes: ["de-DE","en-US"]`, custom vocabulary `Lotse, Hey Lotse, IBAN, CRM, Bankverbindung`. The model cannot answer, call tools or speak.
+- Locked config: transcription only, `languageCodes: ["de-DE","en-US"]`, custom vocabulary `Valo, Hey Valo, IBAN, CRM, Bankverbindung`. The model cannot answer, call tools or speak.
 - Get a **fresh token per utterance**. Minting takes ~0.3 s warm (first call after server start ~1.4 s).
 
 ## 2. Talking to Gemini Live (offscreen document, plain `WebSocket`, no SDK needed)
@@ -67,7 +67,7 @@ End of utterance: send `audioStreamEnd` yourself (fastest), **or** just keep str
 | final transcript after `audioStreamEnd` | **~0.36–0.6 s** |
 | final transcript via server VAD (no `audioStreamEnd`) | ~1.2 s after speech ends |
 
-→ Fetch the token and open the socket **immediately** on wake word/hotkey and **buffer mic audio** until `setupComplete`; the user is still talking during setup, so it's mostly hidden. Transcript quality was exact (incl. "Hey Lotse", "IBAN", "Bankverbindung"). Strip a leading "Hey Lotse," from the transcript before `/ask`.
+→ Fetch the token and open the socket **immediately** on wake word/hotkey and **buffer mic audio** until `setupComplete`; the user is still talking during setup, so it's mostly hidden. Transcript quality was exact (incl. "Hey Valo", "IBAN", "Bankverbindung"). Strip a leading "Hey Valo," from the transcript before `/ask`.
 
 Not usable for this: `gemini-3.1-flash-live-preview` / `gemini-3.8-live` (audio output only → "response modalities (TEXT) not supported"), and they'd answer instead of just transcribing.
 
@@ -85,10 +85,10 @@ Not usable for this: `gemini-3.1-flash-live-preview` / `gemini-3.8-live` (audio 
 - First use: if `getUserMedia` fails with `NotAllowedError`, open an extension page (e.g. `mic-permission.html`) as a **normal tab** that calls `getUserMedia` once, then closes; the grant then applies to the extension origin → retry in offscreen. `"microphone"`/`audioCapture` manifest permissions don't help.
 
 **Wake word (openWakeWord, D-10)**
-- No pre-trained "Hey Lotse" model exists → demo with **`hey_jarvis`** and make the keyword/model configurable; a custom "Hey Lotse" model can be trained with openWakeWord's training notebook or LiveKit's wakeword trainer (Apache 2.0, synthetic speech → openWakeWord ONNX).
+- No pre-trained "Hey Valo" model exists → demo with **`hey_jarvis`** and make the keyword/model configurable; a custom "Hey Valo" model can be trained with openWakeWord's training notebook or LiveKit's wakeword trainer (Apache 2.0, synthetic speech → openWakeWord ONNX).
 - `openwakeword-wasm-browser` 0.1.1 (MIT wrapper, last publish 2025-11, onnxruntime-web ^1.23) ships the ONNX models (`melspectrogram`, `embedding_model`, `silero_vad`, `hey_jarvis_v0.1`, `alexa`, `hey_mycroft`, …, ~18 MB with tflite copies) and a small `WakeWordEngine` (1280-sample frames @16 kHz → mel → embedding → keyword head, threshold 0.5, 2 s cooldown). **Caveats for MV3:** it loads its AudioWorklet from a `Blob` URL (blocked by the extension CSP → ship the worklet as a bundled file instead), and it opens its own `getUserMedia` (better: one shared stream for wake word + transcription). Easiest: copy its ~300-line engine logic, bundle models + ORT wasm locally (MV3: no remote code), `ort.env.wasm.numThreads = 1` (offscreen doc is not cross-origin isolated), CSP `wasm-unsafe-eval`.
 - `openwakeword-web` 0.1.0 (Apache-2.0, 2026-06) — similar, no models bundled; less proven.
-- **License:** openWakeWord's *pre-trained* models are CC BY-NC-SA 4.0 → OK for the hackathon demo, not for commercial use (train our own "Hey Lotse").
+- **License:** openWakeWord's *pre-trained* models are CC BY-NC-SA 4.0 → OK for the hackathon demo, not for commercial use (train our own "Hey Valo").
 - Bonus: the bundled `silero_vad` gives client-side end-of-utterance (≈1 s silence → `audioStreamEnd`).
 - Before the wake word fires, **no audio leaves the device**; open the Gemini socket only after detection/hotkey.
 
@@ -101,4 +101,4 @@ Not usable for this: `gemini-3.1-flash-live-preview` / `gemini-3.8-live` (audio 
 curl -s -X POST http://localhost:3001/api/lotse/live-token -H "x-lotse-session: test" | jq '.model, .expiresAt'
 ```
 
-Extension checklist: hotkey Alt+L → state `listening`; first use opens the mic-permission tab; say "Hey Jarvis" (until "Hey Lotse" is trained) → `listening`; in the demo CRM ask "Wie ändere ich die IBAN?" → transcript appears, Lotse points at the field, speaks at most 2 sentences (or nothing).
+Extension checklist: hotkey Alt+Shift+L (macOS ⌘⇧K) → state `listening`; first use opens the mic-permission tab; say "Hey Jarvis" (until "Hey Valo" is trained) → `listening`; in the demo CRM ask "Wie ändere ich die IBAN?" → transcript appears, Valo points at the field, speaks at most 2 sentences (or nothing).

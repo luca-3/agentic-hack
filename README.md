@@ -1,6 +1,6 @@
-# Lotse — the co-pilot that teaches people their business apps
+# Valo — the co-pilot that teaches people their business apps
 
-Lotse watches how employees use a web app (e.g. CORPUS, an internal fleet/operations tool), notices **when someone is stuck**, and shows the way **on the page itself**: an agent cursor glides to the right field, highlights it, and — only if needed — says one short sentence. Ask by voice ("Hey Lotse, wie ändere ich die IBAN?") or just keep working; Lotse offers help on its own and gets quieter the more you know. It never clicks for you: people learn instead of being replaced.
+Valo watches how employees use a web app (e.g. CORPUS, an internal fleet/operations tool), notices **when someone is stuck**, and shows the way **on the page itself**: an agent cursor glides to the right field, highlights it, and — only if needed — says one short sentence. Ask by voice ("Hey Valo, wie ändere ich die IBAN?") or just keep working; Valo offers help on its own and gets quieter the more you know. It never clicks for you: people learn instead of being replaced.
 
 Built in one day at the [{Tech: Europe} Agentic AI Hack Karlsruhe](https://luma.com/kar-hack) — **100 % Google Gemini**, running on our **own agent harness**.
 
@@ -15,7 +15,7 @@ flowchart LR
     VOICE["Wake word (openWakeWord)<br/>offscreen audio"]
   end
 
-  subgraph Runtime["Lotse Agent Runtime — our own harness (apps/server)"]
+  subgraph Runtime["Valo Agent Runtime — our own harness (apps/server)"]
     GUARD["Guard<br/>auth · policy · limits · budgets"]
     PIPE["Perception pipeline<br/>/state → /intent → /decide"]
     ROUTER["Model router<br/>point · guide · reason"]
@@ -70,7 +70,7 @@ We use the Vercel AI SDK only as the thin model-call layer. **Everything that ma
 
 **Why not an off-the-shelf harness?** We need sub-second, real-time guidance with tools that run **in the user's browser**, Gemini-only with our own key, and strict privacy (works council, GDPR) — generic agent frameworks optimize for long-running chat agents instead.
 
-## Why Lotse
+## Why Valo
 
 - **Notices on its own** when someone is stuck — no admin-built tours.
 - **Gets quieter** the better you get (adaptive per-user threshold).
@@ -91,10 +91,10 @@ npm run build -w @lotse/extension   # load apps/extension/.output/chrome-mv3 via
 | Folder | |
 | --- | --- |
 | `apps/extension` | Chrome extension — observe, pseudonymize, orb/cursor/plans, voice |
-| `apps/server` | Lotse Agent Runtime — the harness, all Gemini calls |
+| `apps/server` | Valo Agent Runtime — the harness, all Gemini calls |
 | `apps/dashboard` | Org admin — apps, features, knowledge, learning suggestions, insights |
 | `packages/shared` | The contract (zod schemas + types) |
-| `demo-crm` | Static demo CRM with scenarios to try Lotse on |
+| `demo-crm` | Static demo CRM with scenarios to try Valo on |
 | `docs` | Product wiki: [requirements](docs/requirements.md), [architecture](docs/architecture.md), [decisions D-01…D-30](docs/decisions.md) |
 
 Setup details: [SETUP.md](SETUP.md) · Guide for coding agents: [AGENTS.md](AGENTS.md) · Runtime API: [apps/server/RUNTIME.md](apps/server/RUNTIME.md)

@@ -1,4 +1,4 @@
-// Smoke test for the Lotse runtime against a running dev server: `npm run smoke -w @lotse/server`
+// Smoke test for the Valo runtime against a running dev server: `npm run smoke -w @lotse/server`
 // (server: `npm run dev:server`, port 3001; override with LOTSE_URL). Scenarios from demo-crm/SCENARIOS.md.
 // Prints time-to-first-event (after `tier`) and total per case; exits 1 if an expectation fails.
 

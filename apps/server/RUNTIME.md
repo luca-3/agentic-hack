@@ -1,7 +1,7 @@
-# Lotse runtime — integration guide for the extension
+# Valo runtime — integration guide for the extension
 
 Server: `apps/server` (Next.js, `http://localhost:3001` = `LOTSE_DEFAULTS.serverUrl`). Contract: `@lotse/shared` (zod schemas, validate responses with them).
-Lotse **only marks** (highlight, step plan, short text). There is no endpoint or event that clicks or types.
+Valo **only marks** (highlight, step plan, short text). There is no endpoint or event that clicks or types.
 Voice: see `VOICE.md`. Smoke test: `npm run smoke -w @lotse/server` (needs the server running; `LOTSE_URL` to override).
 
 ## Headers (every call)
@@ -36,7 +36,7 @@ CORS: `chrome-extension://*` and `http://localhost:*` are allowed (incl. the two
 
 - **Policy** (`src/lib/lotse/policy.ts`): `GET /api/lotse/policy?app=localhost:3100` → `{ app, allowed, known, blockedRoutes, appName, orgName, signedIn, member, role, reason?, ttlSec }`. `known` = the host is in some org's `apps.domains`. Unknown hosts: allowed with an empty blocklist in dev, refused in production (`LOTSE_ALLOW_UNKNOWN_APPS=1|0` overrides); in production a known app also requires org membership. `LOTSE_DISABLED=1` → `allowed: false`.
 - **Blocked routes:** CORPUS hosts (`LOTSE_CORPUS_HOSTS`, default `localhost:3100,127.0.0.1:3100`, or a dashboard app named "CORPUS…") always get `LOTSE_FLEET_ROUTES` (default `*fahrzeug*,*vehicle*,*fleet*,*fuhrpark*`) — the vehicle pages hold real fleet data. Extra per app: `LOTSE_BLOCKED_ROUTES="localhost:3100=/admin/*|/export*;localhost:4000=/konto*"`. Blank env values fall back to the defaults. Matching: `routeBlocked(location, patterns)` in `@lotse/shared` (zod-free as `@lotse/shared/route`) — `*` = anything, case-insensitive, against path + query + hash.
-- **Extension enforcement (fail closed):** the content script checks the FULL local location (query included, never sent) before reading anything; on a blocked route (or while the policy is unknown) it builds no snapshot, sends no event, shows no highlight, and the service worker takes no screenshot, aborts in-flight inference and refuses questions — also while recording. The overlay chip and the side panel say "Lotse pausiert auf dieser Seite". The policy is cached per host for `ttlSec` (60 s); a failed refetch keeps the last known blocklist.
+- **Extension enforcement (fail closed):** the content script checks the FULL local location (query included, never sent) before reading anything; on a blocked route (or while the policy is unknown) it builds no snapshot, sends no event, shows no highlight, and the service worker takes no screenshot, aborts in-flight inference and refuses questions — also while recording. The overlay chip and the side panel say "Valo pausiert auf dieser Seite". The policy is cached per host for `ttlSec` (60 s); a failed refetch keeps the last known blocklist.
 - **Login:** the side panel signs in with Supabase email/password (Auth REST, URL + publishable key from `/auth-config`); the session lives in `chrome.storage.session`, is refreshed a minute before expiry and on a 401 (one retry). Every runtime call sends `Authorization: Bearer <access token>`; signed in, the server takes the role from `org_members` and the manual demo role is not sent. Without login (dev) everything works anonymously as before. Local test user: `npm run seed:dev-org -w @lotse/server -- --with-user` → `vertrieb@demo.test` (role Vertrieb).
 
 Input caps (server trims, you don't have to): question ≤ 500 chars (longer → 400), ≤ 300 snapshot elements, labels ≤ 80 chars. Send **labels only, never input values**.
@@ -79,7 +79,7 @@ explicit question (text / voice / lotse:wake-question) ────────�
 
 Request with `Accept: application/x-ndjson`. Each line is one `GuidanceEvent` (parse with `GuidanceEventSchema`), flushed as soon as known:
 
-1. `{"type":"tier","tier":"point|guide|reason","model":"…","snapshotId":"…"}` — always first (status UI: "Lotse sucht …"). `snapshotId` echoes `AskRequest.snapshot.id` (omitted when the request snapshot had no id) — drop the answer if it no longer matches the page.
+1. `{"type":"tier","tier":"point|guide|reason","model":"…","snapshotId":"…"}` — always first (status UI: "Valo sucht …"). `snapshotId` echoes `AskRequest.snapshot.id` (omitted when the request snapshot had no id) — drop the answer if it no longer matches the page.
 2. Zero or more, **in arrival order — render immediately**:
    - `point` `{ elementNumber, label, hint? }` → move the cursor/highlight to that element on the **current** page. `elementNumber` is always one you sent.
    - `plan` `{ steps: [{ label, route?, elementNumber?, hint? }] }` → step tour. Steps with `elementNumber` are on the current page (step 1 usually has one). Advance locally: after each click/navigation, find the next step's `label` in a fresh snapshot (placeholders like `‹Kundenname›` may appear → match loosely or show the hint).
@@ -154,7 +154,7 @@ Events carry no search terms (privacy), so `intent` can be generic ("Wie komme i
 | `bad_request` | 400 / 413 / 404 | Body invalid or too large; 404 = unknown `offerId`. Don't retry unchanged. |
 | `unauthorized` | 401 | Missing/expired token (production). Refresh the Supabase session, retry once. |
 | `rate_limited` | 429 | Per-minute limit. Honor `Retry-After` (seconds). |
-| `budget_exceeded` | 429 | Daily token budget used up. Show "Lotse macht Pause bis morgen". |
+| `budget_exceeded` | 429 | Daily token budget used up. Show "Valo macht Pause bis morgen". |
 | `timeout` | 200 (in stream) / 504 (legacy) | Tier timeout. Keep what was already shown; offer "nochmal versuchen". |
 | `internal` | 500 / 503 | Server/model error; 503 = kill switch `LOTSE_DISABLED=1`. |
 
@@ -172,7 +172,7 @@ Code: `src/lib/lotse/` — `observe.ts` (`/state` + `/intent`), `orchestrator.ts
 
 ## Agent memory + knowledge gaps (D-28, R-LRN-3/5)
 
-Lotse learns incrementally from usage and keeps it **apart from the curated knowledge base**: table `agent_memory` (+ `agent_memory_evidence`), always shown to the model as a labeled `<agent_memory>` block. Code: `src/lib/lotse/memory.ts` (store + read path), `src/lib/lotse/gaps.ts` (gaps + learning after `/ask`). Migration `20261114123416_agent_memory.sql`.
+Valo learns incrementally from usage and keeps it **apart from the curated knowledge base**: table `agent_memory` (+ `agent_memory_evidence`), always shown to the model as a labeled `<agent_memory>` block. Code: `src/lib/lotse/memory.ts` (store + read path), `src/lib/lotse/gaps.ts` (gaps + learning after `/ask`). Migration `20261114123416_agent_memory.sql`.
 
 - **Learning (write):** after every explicit `/ask` (text/voice, not proactive; background, after the answer) one lite-model call (`gemini-3.5-flash-lite`, ≤ 5 s, `agent_usage.route = 'memory'`) maps the question to a neutral topic (2–4 words, known topics reused, names/numbers/placeholders stripped) and the feature it meant. **The question is never stored.** Then: no `point`/`plan` (and not role-blocked) or `searchKnowledge` without hits → `knowledge_gaps` (count + distinct persons); answered with a feature → `faq` memory evidence ("„IBAN ändern“ meint die Funktion …"); role-blocked → `role_hint`. Evidence is per hashed subject (`sha256(salt:caller.key)`), so a person counts once.
 - **Promotion:** `proposed` → `active` only at ≥ 5 distinct persons and no negative evidence (SQL `record_agent_memory_evidence`) or by an org admin; 👎 on a `/decide` offer → negative evidence for memories of that intent, ≥ 2 → back to `proposed`; no support for `LOTSE_MEMORY_TTL_DAYS` (60) → `expired`. The model has **no memory tool** — page content can't activate anything.

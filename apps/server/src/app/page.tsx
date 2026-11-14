@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-20 font-sans">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Lotse Server</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Valo Server</h1>
         <p className="text-zinc-600 dark:text-zinc-400">Agent runtime — API for the extension and the dashboard (Gemini + local Supabase).</p>
         <a href="/chat" className="w-fit rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900">
           Open agent playground →

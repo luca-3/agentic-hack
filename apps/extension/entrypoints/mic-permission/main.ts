@@ -3,7 +3,10 @@
  * A grant here applies to the whole extension origin, so the offscreen document can capture afterwards.
  * The service worker closes this tab after "mic-granted".
  */
+import { applyShortcutLabels, shortcutLabels } from "@/utils/shortcuts";
 import { notifyWorker } from "@/utils/voice/protocol";
+
+applyShortcutLabels();
 
 const status = document.querySelector<HTMLParagraphElement>("#status")!;
 const retry = document.querySelector<HTMLButtonElement>("#retry")!;
@@ -14,7 +17,7 @@ async function request(): Promise<void> {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     stream.getTracks().forEach((track) => track.stop()); // only the grant is needed here; capture happens offscreen
-    status.textContent = "Danke! Das Mikrofon ist freigegeben. Sag „Hey Jarvis …“ oder drücke Alt+Shift+L. Dieser Tab schließt sich gleich.";
+    status.textContent = `Danke! Das Mikrofon ist freigegeben. Sag „Hey Jarvis …“ oder drücke ${shortcutLabels().listen}. Dieser Tab schließt sich gleich.`;
     notifyWorker({ type: "mic-granted" });
   } catch (error) {
     const name = (error as DOMException | null)?.name;

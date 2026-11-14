@@ -256,7 +256,7 @@ function onFrame(frame: Float32Array): void {
 
 function startUtterance(trigger: ListenTrigger): void {
   if (utterance || !config) return;
-  speech?.abort(); // barge-in: the user talks, Lotse stops talking
+  speech?.abort(); // barge-in: the user talks, Valo stops talking
   const vad = detector;
   vad?.resetVad();
   setMode("listening");

@@ -150,7 +150,7 @@ export type EventBatch = z.infer<typeof EventBatchSchema>;
 export const StuckTriggerSchema = z.enum(["repeated_search", "page_pingpong", "form_idle", "repeated_error", "rage_click", "repeated_click", "workflow_update"]);
 export type StuckTrigger = z.infer<typeof StuckTriggerSchema>;
 
-/** POST /api/lotse/decide — "should Lotse offer help now?" (Gemini Decisions API, lite-model fallback). No images. */
+/** POST /api/lotse/decide — "should Valo offer help now?" (Gemini Decisions API, lite-model fallback). No images. */
 export const DecideRequestSchema = z.object({
   trigger: StuckTriggerSchema,
   triggerReason: z.string().max(500).optional(), // the local rule's reason text (StuckSignal.reason), if any
@@ -294,7 +294,7 @@ export type VoiceState = z.infer<typeof VoiceStateSchema>;
 
 export const LOTSE_SETTINGS_KEY = "lotse:settings";
 export const LotseSettingsSchema = z.object({
-  proactive: z.boolean().default(true), // Lotse may offer help on its own
+  proactive: z.boolean().default(true), // Valo may offer help on its own
   voice: z.boolean().default(true), // wake word / hotkey listening
   speak: z.boolean().default(true), // spoken answers (still only when needed, ≤ 2 sentences)
 });
@@ -468,14 +468,14 @@ export type LearnResponse = z.infer<typeof LearnResponseSchema>;
 /* ── App policy + extension login (D-05 login, D-12 privacy, D-27) ─────────────────────────────── */
 
 /**
- * GET /api/lotse/policy?app=<host> — may Lotse run in this app, and where must it stay silent?
+ * GET /api/lotse/policy?app=<host> — may Valo run in this app, and where must it stay silent?
  * On a location matching `blockedRoutes` the extension observes, snapshots, screenshots and sends NOTHING
  * (CORPUS vehicle/fleet pages hold real fleet data). No policy (server down, error) = paused (fail closed).
  * Send the usual headers; with `Authorization: Bearer` the response carries the caller's org role.
  */
 export const PolicyResponseSchema = z.object({
   app: z.string().max(200), // normalized host the policy is for, e.g. "localhost:3100"
-  allowed: z.boolean(), // false = Lotse stays completely off in this app
+  allowed: z.boolean(), // false = Valo stays completely off in this app
   known: z.boolean(), // host is registered as an app of an org (dashboard apps.domains)
   blockedRoutes: z.array(z.string().max(200)).max(50), // patterns for routeBlocked()
   appName: z.string().nullable(),

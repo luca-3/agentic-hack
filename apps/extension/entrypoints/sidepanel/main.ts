@@ -1,9 +1,11 @@
 import { LOTSE_DEFAULTS, type VoiceState } from "@lotse/shared";
 import type { LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
+import { applyShortcutLabels } from "../../utils/shortcuts";
 import "./presence"; // D-29 switches: "Automatisch aktiv", "Status-Kreis anzeigen"
 
 const get = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
+applyShortcutLabels();
 const startButton = get<HTMLButtonElement>("#start");
 const stopButton = get<HTMLButtonElement>("#stop");
 const askForm = get<HTMLFormElement>("#ask");
@@ -109,7 +111,7 @@ const clock = (timestamp: number) => new Date(timestamp).toLocaleTimeString("de-
 
 function render(status: LotseStatus) {
   renderAccount(status);
-  get("#activity").textContent = status.recording ? "Lotse aktiv" : "Lotse pausiert";
+  get("#activity").textContent = status.recording ? "Valo aktiv" : "Valo pausiert";
   get("#activity").classList.toggle("active", status.recording);
   const voiceChip = get("#voice-state");
   voiceChip.textContent = status.settings.voice ? VOICE_LABEL[status.voiceState] : "";
@@ -154,7 +156,7 @@ function render(status: LotseStatus) {
   speakToggle.disabled = !status.settings.voice;
   get<HTMLButtonElement>("#listen").disabled = !status.settings.voice;
   const snoozed = status.snoozedUntil !== null;
-  get("#snooze-line").textContent = !status.settings.proactive ? "Lotse bietet keine Hilfe von sich aus an." : snoozed ? `Pausiert bis ${clock(status.snoozedUntil!)}.` : "";
+  get("#snooze-line").textContent = !status.settings.proactive ? "Valo bietet keine Hilfe von sich aus an." : snoozed ? `Pausiert bis ${clock(status.snoozedUntil!)}.` : "";
   get("#snooze").hidden = snoozed || !status.settings.proactive;
   get("#resume").hidden = !snoozed;
   get("#threshold-value").textContent = status.threshold === null ? "–" : percent(status.threshold);
@@ -175,7 +177,7 @@ async function act(message: LotseMessage) {
     const result = await send(message);
     if (result.ok) render(result.status);
     else notice.textContent = result.error;
-  } catch { notice.textContent = "Lotse ist noch nicht erreichbar. Lade die Erweiterung neu."; }
+  } catch { notice.textContent = "Valo ist noch nicht erreichbar. Lade die Erweiterung neu."; }
 }
 
 loginForm.addEventListener("submit", (event) => {

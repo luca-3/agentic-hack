@@ -12,7 +12,7 @@ import { logUsage } from "./usage";
 
 /**
  * Knowledge gaps + learning from answers (D-28).
- * - knowledge_gaps: questions Lotse could not answer (no point/plan, or the knowledge search found nothing ≥ 0.5),
+ * - knowledge_gaps: questions Valo could not answer (no point/plan, or the knowledge search found nothing ≥ 0.5),
  *   stored as a NEUTRAL TOPIC only (e.g. "IBAN ändern") — never the question. Upsert-increment per (org, app, topic),
  *   distinct persons counted via hashed subjects. Visible to admins only for ≥ MEMORY_MIN_PERSONS persons (D-12).
  * - afterAsk(): runs after every explicit /ask answer (background, never blocks or breaks the answer): one lite-model
@@ -248,7 +248,7 @@ export interface AskOutcome {
 
 /**
  * Background step after an explicit /ask (text/voice): gap or memory evidence. Proactive answers are skipped (their
- * "question" is Lotse's own inferred goal). LOTSE_MEMORY=0 turns learning off. Never throws.
+ * "question" is Valo's own inferred goal). LOTSE_MEMORY=0 turns learning off. Never throws.
  */
 export async function afterAsk(o: AskOutcome): Promise<void> {
   try {

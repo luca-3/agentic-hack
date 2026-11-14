@@ -69,7 +69,7 @@ items.push(...gaps.map((g) => ({
 ```
 Das passt zu deinem Payload `{ topic, draft? }` und zur RLS-Policy `persons >= 5`.
 
-### `agent_memory` — was Lotse über Wochen lernt
+### `agent_memory` — was Valo über Wochen lernt
 - Getrennt von deiner Wissensbasis (`documents`), im Prompt immer als `<agent_memory>` markiert („gelernt, niedrigere Priorität als die Funktionsliste").
 - `kind`: `faq` (Wort der Leute → Feature, z. B. „IBAN ändern" meint „Bankverbindung (IBAN) eines Kunden ändern"), `role_hint` (Rolle fragt oft nach einem gesperrten Feature), `pitfall`, `path_hint`, `gap_resolution`. `source`: `agent` (Runtime nach Antworten), `learn_loop` (du), `admin`.
 - Lebenszyklus: `proposed` → `active` erst bei **≥ 5 verschiedenen Personen ohne 👎** (atomar in SQL) oder per Admin. 2× 👎 auf Offers zu dem Feature → zurück auf `proposed`. 60 Tage ohne neue Evidenz → `expired` (`LOTSE_MEMORY_TTL_DAYS`). Der Agent hat **kein Memory-Tool** — Seiteninhalte können höchstens einen Vorschlag beeinflussen, nie aktivieren.
@@ -95,7 +95,7 @@ Auth wie bei learn: `Authorization: Bearer <access token>` eines Org-Admins (im 
 - `POST /api/lotse/memory` mit `{ action, app?, … }`:
   - `approve` / `reject` / `expire` `{ id }` → `{ memory }`
   - `create` `{ kind, topic, content, feature? }` → `{ memory }` (sofort aktiv)
-  - `resolve_gap` `{ gapId, content }` → `{ gap, memory }`: Admin beantwortet eine Lücke → aktive `gap_resolution`, Lotse nutzt sie ab der nächsten Frage (≤ 60 s Cache)
+  - `resolve_gap` `{ gapId, content }` → `{ gap, memory }`: Admin beantwortet eine Lücke → aktive `gap_resolution`, Valo nutzt sie ab der nächsten Frage (≤ 60 s Cache)
   - `dismiss_gap` `{ gapId }` → `{ gap }`
 - `AgentMemory` = `{ id, orgId, appId, kind, topic, feature, content, source, evidenceCount, persons, negatives, confidence, status, createdAt, updatedAt, lastSeenAt, activatedAt }`
 - `KnowledgeGap` = `{ id, orgId, appId, topic, count, persons, status, memoryId, firstSeen, lastSeen }`

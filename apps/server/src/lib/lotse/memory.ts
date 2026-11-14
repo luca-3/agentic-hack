@@ -7,7 +7,7 @@ import { cleanText, GuardError } from "./guard";
 import { knowledgeSource, overlap, tokenize } from "./knowledge";
 
 /**
- * Agent memory (D-28): what Lotse learned from many people's usage over weeks/months, stored next to — but clearly
+ * Agent memory (D-28): what Valo learned from many people's usage over weeks/months, stored next to — but clearly
  * apart from — the curated knowledge base (`public.documents`). Tables `agent_memory` + `agent_memory_evidence`.
  *
  * Write path: proposeMemory() / reinforceMemory(). Memories start `proposed`; they become `active` only with support

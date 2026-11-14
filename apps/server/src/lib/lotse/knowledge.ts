@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import kundenwerkFeatures from "./fixtures/kundenwerk-features.json";
 
 /**
- * App knowledge for the Lotse agent: which org/app the request is in, which features the app has, where they live
+ * App knowledge for the Valo agent: which org/app the request is in, which features the app has, where they live
  * and who may use them. The agent only depends on `KnowledgeSource` — swap the source without touching agent/orchestrator.
  *
  * `LOTSE_KNOWLEDGE_SOURCE`:

@@ -1,6 +1,6 @@
 /**
  * Side panel switches for D-29: "Automatisch aktiv" and "Status-Kreis anzeigen" (chrome.storage.sync `lotse:presence`,
- * both default on), the hosts where the orb was hidden, and where Lotse starts by itself (`lotse:activation`).
+ * both default on), the hosts where the orb was hidden, and where Valo starts by itself (`lotse:activation`).
  */
 import {
   ORB_PLACES_KEY, PRESENCE_KEY, parsePlaces, parsePresence,
@@ -34,8 +34,8 @@ async function renderActivation() {
   autoLine.textContent = info.manualPause
     ? "Von dir pausiert – „Beobachtung starten“ oder „Fortsetzen“ im Status-Kreis setzt fort."
     : info.autoActivate
-      ? `Lotse startet auf den Apps deiner Organisation von selbst${hosts}.`
-      : "„Automatisch aktiv“ ist aus – starte Lotse mit „Beobachtung starten“.";
+      ? `Valo startet auf den Apps deiner Organisation von selbst${hosts}.`
+      : "„Automatisch aktiv“ ist aus – starte Valo mit „Beobachtung starten“.";
 }
 
 auto.addEventListener("change", () => { void save({ autoActivate: auto.checked }).then(renderActivation); });

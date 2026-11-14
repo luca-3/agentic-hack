@@ -1,10 +1,10 @@
-# Lotse extension — handoff
+# Valo extension — handoff
 
 Status: 2026-11-14. This document is the entry point for the next agent working on the browser extension. Read `AGENTS.md`, this document, `docs/extension-observability.md`, and `packages/shared/src/index.ts` before changing the implementation.
 
 ## Idea and confirmed scope
 
-Lotse observes an employee using a business web app, understands the sequence of UI states and actions, infers the workflow and intent, and offers contextual guidance. Guidance uses the actual page: a frame, arrow and short explanation identify the next element. The employee performs the action; Lotse never clicks or fills fields. The original targets are CORPUS and the EBV portal; the repository includes a local sample CRM.
+Valo observes an employee using a business web app, understands the sequence of UI states and actions, infers the workflow and intent, and offers contextual guidance. Guidance uses the actual page: a frame, arrow and short explanation identify the next element. The employee performs the action; Valo never clicks or fills fields. The original targets are CORPUS and the EBV portal; the repository includes a local sample CRM.
 
 The user owns the Gemini endpoints needed for observability. This implementation owns the extension and its shared data contracts. All LLM and decision models must be Google Gemini. The Gemini key stays in the repository-root `.env.local` and is only used by the server.
 
@@ -59,7 +59,7 @@ The extension is bundled independently. Content scripts and the side panel commu
 - State IDs remain stable while the current semantic state is unchanged. Scroll geometry and capture time do not change the ID; semantic changes do.
 - Snapshot-ID validation before drawing a highlight; missing, hidden, disabled or stale targets are rejected.
 - A Shadow DOM frame, arrow/bubble, and local-recording indicator. The overlay follows scrolling/resizing and does not intercept clicks. It works with native dialog top layers. Clicking the highlighted element clears the hint, including when recording is paused.
-- Cleanup of event listeners, timers and observers on WXT content-script invalidation. Lotse's own UI is excluded from observation.
+- Cleanup of event listeners, timers and observers on WXT content-script invalidation. Valo's own UI is excluded from observation.
 
 ### Local history and workflows
 
@@ -95,7 +95,7 @@ The extension is bundled independently. Content scripts and the side panel commu
 
 `apps/extension/entrypoints/sidepanel` provides start/pause, local action/state/frame/inference counts, recent actions, inferred workflow/intent, runtime status, text questions, a screenshot toggle, and manually supplied demo role/application knowledge. It is a development/demo surface, not finished organization onboarding.
 
-`apps/extension/wxt.config.ts` adds `activeTab` for screenshot capture and the `Alt+L` command to open the side panel. Existing permissions are `sidePanel`, `storage`, `tabs`; host permissions remain local-only.
+`apps/extension/wxt.config.ts` adds `activeTab` for screenshot capture and the `Alt+L` command (macOS `Command+Shift+L`) to open the side panel. Existing permissions are `sidePanel`, `storage`, `tabs`; host permissions remain local-only.
 
 `apps/extension/eslint.config.mjs` and its package lint command reuse the monorepo's installed TypeScript lint toolchain. `npm run lint` now checks extension source as well.
 
@@ -150,7 +150,7 @@ npm run lint
 npm run build -w @lotse/extension
 ```
 
-For ordinary use, start the independently owned runtime with `npm run dev:server`, optionally serve the sample app with `npm run demo:crm`, then load `apps/extension/.output/chrome-mv3` through Chrome's Extensions page → Developer mode → Load unpacked. Open the permitted app, click the Lotse toolbar icon, enter the demo context and start recording. `Alt+L` opens the question panel. The toolbar gesture also grants the temporary active-tab permission required for image capture.
+For ordinary use, start the independently owned runtime with `npm run dev:server`, optionally serve the sample app with `npm run demo:crm`, then load `apps/extension/.output/chrome-mv3` through Chrome's Extensions page → Developer mode → Load unpacked. Open the permitted app, click the Valo toolbar icon, enter the demo context and start recording. `Alt+L` opens the question panel. The toolbar gesture also grants the temporary active-tab permission required for image capture.
 
 ## Suggested next-agent division
 

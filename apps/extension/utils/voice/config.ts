@@ -1,7 +1,7 @@
 /** Tunables of the voice pipeline (apps/extension/VOICE.md). Override per browser via chrome.storage.local `lotse:voice-config`. */
 export const VOICE_DEFAULTS = {
   /**
-   * openWakeWord keyword. No pre-trained "Hey Lotse" model exists → the demo uses "hey_jarvis"
+   * openWakeWord keyword. No pre-trained "Hey Valo" model exists → the demo uses "hey_jarvis"
    * (pre-trained models are CC BY-NC-SA 4.0: fine for the hackathon, not for commercial use).
    */
   keyword: "hey_jarvis",
@@ -25,7 +25,7 @@ export const VOICE_DEFAULTS = {
   thinkingTimeoutMs: 25_000,
 } as const;
 
-/** Bundled keyword models (wxt.config.ts copies them to /wakeword/). Add a trained "hey_lotse" here later. */
+/** Bundled keyword models (wxt.config.ts copies them to /wakeword/). Add a trained "hey_valo" here later. */
 export const WAKEWORD_MODEL_FILES: Record<string, string> = {
   hey_jarvis: "hey_jarvis_v0.1.onnx",
 };
@@ -35,8 +35,8 @@ export const VOICE_CONFIG_KEY = "lotse:voice-config";
 /** chrome.storage.session key for the pseudonymous voice session id (rate-limit key on the server). */
 export const VOICE_SESSION_KEY = "lotse:voice-session";
 
-// "Hey Jarvis, …" / "Hallo Lotse: …" / "Lotse …" at the start of the transcript.
-const WAKE_PHRASE = /^\s*(?:(?:hey|hei|hi|he|hallo|ok|okay)[\s,!.]+)?(?:jarvis|lotse|lotsen|lotze)\b[\s,.!?:;–-]*/i;
+// "Hey Jarvis, …" / "Hallo Valo: …" / "Valo …" at the start of the transcript.
+const WAKE_PHRASE = /^\s*(?:(?:hey|hei|hi|he|hallo|ok|okay)[\s,!.]+)?(?:jarvis|valo|walo|lotse|lotsen|lotze)\b[\s,.!?:;–-]*/i;
 
 /** Removes a leading wake phrase from a transcript; "" when nothing else was said. */
 export function stripWakePhrase(text: string): string {

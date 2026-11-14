@@ -12,21 +12,21 @@ const WAKEWORD_MODELS = ["melspectrogram.onnx", "embedding_model.onnx", "silero_
 // `npm run dev:extension` opens a Chrome with the extension loaded; or load `.output/chrome-mv3` via chrome://extensions → "Load unpacked".
 export default defineConfig({
   manifest: {
-    name: "Lotse (dev)",
-    description: "Lotse zeigt dir in Web-Apps, wo du klicken musst.",
+    name: "Valo (dev)",
+    description: "Valo zeigt dir in Web-Apps, wo du klicken musst.",
     // offscreen: microphone (wake word + transcription) and spoken answers live in an offscreen document.
     permissions: ["sidePanel", "storage", "tabs", "activeTab", "offscreen"],
     // Local dev only: our server (3001), dashboard (3000), demo CRM (4000), local CORPUS instance.
     host_permissions: ["http://localhost/*", "http://127.0.0.1/*"],
-    action: { default_title: "Lotse öffnen" },
+    action: { default_title: "Valo öffnen" },
     commands: {
       "lotse-ask": {
-        suggested_key: { default: "Alt+L" },
-        description: "Lotse öffnen und eine Frage stellen",
+        suggested_key: { default: "Alt+L", mac: "Command+Shift+L" },
+        description: "Valo öffnen und eine Frage stellen",
       },
       "lotse-listen": {
-        suggested_key: { default: "Alt+Shift+L" },
-        description: "Lotse zuhören lassen (Frage sprechen)",
+        suggested_key: { default: "Alt+Shift+L", mac: "Command+Shift+K" },
+        description: "Valo zuhören lassen (Frage sprechen)",
       },
     },
     // CSP: WXT's MV3 default for extension pages already allows 'wasm-unsafe-eval' (ONNX Runtime Web) — nothing to add.

@@ -1,11 +1,12 @@
 /**
- * Status orb controller (content script, D-29). Shows Lotse's state on org app pages: not connected, signed out, active,
+ * Status orb controller (content script, D-29). Shows Valo's state on org app pages: not connected, signed out, active,
  * paused (by the user or a blocked route), listening (wake word / hotkey / click), thinking, speaking, offer, error.
  * The service worker answers `lotse:orb-status` (utils/activation.ts) — polled every 1.5 s while the orb is visible —
  * and pushes `lotse:voice-state`, so the orb reacts to "Hey Jarvis" at once. Switches: `lotse:presence` (sync),
  * position + hidden hosts: `lotse:orb` (local).
  */
 import type { VoiceState } from "@lotse/shared";
+import { shortcutLabels } from "../shortcuts";
 import { OrbView, type OrbMenuItem, type OrbViewModel } from "./view";
 import {
   ORB_PLACES_KEY, ORB_TITLE, PRESENCE_KEY, orbMode, parsePlaces, parsePresence,
@@ -43,11 +44,11 @@ export function setupOrb(options: Options = {}): { destroy(): void } {
     if (mode === "error") detail = (live?.error ? live.text : current.error) ?? "";
     else if (mode === "offer") detail = current.offer ?? "";
     else if (mode === "listening") detail = "Stell deine Frage. Ein Klick beendet sie.";
-    else if (mode === "thinking") detail = "Lotse sucht den nächsten Schritt.";
+    else if (mode === "thinking") detail = "Valo sucht den nächsten Schritt.";
     else if (mode === "speaking") detail = "Klick: neue Frage stellen.";
-    const hint = current.voiceOn ? "Klick: Frage sprechen („Hey Jarvis“, Alt+Shift+L) · Rechtsklick: Menü" : "Sprache ist aus · Rechtsklick: Menü";
+    const hint = current.voiceOn ? `Klick: Frage sprechen („Hey Jarvis“, ${shortcutLabels().listen}) · Rechtsklick: Menü` : "Sprache ist aus · Rechtsklick: Menü";
     const menu: OrbMenuItem[] = [];
-    if (current.base === "paused" || (current.base === "idle" && !current.autoActivate)) menu.push({ id: "resume", label: current.base === "paused" ? "Fortsetzen" : "Lotse hier starten" });
+    if (current.base === "paused" || (current.base === "idle" && !current.autoActivate)) menu.push({ id: "resume", label: current.base === "paused" ? "Fortsetzen" : "Valo hier starten" });
     else if (current.base === "active" || current.base === "blocked" || current.base === "idle") menu.push({ id: "pause", label: "Pausieren" });
     if (current.voiceOn && current.base !== "offline") menu.push({ id: "listen", label: mode === "listening" ? "Zuhören beenden" : "Frage sprechen" });
     menu.push({ id: "panel", label: current.signedIn ? "Seitenbereich öffnen" : "Anmelden · Seitenbereich öffnen" });
@@ -90,18 +91,18 @@ export function setupOrb(options: Options = {}): { destroy(): void } {
 
   function onActivate() {
     if (!status) return;
-    if (status.base === "offline") { showFlash("Der Lotse-Server ist nicht erreichbar.", true); void poll(); return; }
+    if (status.base === "offline") { showFlash("Der Valo-Server ist nicht erreichbar.", true); void poll(); return; }
     if (status.base === "signed-out") { openPanel(); return; }
     void send({ type: "lotse:listen" }).then((reply) => {
-      if (!reply) showFlash("Lotse ist nicht erreichbar. Lade die Erweiterung neu.", true);
-      else if (reply.ok === false) showFlash(reply.error ?? "Lotse kann gerade nicht zuhören.", true);
+      if (!reply) showFlash("Valo ist nicht erreichbar. Lade die Erweiterung neu.", true);
+      else if (reply.ok === false) showFlash(reply.error ?? "Valo kann gerade nicht zuhören.", true);
       void poll();
     });
   }
 
   function openPanel() {
     void send({ type: "lotse:open-panel" }).then((reply) => {
-      if (!reply?.ok) showFlash(reply?.error ?? "Öffne den Seitenbereich mit Alt+L.", false);
+      if (!reply?.ok) showFlash(reply?.error ?? `Öffne den Seitenbereich mit ${shortcutLabels().ask}.`, false);
     });
   }
 
@@ -111,7 +112,7 @@ export function setupOrb(options: Options = {}): { destroy(): void } {
     if (id === "pause" || id === "resume") {
       void send({ type: "lotse:orb-pause", paused: id === "pause" }).then((reply) => {
         if (reply?.ok === false) showFlash(reply.error ?? "Das hat nicht geklappt.", true);
-        else showFlash(id === "pause" ? "Lotse pausiert, bis du fortsetzt." : "Lotse ist wieder aktiv.", false, 3_000);
+        else showFlash(id === "pause" ? "Valo pausiert, bis du fortsetzt." : "Valo ist wieder aktiv.", false, 3_000);
         void poll();
       });
       return;

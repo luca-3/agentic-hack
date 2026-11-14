@@ -1,5 +1,5 @@
 /**
- * Auto-activation (D-29), service worker only. Once signed in, Lotse is permanently active on the apps of the user's org:
+ * Auto-activation (D-29), service worker only. Once signed in, Valo is permanently active on the apps of the user's org:
  * whenever the focused tab shows a host whose policy says `autoStart` (dashboard `apps.domains` of the user's org; in dev
  * also apps the runtime knows, e.g. the demo CRM) and the route is not blocked, observation starts by itself — no "Start".
  * It follows the focused tab and stops when the tab it started leaves the org's apps. A manual pause (orb menu or side
@@ -11,6 +11,7 @@
  */
 import type { PolicyResponse, VoiceState } from "@lotse/shared";
 import { hostOf, pageVerdict } from "./policy";
+import { shortcutLabels } from "./shortcuts";
 import {
   ACTIVATION_KEY, APP_HOSTS_KEY, DEFAULT_PRESENCE, PRESENCE_KEY, parsePresence,
   type ActivationInfo, type OrbBase, type OrbStatus, type Presence,
@@ -33,7 +34,7 @@ const MAX_TRIES = 3;
 let deps: ActivationDeps | null = null;
 let presence: Presence = { ...DEFAULT_PRESENCE };
 let manualPause = false;
-let autoTab: number | null = null; // the tab Lotse started by itself
+let autoTab: number | null = null; // the tab Valo started by itself
 let appHosts = new Set<string>();
 let lastError: { text: string; at: number } | null = null;
 const failures = new Map<number, { url: string; count: number }>();
@@ -116,7 +117,7 @@ async function evaluate() {
   try {
     await deps.ready;
     await loaded;
-    // The tab Lotse started by itself left the org's apps (navigated elsewhere on localhost) → stop there.
+    // The tab Valo started by itself left the org's apps (navigated elsewhere on localhost) → stop there.
     const rec = deps.recording();
     if (autoTab !== null && rec.on && rec.tabId === autoTab) {
       const tab = await browser.tabs.get(autoTab).catch(() => null);
@@ -157,10 +158,10 @@ function onMessage(message: unknown, sender: Sender, respond: (response: unknown
     case "lotse:open-panel": {
       // Chrome only opens the side panel inside the user's gesture: call it before any await.
       const windowId = sender.tab?.windowId;
-      if (windowId === undefined) { respond({ ok: false, error: "Öffne den Seitenbereich mit Alt+L." }); return true; }
+      if (windowId === undefined) { respond({ ok: false, error: `Öffne den Seitenbereich mit ${shortcutLabels().ask}.` }); return true; }
       browser.sidePanel.open({ windowId }).then(
         () => respond({ ok: true }),
-        () => respond({ ok: false, error: "Öffne den Seitenbereich mit Alt+L." }),
+        () => respond({ ok: false, error: `Öffne den Seitenbereich mit ${shortcutLabels().ask}.` }),
       );
       return true;
     }
@@ -169,7 +170,7 @@ function onMessage(message: unknown, sender: Sender, respond: (response: unknown
       return true;
     case "lotse:orb-pause":
       void setPaused((message as { paused?: unknown }).paused === true).then(respond, (error: unknown) =>
-        respond({ ok: false, error: error instanceof Error ? error.message : "Lotse konnte nicht starten." }));
+        respond({ ok: false, error: error instanceof Error ? error.message : "Valo konnte nicht starten." }));
       return true;
     case "lotse:activation":
       void loaded.then(() => respond({ manualPause, autoActivate: presence.autoActivate, appHosts: [...appHosts], autoTab } satisfies ActivationInfo));
@@ -185,7 +186,7 @@ function onMessage(message: unknown, sender: Sender, respond: (response: unknown
 }
 
 async function setPaused(paused: boolean): Promise<{ ok: true }> {
-  if (!deps) throw new Error("Lotse startet noch.");
+  if (!deps) throw new Error("Valo startet noch.");
   await deps.ready;
   await loaded;
   manualPause = paused;
@@ -214,14 +215,14 @@ async function orbStatus(sender: Sender): Promise<OrbStatus> {
   const app = policy?.appName ? `${policy.appName}${policy.orgName ? " · " + policy.orgName : ""}` : host ?? "";
   let base: OrbBase;
   let detail: string;
-  if (!policy) { base = "offline"; detail = "Der Lotse-Server ist nicht erreichbar. Bis dahin beobachtet Lotse nichts."; }
-  else if (!policy.allowed && policy.known && !policy.signedIn) { base = "signed-out"; detail = policy.reason ?? "Melde dich im Seitenbereich an (Alt+L)."; }
-  else if (!policy.allowed) { base = "blocked"; detail = policy.reason ?? "Diese App ist für Lotse nicht freigegeben."; }
-  else if (pageVerdict(url, policy).paused) { base = "blocked"; detail = "Hier beobachtet Lotse nichts (geschützte Daten). Auf freigegebenen Seiten geht es von selbst weiter."; }
+  if (!policy) { base = "offline"; detail = "Der Valo-Server ist nicht erreichbar. Bis dahin beobachtet Valo nichts."; }
+  else if (!policy.allowed && policy.known && !policy.signedIn) { base = "signed-out"; detail = policy.reason ?? `Melde dich im Seitenbereich an (${shortcutLabels().ask}).`; }
+  else if (!policy.allowed) { base = "blocked"; detail = policy.reason ?? "Diese App ist für Valo nicht freigegeben."; }
+  else if (pageVerdict(url, policy).paused) { base = "blocked"; detail = "Hier beobachtet Valo nichts (geschützte Daten). Auf freigegebenen Seiten geht es von selbst weiter."; }
   else if (here) { base = "active"; detail = `Beobachtet ${app} und hilft bei Bedarf${who}.`; }
   else if (manualPause) { base = "paused"; detail = "Von dir pausiert. Menü → Fortsetzen."; }
   else if (!presence.autoActivate) { base = "idle"; detail = "„Automatisch aktiv“ ist aus. Menü → Starten."; }
-  else if (isApp) { base = "idle"; detail = "Lotse startet gleich …"; schedule(300); }
+  else if (isApp) { base = "idle"; detail = "Valo startet gleich …"; schedule(300); }
   else { base = "idle"; detail = "Diese Seite ist keine App deiner Organisation. Menü → Starten."; }
   const error = lastError && Date.now() - lastError.at < ERROR_MS ? lastError.text : null;
   return {

@@ -39,7 +39,7 @@ Findings that led to the decisions. Date = when checked. Verify before relying o
 
 ## PostHog as reference (2026-11-14)
 
-- **Wizard** (`npx @posthog/wizard`): AI agent detects framework, installs SDK, instruments events, verifies with a test event; integration knowledge shipped as skills ("context mill"). Blueprint for a future Lotse repo-scanning wizard. [Docs](https://posthog.com/docs/ai-engineering/ai-wizard), [repo AGENTS.md](https://github.com/PostHog/wizard/blob/main/AGENTS.md)
+- **Wizard** (`npx @posthog/wizard`): AI agent detects framework, installs SDK, instruments events, verifies with a test event; integration knowledge shipped as skills ("context mill"). Blueprint for a future Valo repo-scanning wizard. [Docs](https://posthog.com/docs/ai-engineering/ai-wizard), [repo AGENTS.md](https://github.com/PostHog/wizard/blob/main/AGENTS.md)
 - **`posthog.on('eventCaptured', cb)`** gives every event client-side before sending — a zero-instrumentation tap for apps with PostHog. Wrap listener in try/catch (older versions drop the event if it throws). [SDK reference](https://posthog.com/docs/references/posthog-js)
 - **EBV-Portal** already uses PostHog (installed via wizard) with `mask_all_text` + attribute ignorelist and opt-in consent → its events don't say *what* was clicked. Lesson: separate UI labels (OK) from user content (never).
 

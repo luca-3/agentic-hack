@@ -1,4 +1,4 @@
-// Dev seed for the Lotse runtime's DB path — additive and idempotent, never deletes or overwrites anything.
+// Dev seed for the Valo runtime's DB path — additive and idempotent, never deletes or overwrites anything.
 //   node scripts/seed-dev-org.mjs                      org "Fuller GmbH (Demo)" + app "Kundenwerk CRM" (localhost:4000) + missing features
 //   node scripts/seed-dev-org.mjs --with-user          + test user vertrieb@demo.test / demo1234 (role Vertrieb, org admin)
 //   node scripts/seed-dev-org.mjs --with-knowledge     + knowledge/kundenwerk-crm-faq.md embedded via the running server (implies --with-user)

@@ -6,7 +6,7 @@ import { devAuthAllowed, type Caller } from "./guard";
 import { knowledgeSource } from "./knowledge";
 
 /**
- * App policy for the extension (GET /api/lotse/policy): is the host a known app, where must Lotse stay silent, who is the caller.
+ * App policy for the extension (GET /api/lotse/policy): is the host a known app, where must Valo stay silent, who is the caller.
  *
  * Blocked routes (patterns for `routeBlocked` in @lotse/shared — `*` = anything, case-insensitive, matched against path + query + hash):
  *  - CORPUS apps (host in `LOTSE_CORPUS_HOSTS`, default localhost:3100 / 127.0.0.1:3100, or dashboard app named "CORPUS…")
@@ -94,10 +94,10 @@ export async function resolvePolicy(appParam: string, caller: Caller): Promise<P
   let reason: string | undefined;
   if (process.env.LOTSE_DISABLED === "1") {
     allowed = false;
-    reason = "Lotse ist gerade deaktiviert.";
+    reason = "Valo ist gerade deaktiviert.";
   } else if (!known && !allowUnknownApps()) {
     allowed = false;
-    reason = "Diese App ist für Lotse nicht freigegeben.";
+    reason = "Diese App ist für Valo nicht freigegeben.";
   } else if (known && !member && !devAuthAllowed()) {
     allowed = false;
     reason = "Melde dich mit einem Konto dieser Organisation an.";

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lotse Server",
-  description: "Lotse agent runtime — API for extension and dashboard",
+  title: "Valo Server",
+  description: "Valo agent runtime — API for extension and dashboard",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
