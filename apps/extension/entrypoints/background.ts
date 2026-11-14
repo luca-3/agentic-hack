@@ -88,7 +88,6 @@ const ANALYTICS_TYPES = new Set<LotseEvent["type"]>(["click", "route", "search",
 const URGENT_EVENTS = new Set<LotseEvent["type"]>(["repeated_click", "rage_click", "error", "empty_results", "idle"]);
 const OFFER_COOLDOWN_MS = 120_000; // D-20: passive workflow_update cooldown (2 min)
 const EXPLICIT_TRIGGER_COOLDOWN_MS = 8_000; // explicit stuck rules (rage click, ≥2 empty searches, errors) only guard double-firing
-const SNOOZE_MS = 10 * 60_000; // "Nein" → ten minutes of quiet
 const OFFER_TTL_MS = 75_000;
 const PLAN_TTL_MS = 30 * 60_000;
 
@@ -199,6 +198,8 @@ export default defineBackground(() => {
     }
   });
   browser.tabs.onUpdated.addListener((tabId, changes) => {
+    // Full page navigation wipes any in-page offer bubble — clear stale pendingOffer so new pages aren't blocked for 75 s.
+    if (pendingOffer?.tabId === tabId && (changes.url || changes.status === "loading")) dropOffer(false);
     if (tabId !== recordingTab || !recording) return;
     if (changes.url && !localUrl(changes.url)) { void ready.then(stop); return; }
     // Entering a blocked route (incl. SPA pushState/hash changes): drop whatever is in flight for this tab at once.
@@ -280,12 +281,18 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
       const snapshot = incoming.snapshot ? ObservationSnapshotSchema.parse(incoming.snapshot) : undefined;
       if (snapshot && !localUrl(snapshot.url)) break;
       if (snapshot) lastAppHost = new URL(snapshot.url).host;
+      if (event?.type === "route" && pendingOffer?.tabId === senderTab) dropOffer(false);
       buffer.record({ event, snapshot });
       if (event) queueAnalytics(event);
       if (oldWorkflow && oldWorkflow !== buffer.workflow?.id) { decision = null; inference = null; }
       schedulePersistence();
       if (snapshot) void captureFrame(senderTab!, snapshot).catch(() => undefined);
-      queueInference(event && URGENT_EVENTS.has(event.type) ? 350 : 1_000);
+      const delayMs = event && (event.type === "rage_click" || event.type === "repeated_click")
+        ? 150
+        : event && URGENT_EVENTS.has(event.type)
+          ? 350
+          : 1_000;
+      queueInference(delayMs);
       break;
     }
     case "lotse:ask":
@@ -764,8 +771,10 @@ async function offerFeedback(offerId: string, feedback: "up" | "down" | "decline
   if (typeof offerId !== "string" || !offerId) throw new Error("Invalid feedback.");
   if (feedback === "declined") {
     if (pendingOffer?.id === offerId) dropOffer(true);
-    snoozeUntil = Date.now() + SNOOZE_MS;
-    message = "Okay – Valo won't offer help for the next 10 minutes.";
+    // Declining one offer already raises the user's adaptive threshold (+0.02 in Supabase);
+    // only hold back briefly here instead of muting explicit panic/stuck help for 10 minutes (use "Quiet 10m" for full snooze).
+    lastDecisionAt = Date.now();
+    message = "Got it – Valo dismissed this offer.";
     schedulePersistence();
   } else {
     if (feedbackGiven.has(offerId)) return;
