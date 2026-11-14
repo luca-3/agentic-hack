@@ -20,6 +20,8 @@ export interface GuidanceInput {
   question: string;
   snapshot: PageSnapshot; // already capped by capSnapshot()
   features: Feature[];
+  orgId?: string | null; // knowledge base is per org — without it searchKnowledge finds nothing
+  dashboardAppId?: string | null;
   role?: string;
   recentEvents?: LotseEvent[];
   decision: TierDecision;
@@ -165,7 +167,8 @@ function buildTools(input: GuidanceInput, check: ReturnType<typeof makeValidator
       inputSchema: z.object({ query: z.string().min(1).max(200) }),
       execute: async ({ query }) => {
         try {
-          const docs = await searchDocuments(query, { limit: 3 });
+          if (!input.orgId) return "No knowledge base for this app.";
+          const docs = await searchDocuments(query, { orgId: input.orgId, appId: input.dashboardAppId, limit: 3 });
           if (docs.length === 0) return "Nothing found.";
           return `<knowledge>\n${docs.map((d) => cleanText(d.content, 400)).join("\n---\n")}\n</knowledge>`;
         } catch {

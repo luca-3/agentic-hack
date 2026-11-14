@@ -15,6 +15,7 @@ import kundenwerkFeatures from "./fixtures/kundenwerk-features.json";
 export interface AppKnowledge {
   appId: string; // host or dashboard app id the request named
   orgId: string | null; // dashboard org (db source only)
+  dashboardAppId?: string | null; // apps.id in the dashboard DB (db source only) — scopes the knowledge search
   features: Feature[];
   source: "db" | "fixture" | "none";
 }
@@ -65,9 +66,9 @@ export const dbKnowledge: KnowledgeSource = {
       );
       if (!parsed.success || parsed.data.length === 0) {
         const fallback = await fixtureKnowledge.getApp(appId);
-        return { ...fallback, orgId: app.org_id as string };
+        return { ...fallback, orgId: app.org_id as string, dashboardAppId: app.id as string };
       }
-      const value: AppKnowledge = { appId, orgId: app.org_id as string, features: parsed.data, source: "db" };
+      const value: AppKnowledge = { appId, orgId: app.org_id as string, dashboardAppId: app.id as string, features: parsed.data, source: "db" };
       cache.set(appId, { at: Date.now(), value });
       return value;
     } catch (e) {

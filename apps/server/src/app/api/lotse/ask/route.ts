@@ -44,6 +44,8 @@ export async function POST(request: Request) {
       question: body.question,
       snapshot,
       features: app.features,
+      orgId: app.orgId,
+      dashboardAppId: app.dashboardAppId,
       role: body.role,
       recentEvents: body.recentEvents,
       decision,
