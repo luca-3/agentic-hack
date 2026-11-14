@@ -1,26 +1,181 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Valo design tokens (design_handoff_valo_admin). Light = default, dark follows the system setting (no JS). */
+@theme {
+  --font-sans: var(--font-plex-sans), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Schriftgrößen – nie unter 13 px */
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.1875rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.875rem;
+  --text-stat: 2.75rem;
+
+  --spacing: 0.25rem;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-xl: 12px;
+  --radius-lg: 20px;
+  --radius-panel: 28px;
+
+  /* Nachtblau-Skala (Basis 800 = #0F2A3D) + Rollen-Tokens */
+  --color-navy-50: #F2F6F9;
+  --color-navy-100: #E1EAF0;
+  --color-navy-200: #C3D4E0;
+  --color-navy-300: #9AB5C9;
+  --color-navy-400: #6B8FAA;
+  --color-navy-500: #456E8C;
+  --color-navy-600: #2E5572;
+  --color-navy-700: #1A3A52;
+  --color-navy-800: #0F2A3D;
+  --color-navy-900: #0A1D2B;
+  --color-navy-950: #061219;
+  --color-petrol: #127A86;
+  --color-help: #FF8A3D;
+  --color-bg: #F7F5F0;
+  --color-panel: #F7F5F0;
+  --color-shell: #0F2A3D;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F2F6F9;
+  --color-surface-hover: #F2F6F9;
+  --color-input: #FFFFFF;
+  --color-input-disabled: #F2F6F9;
+  --color-line: #C3D4E0;
+  --color-line-strong: #6B8FAA;
+  --color-track: #E1EAF0;
+  --color-bar: #456E8C;
+  --color-text: #0F2A3D;
+  --color-muted: #456E8C;
+  --color-primary: #127A86;
+  --color-primary-hover: #0E646E;
+  --color-on-primary: #FFFFFF;
+  --color-primary-soft: #E3F1F3;
+  --color-primary-line: #9CCDD3;
+  --color-primary-text: #0F6A75;
+  --color-danger: #B3261E;
+  --color-danger-hover: #921E18;
+  --color-on-danger: #FFFFFF;
+  --color-danger-soft: #FAE6E3;
+  --color-danger-text: #8C1D17;
+  --color-danger-line: #D9918A;
+  --color-warn-soft: #FBEFD3;
+  --color-warn-text: #634500;
+  --color-warn-line: #C9A85C;
+  --color-info-soft: #E1EAF0;
+  --color-info-text: #1A3A52;
+  --color-ok-soft: #E1EEE2;
+  --color-ok-text: #22532A;
+  --color-ok-line: #8DB894;
+  --color-focus: #7B6AD0;
+  --color-priv-soft: #F4F1FB;
+  --color-priv-chip: #ECE8F7;
+  --color-priv-line: #C9BFEA;
+  --color-priv-accent: #7B6AD0;
+  --color-priv-text: #4B3F8C;
+  --color-priv-strong: #2E2660;
+  --color-ink-bg: #0F2A3D;
+  --color-ink-fg: #FFFFFF;
+  --color-ink-muted: #9AB5C9;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  @media (prefers-color-scheme: dark) {
+    :root {
+    color-scheme: dark;
+    --color-navy-50: #F2F6F9;
+    --color-navy-100: #E1EAF0;
+    --color-navy-200: #C3D4E0;
+    --color-navy-300: #9AB5C9;
+    --color-navy-400: #6B8FAA;
+    --color-navy-500: #456E8C;
+    --color-navy-600: #2E5572;
+    --color-navy-700: #1A3A52;
+    --color-navy-800: #0F2A3D;
+    --color-navy-900: #0A1D2B;
+    --color-navy-950: #061219;
+    --color-petrol: #127A86;
+    --color-help: #FF8A3D;
+    --color-bg: #0A1D2B;
+    --color-panel: #0A1D2B;
+    --color-shell: #061219;
+    --color-surface: #0F2A3D;
+    --color-surface-2: #1A3A52;
+    --color-surface-hover: #14324A;
+    --color-input: #0C2335;
+    --color-input-disabled: #1A3A52;
+    --color-line: #24465F;
+    --color-line-strong: #6B8FAA;
+    --color-track: #1A3A52;
+    --color-bar: #9AB5C9;
+    --color-text: #F2F6F9;
+    --color-muted: #9AB5C9;
+    --color-primary: #5CC0CB;
+    --color-primary-hover: #86D2DA;
+    --color-on-primary: #061219;
+    --color-primary-soft: #103A47;
+    --color-primary-line: #2E6A7A;
+    --color-primary-text: #86D2DA;
+    --color-danger: #C5352A;
+    --color-danger-hover: #A82C22;
+    --color-on-danger: #FFFFFF;
+    --color-danger-soft: #3A1F1C;
+    --color-danger-text: #F4AFA8;
+    --color-danger-line: #8A3E37;
+    --color-warn-soft: #362C15;
+    --color-warn-text: #EDD08C;
+    --color-warn-line: #7D6630;
+    --color-info-soft: #1A3A52;
+    --color-info-text: #C3D4E0;
+    --color-ok-soft: #1C3020;
+    --color-ok-text: #A8D8AE;
+    --color-ok-line: #4E7A55;
+    --color-focus: #A495F0;
+    --color-priv-soft: #221C48;
+    --color-priv-chip: #2E2660;
+    --color-priv-line: #4B3F8C;
+    --color-priv-accent: #A495F0;
+    --color-priv-text: #D9D2F5;
+    --color-priv-strong: #D9D2F5;
+    --color-ink-bg: #E1EAF0;
+    --color-ink-fg: #0F2A3D;
+    --color-ink-muted: #456E8C;
+  }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Farbpaletten für Kopfzeile + Seitenleiste (Standard: nachtblau): <html data-shell="nachtblau|petrol|schiefer|tanne|aubergine|hell">.
+   Elemente mit data-shell-area bekommen helle Schrift auf dunklem Grund. */
+@layer base {
+  [data-shell="petrol"]    { --color-shell: #173A40; --sh-pill: #244D54; --sh-muted: #B4CBCF; --sh-line: #6F8E93; }
+  [data-shell="nachtblau"] { --color-shell: #0F2A3D; --sh-pill: #1A3A52; --sh-muted: #9AB5C9; --sh-line: #6B8FAA; --sh-active: #1A3A52; }
+  [data-shell="schiefer"]  { --color-shell: #262C32; --sh-pill: #353C43; --sh-muted: #BCC3CA; --sh-line: #7A838C; }
+  [data-shell="tanne"]     { --color-shell: #1C3A2E; --sh-pill: #294B3D; --sh-muted: #B5CDBF; --sh-line: #6F9080; }
+  [data-shell="aubergine"] { --color-shell: #34223B; --sh-pill: #45304D; --sh-muted: #CDBBD3; --sh-line: #8E7896; }
+  [data-shell]:not([data-shell="hell"]) [data-shell-area] {
+    --color-text: #F2F5F6; --color-muted: var(--sh-muted);
+    --color-surface: var(--sh-pill); --color-surface-2: var(--sh-pill); --color-line-strong: var(--sh-line);
+    --color-primary: #FFFFFF; --color-primary-hover: #E3E9EB; --color-on-primary: var(--color-shell);
+    --color-ink-bg: #FFFFFF; --color-ink-fg: var(--color-shell);
+    --color-primary-soft: var(--sh-pill); --color-primary-text: #FFFFFF; --sh-active-fg: #FFFFFF; --color-focus: #A495F0;
+    --color-priv-soft: #2E2660; --color-priv-chip: #2E2660; --color-priv-line: #4B3F8C; --color-priv-accent: #A495F0; --color-priv-text: #D9D2F5; --color-priv-strong: #D9D2F5;
+    color: var(--color-text);
+  }
+}
+
+@layer base {
+  html { background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); font-size: 100%; line-height: 1.5; }
+  body { font-size: var(--text-base); }
+  :focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+  input::placeholder, textarea::placeholder { color: var(--color-muted); opacity: 1; }
+  summary { list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  details[open] > summary [data-chev] { transform: rotate(90deg); }
+  a { color: var(--color-primary-text); }
+  a:hover { color: var(--color-text); }
+  /* Keine Öffnen/Schließen-Animationen */
+  *, *::before, *::after { transition: none; animation: none; }
 }

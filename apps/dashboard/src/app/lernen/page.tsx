@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { Shell, feld, karte, knopf } from "@/components/Shell";
+import { Shell } from "@/components/Shell";
+import { PRODUCT_NAME } from "@/components/ui";
 import { getOrgContext } from "@/lib/org";
 import { auswerten, erledigen, funktionUebernehmen, verwerfen, wissenUebernehmen } from "./actions";
 
 export default function LernenPage({ searchParams }: PageProps<"/lernen">) {
   return (
     <Shell
+      href="/lernen"
       title="Lernen"
-      intro="Beim ersten Mal erkundet Lotse die App (ein Admin startet die Erkundung in der Erweiterung). Danach lernt Lotse aus der Nutzung. Vorschläge gelten erst, wenn ein Admin sie übernimmt."
+      intro={`Beim ersten Mal erkundet ${PRODUCT_NAME} die App (ein Admin startet die Erkundung in der Erweiterung). Danach lernt ${PRODUCT_NAME} aus der Nutzung. Vorschläge gelten erst, wenn ein Admin sie übernimmt.`}
     >
       <Inhalt searchParams={searchParams} />
     </Shell>
@@ -40,9 +42,9 @@ const REGEL: Record<string, string> = {
   other: "Sonstiges",
 };
 const SCHWERE: Record<string, { text: string; klasse: string }> = {
-  high: { text: "hoch", klasse: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300" },
-  medium: { text: "mittel", klasse: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200" },
-  low: { text: "niedrig", klasse: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" },
+  high: { text: "hoch", klasse: "bg-danger-soft text-danger-text" },
+  medium: { text: "mittel", klasse: "bg-warn-soft text-warn-text" },
+  low: { text: "niedrig", klasse: "bg-info-soft text-info-text" },
 };
 const TABS = [
   { status: "open", label: "Offen" },
@@ -66,20 +68,23 @@ const ABSCHNITTE: { titel: string; passt: (z: Zeile) => boolean }[] = [
   { titel: "Erste Analyse: Design-Befunde", passt: (z) => z.kind === "design" },
   { titel: "Neue Funktionen aus der Nutzung", passt: (z) => z.kind === "feature" && z.source === "learn" },
   { titel: "Veraltete Klickpfade", passt: (z) => z.kind === "stale_feature" },
-  { titel: "Hier irrt Lotse", passt: (z) => z.kind === "agent_error" },
+  { titel: `Hier irrt ${PRODUCT_NAME}`, passt: (z) => z.kind === "agent_error" },
   { titel: "Wissenslücken", passt: (z) => z.kind === "knowledge_gap" },
 ];
 
-const rot = "rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300";
-const gruen = "rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300";
-const zweit = "rounded-md border border-zinc-300 px-3 py-2 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900";
+const karte = "rounded-lg border border-line bg-surface p-6";
+const feld = "w-full rounded-xl border border-line-strong bg-input p-3 text-base text-text";
+const knopf = "inline-flex h-11 cursor-pointer items-center rounded-full border border-primary bg-primary px-[18px] text-base font-semibold text-on-primary hover:bg-primary-hover";
+const rot = "m-0 rounded-[10px] border border-danger-line bg-danger-soft px-4 py-3.5 font-semibold text-text";
+const gruen = "m-0 rounded-[10px] border border-ok-line bg-ok-soft px-4 py-3.5 font-semibold text-text";
+const zweit = "inline-flex h-11 cursor-pointer items-center rounded-full border border-line-strong bg-surface px-[18px] text-base font-semibold text-text hover:bg-surface-2";
 const UUID = /^[0-9a-f-]{36}$/i;
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 const kurz = (s: string, n = 300) => (s.length > n ? `${s.slice(0, n)} …` : s);
 
 async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["searchParams"] }) {
   const [{ supabase, isAdmin }, sp] = await Promise.all([getOrgContext(), searchParams]);
-  if (!isAdmin) return <p className="text-sm text-zinc-500">Nur Admins sehen Lernvorschläge.</p>;
+  if (!isAdmin) return <p className="text-sm text-muted">Nur Admins sehen Lernvorschläge.</p>;
 
   const app = typeof sp.app === "string" && UUID.test(sp.app) ? sp.app : "";
   const status = TABS.find((t) => t.status === sp.status)?.status ?? "open";
@@ -103,7 +108,7 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["se
     return `/lernen${q.size ? `?${q}` : ""}`;
   };
   const chip = (aktiv: boolean) =>
-    `rounded-full border px-3 py-1 text-sm ${aktiv ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900" : "border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"}`;
+    `inline-flex h-10 items-center rounded-full border px-3.5 text-sm font-semibold no-underline ${aktiv ? "border-primary bg-primary text-on-primary" : "border-line-strong bg-surface text-text hover:bg-surface-2"}`;
   const filter = (
     <>
       <input type="hidden" name="app" value={app} />
@@ -124,7 +129,7 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["se
       <form action={auswerten} className="flex flex-wrap items-center gap-3">
         {filter}
         <button className={knopf}>Jetzt auswerten</button>
-        <span className="text-sm text-zinc-500">
+        <span className="text-sm text-muted">
           Wertet die Nutzung aus{app ? ` für ${appName.get(app) ?? "diese App"}` : " für alle Apps"}.
         </span>
       </form>
@@ -140,12 +145,12 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["se
             </Link>
           ))}
         </div>
-        <div className="flex gap-4 border-b border-zinc-200 text-sm dark:border-zinc-800">
+        <div className="flex gap-4 border-b border-line">
           {TABS.map((t) => (
             <Link
               key={t.status}
               href={link({ status: t.status })}
-              className={`-mb-px border-b-2 px-1 pb-2 ${t.status === status ? "border-zinc-900 font-medium dark:border-zinc-100" : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"}`}
+              className={`-mb-px border-b-2 px-1 pb-2 no-underline ${t.status === status ? "border-primary font-semibold text-text" : "border-transparent text-muted hover:text-text"}`}
             >
               {t.label}
             </Link>
@@ -154,7 +159,7 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["se
       </div>
 
       {zeilen.length === 0 && (
-        <p className="text-sm text-zinc-500">Starte die Erkundung in der Lotse-Erweiterung oder klicke ‚Jetzt auswerten‘.</p>
+        <p className="m-0 rounded-lg border border-dashed border-line-strong bg-surface p-6 text-muted">Starte die Erkundung in der {PRODUCT_NAME}-Erweiterung oder klicke ‚Jetzt auswerten‘.</p>
       )}
 
       {ABSCHNITTE.map((ab) => {
@@ -162,15 +167,15 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["se
         return (
           <section key={ab.titel} className={karte}>
             <div className="flex items-baseline gap-3">
-              <h2 className="text-lg font-semibold">{ab.titel}</h2>
-              <span className="text-sm text-zinc-500">{liste.length}</span>
+              <h2 className="m-0 text-xl font-semibold">{ab.titel}</h2>
+              <span className="text-sm text-muted">{liste.length}</span>
             </div>
             {liste.length === 0 ? (
-              <p className="mt-2 text-sm text-zinc-500">Noch nichts gefunden.</p>
+              <p className="mt-2 text-sm text-muted">Noch nichts gefunden.</p>
             ) : (
               <ul className="mt-3 flex flex-col gap-3">
                 {liste.map((z) => (
-                  <li key={z.id} className="rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+                  <li key={z.id} className="rounded-[10px] border border-line p-4">
                     <Karte z={z} appName={z.app_id ? appName.get(z.app_id) : undefined} offen={status === "open"} filter={filter} />
                   </li>
                 ))}
@@ -198,9 +203,9 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
     inhalt = (
       <div className="mt-2 flex flex-col gap-1">
         <div className="font-medium">{str(p.name)}</div>
-        {str(p.route) && <div className="font-mono text-xs text-zinc-500">{str(p.route)}</div>}
+        {str(p.route) && <div className="font-mono text-xs text-muted">{str(p.route)}</div>}
         {pfad.length > 0 && <div>{pfad.join(" → ")}</div>}
-        {str(p.description) && <div className="text-zinc-500">{str(p.description)}</div>}
+        {str(p.description) && <div className="text-muted">{str(p.description)}</div>}
       </div>
     );
     annehmen = { action: funktionUebernehmen, label: "Übernehmen" };
@@ -210,16 +215,16 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
         {s && <span className={`rounded px-2 py-0.5 text-xs font-medium ${s.klasse}`}>{s.text}</span>}
         <span className="font-medium">{REGEL[str(p.rule)] ?? "Sonstiges"}</span>
-        {str(p.route) && <span className="font-mono text-xs text-zinc-500">{str(p.route)}</span>}
+        {str(p.route) && <span className="font-mono text-xs text-muted">{str(p.route)}</span>}
         {str(p.elementLabel) && <span>„{str(p.elementLabel)}“</span>}
-        {str(p.measured) && <span className="text-zinc-500">Gemessen: {str(p.measured)}</span>}
+        {str(p.measured) && <span className="text-muted">Gemessen: {str(p.measured)}</span>}
       </div>
     );
   } else if (z.kind === "stale_feature") {
     inhalt = (
       <p className="mt-2">
         ‚{str(p.missingLabel)}‘ wurde länger nicht gesehen — Klickpfad von ‚{str(p.feature)}‘ prüfen.{" "}
-        <Link href="/apps" className="underline">
+        <Link href="/apps" className="font-semibold">
           Zu Apps &amp; Funktionen
         </Link>
       </p>
@@ -229,9 +234,9 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
       <div className="mt-2 flex flex-col gap-1">
         <div>
           Status: <span className="font-medium">{str(p.status) || "–"}</span>
-          {str(p.route) && <span className="ml-3 font-mono text-xs text-zinc-500">{str(p.route)}</span>}
+          {str(p.route) && <span className="ml-3 font-mono text-xs text-muted">{str(p.route)}</span>}
         </div>
-        {str(p.lastError) && <div className="text-zinc-500">Letzter Fehler: {kurz(str(p.lastError))}</div>}
+        {str(p.lastError) && <div className="text-muted">Letzter Fehler: {kurz(str(p.lastError))}</div>}
       </div>
     );
   }
@@ -242,8 +247,8 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
       <input type="hidden" name="id" value={z.id} />
       {filter}
       <div className="font-medium">{z.title}</div>
-      {z.detail && <p className="text-zinc-600 dark:text-zinc-400">{z.detail}</p>}
-      {meta.length > 0 && <p className="text-xs text-zinc-500">{meta.join(" · ")}</p>}
+      {z.detail && <p className="text-muted">{z.detail}</p>}
+      {meta.length > 0 && <p className="text-xs text-muted">{meta.join(" · ")}</p>}
       {inhalt}
       {knowledge && (
         <label className="mt-2 flex flex-col gap-1">
@@ -251,7 +256,7 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
           {offen ? (
             <textarea name="text" rows={6} defaultValue={str(p.draft)} className={feld} placeholder="Antwort für dieses Thema schreiben …" />
           ) : (
-            str(p.draft) && <p className="whitespace-pre-wrap text-zinc-600 dark:text-zinc-400">{str(p.draft)}</p>
+            str(p.draft) && <p className="whitespace-pre-wrap text-muted">{str(p.draft)}</p>
           )}
         </label>
       )}

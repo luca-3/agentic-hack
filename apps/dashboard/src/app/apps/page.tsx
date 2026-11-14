@@ -1,21 +1,19 @@
 import { appAnlegen, domainsSpeichern, funktionenImportieren } from "@/app/actions";
-import { Shell, feld, karte, knopf } from "@/components/Shell";
+import { Shell } from "@/components/Shell";
+import { Card, EmptyState, Field, FormActions, IconChevron, Notice, PRODUCT_NAME, Table, Td, TextareaField, Th } from "@/components/ui";
 import { getOrgContext } from "@/lib/org";
 
 export default function AppsPage({ searchParams }: PageProps<"/apps">) {
   return (
-    <Shell
-      title="Apps & Funktionen"
-      intro="Auf welchen Seiten Lotse läuft und welche Funktionen es dort gibt. Die Funktionsliste ist das App-Wissen, mit dem Lotse zeigt, wo man klicken muss."
-    >
+    <Shell href="/apps" title="Apps & Funktionen" intro={`Welche Apps ${PRODUCT_NAME} kennt und wo die Funktionen darin liegen.`}>
       <Inhalt searchParams={searchParams} />
     </Shell>
   );
 }
 
-const MELDUNG: Record<string, string> = {
-  json: "Das ist kein gültiges JSON.",
-  format: "Das JSON passt nicht zum Format: Liste mit name, description, route, clickPath (Liste), requiredRole (Liste, optional).",
+const FEHLER: Record<string, string> = {
+  json: "Das JSON ist nicht gültig. Nichts wurde geändert.",
+  format: "Das JSON passt nicht zum Format: Liste mit name, description, route, clickPath (Liste), requiredRole (Liste, optional). Nichts wurde geändert.",
 };
 
 type Feature = { id: number; name: string; route: string; click_path: string[]; description: string | null; required_roles: string[] | null };
@@ -26,85 +24,75 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/apps">["sear
     .from("apps")
     .select("id, name, domains, app_features(id, name, route, click_path, description, required_roles)")
     .order("name");
+  const ok = typeof sp.ok === "string" ? sp.ok : undefined;
+  const okText = ok === "neu" ? "App angelegt." : ok === "gespeichert" ? "Gespeichert." : ok ? `${ok} Funktionen übernommen.` : undefined;
 
   return (
-    <div className="flex flex-col gap-6">
-      {typeof sp.fehler === "string" && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">{MELDUNG[sp.fehler]}</p>}
-      {typeof sp.ok === "string" && <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">{sp.ok} Funktionen übernommen.</p>}
+    <>
+      {okText && <Notice tone="success" title={okText} />}
+      {typeof sp.fehler === "string" && FEHLER[sp.fehler] && <Notice tone="error" title={FEHLER[sp.fehler]} />}
+      {!apps?.length && <EmptyState title="Noch keine App angelegt" text="Die erste App unten unter „Neue App“ anlegen." />}
 
       {(apps ?? []).map((app) => {
         const features = ((app.app_features ?? []) as Feature[]).sort((a, b) => a.id - b.id);
         return (
-          <section key={app.id} className={karte}>
-            <div className="flex flex-wrap items-baseline gap-3">
-              <h2 className="text-lg font-semibold">{app.name}</h2>
-              <span className="text-sm text-zinc-500">{features.length} Funktionen</span>
+          <Card key={app.id} className="grid gap-5">
+            <div className="flex items-center gap-3">
+              <h2 className="m-0 text-[22px] font-semibold">{app.name}</h2>
+              <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-sm font-medium">{features.length} Funktionen</span>
             </div>
-
             {isAdmin ? (
-              <form action={domainsSpeichern} className="mt-3 flex flex-wrap items-end gap-2">
+              <form action={domainsSpeichern} className="flex flex-wrap items-end gap-3">
                 <input type="hidden" name="appId" value={app.id} />
-                <label className="flex min-w-64 flex-1 flex-col gap-1 text-sm">
-                  Domains (mit Komma getrennt)
-                  <input name="domains" defaultValue={app.domains.join(", ")} className={feld} />
-                </label>
-                <button className={knopf}>Speichern</button>
+                <Field className="min-w-80 flex-1" label="Domains (mit Komma getrennt)" name="domains" id={`domains-${app.id}`} defaultValue={app.domains.join(", ")} mono />
+                <FormActions submitLabel="Speichern" />
               </form>
             ) : (
-              <p className="mt-2 text-sm text-zinc-500">Domains: {app.domains.join(", ") || "–"}</p>
+              <p className="m-0 text-muted">Domains: <span className="font-mono text-text">{app.domains.join(", ") || "–"}</span></p>
             )}
-
-            <table className="mt-4 w-full text-left text-sm">
-              <thead className="text-zinc-500">
-                <tr>
-                  <th className="py-1 pr-3 font-normal">Funktion</th>
-                  <th className="py-1 pr-3 font-normal">Klickpfad</th>
-                  <th className="py-1 pr-3 font-normal">Rollen</th>
-                </tr>
-              </thead>
+            <Table>
+              <thead><tr><Th className="w-[44%] bg-surface-2">Funktion</Th><Th className="bg-surface-2">Klickpfad</Th><Th className="w-40 bg-surface-2">Rollen</Th></tr></thead>
               <tbody>
+                {features.length === 0 && <tr><Td colSpan={3} className="text-center text-muted">Noch keine Funktionen.</Td></tr>}
                 {features.map((f) => (
-                  <tr key={f.id} className="border-t border-zinc-100 align-top dark:border-zinc-900">
-                    <td className="py-2 pr-3">
-                      <div className="font-medium">{f.name}</div>
-                      {f.description && <div className="text-zinc-500">{f.description}</div>}
-                      <div className="font-mono text-xs text-zinc-400">{f.route}</div>
-                    </td>
-                    <td className="py-2 pr-3">{f.click_path.join(" → ")}</td>
-                    <td className="py-2 pr-3">{f.required_roles?.join(", ") ?? "alle"}</td>
+                  <tr key={f.id} className="hover:bg-surface-hover">
+                    <Td>
+                      <div className="font-semibold">{f.name}</div>
+                      {f.description && <div className="text-sm text-muted">{f.description}</div>}
+                      <code className="mt-1 inline-block rounded-[4px] bg-surface-2 px-1.5 py-px font-mono text-xs">{f.route}</code>
+                    </Td>
+                    <Td>{f.click_path.join(" → ")}</Td>
+                    <Td>{f.required_roles?.join(", ") ?? "alle"}</Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
-
+            </Table>
             {isAdmin && (
-              <details className="mt-4" open={sp.app === app.id && typeof sp.fehler === "string"}>
-                <summary className="cursor-pointer text-sm font-medium">Funktionsliste als JSON ersetzen</summary>
-                <form action={funktionenImportieren} className="mt-2 flex flex-col gap-2">
+              <details className="rounded-[10px] border border-line" open={sp.app === app.id && typeof sp.fehler === "string"}>
+                <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-3.5 font-semibold"><span data-chev><IconChevron /></span>Funktionsliste als JSON ersetzen</summary>
+                <form action={funktionenImportieren} className="grid gap-2.5 px-3.5 pt-1 pb-4">
                   <input type="hidden" name="appId" value={app.id} />
-                  <textarea name="json" rows={8} required className={`${feld} font-mono`} defaultValue={JSON.stringify(features.map(alsJson), null, 2)} />
-                  <button className={`${knopf} self-start`}>Übernehmen</button>
+                  <p className="m-0 text-sm text-muted">Ersetzt alle Funktionen dieser App. Felder: name, description, route, clickPath, requiredRole.</p>
+                  <TextareaField label="Funktionsliste (JSON)" name="json" mono required spellCheck={false} rows={12} defaultValue={JSON.stringify(features.map(alsJson), null, 2)} />
+                  <FormActions submitLabel="Übernehmen" />
                 </form>
               </details>
             )}
-          </section>
+          </Card>
         );
       })}
 
       {isAdmin && (
-        <form action={appAnlegen} className={`${karte} flex flex-wrap items-end gap-2`}>
-          <label className="flex flex-col gap-1 text-sm">
-            Neue App
-            <input name="name" required placeholder="z. B. EBV-Portal" className={feld} />
-          </label>
-          <label className="flex min-w-64 flex-1 flex-col gap-1 text-sm">
-            Domains
-            <input name="domains" placeholder="localhost:3200" className={feld} />
-          </label>
-          <button className={knopf}>Anlegen</button>
+        <form id="neue-app" action={appAnlegen} className="grid gap-4 rounded-lg border border-line bg-surface p-6">
+          <h2 className="m-0 text-xl font-semibold">Neue App</h2>
+          <div className="grid grid-cols-[1fr_2fr] gap-4">
+            <Field label="Name" name="name" id="new-name" required placeholder="z. B. EBV-Portal" />
+            <Field label="Domains (mit Komma getrennt)" name="domains" id="new-domains" placeholder="localhost:3200, app.beispiel.test" mono />
+          </div>
+          <FormActions submitLabel="Anlegen" />
         </form>
       )}
-    </div>
+    </>
   );
 }
 

@@ -11,7 +11,14 @@ export type InsightRow = {
   persons: number;
 };
 
-export type Verdict = "app" | "schulung" | "ok";
+export type Verdict = "improve" | "train" | "ok";
+
+export const VERDICT: Record<Verdict, { label: string; desc: string }> = {
+  improve: { label: "App verbessern", desc: "Der Hinweis hilft nicht – die Oberfläche ist das Problem." },
+  train: { label: "Schulung", desc: "Der Hinweis hilft, aber viele brauchen ihn." },
+  ok: { label: "Läuft", desc: "Kaum jemand bleibt hier hängen." },
+};
+export const VERDICTS = Object.keys(VERDICT) as Verdict[];
 
 export type FeatureInsight = {
   appId: string;
@@ -44,10 +51,10 @@ export function bewerte(rows: InsightRow[]): FeatureInsight[] {
   }
   const list = [...byKey.values()];
   for (const f of list) {
-    if ((f.stillStuckAfterHint ?? 0) >= APP_PROBLEM_AB) f.verdict = "app";
-    else if (Math.max(f.stuckRate ?? 0, f.abandonedFlow ?? 0) >= SCHULUNG_AB) f.verdict = "schulung";
+    if ((f.stillStuckAfterHint ?? 0) >= APP_PROBLEM_AB) f.verdict = "improve";
+    else if (Math.max(f.stuckRate ?? 0, f.abandonedFlow ?? 0) >= SCHULUNG_AB) f.verdict = "train";
   }
-  const order: Record<Verdict, number> = { app: 0, schulung: 1, ok: 2 };
+  const order: Record<Verdict, number> = { improve: 0, train: 1, ok: 2 };
   return list.sort((a, b) => order[a.verdict] - order[b.verdict] || b.persons - a.persons);
 }
 
