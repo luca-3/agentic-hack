@@ -3,6 +3,7 @@ import { routeBlocked } from "@lotse/shared/route"; // zod-free: keeps the schem
 import { findElementByLabel, hasPlaceholder, labelScore, prettyRoute, routeMatches } from "../utils/match";
 import type { LotseMessage, PagePolicy, PlanCommand, PlanView } from "../utils/messages";
 import { LotseOverlay, type OverlayAction, type OverlayButton, type OverlayView } from "../utils/overlay";
+import { collectPagePrivacy, type WithPrivacy } from "../utils/pseudonymize";
 
 const INTERACTIVE = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
 const SIGNAL_ELEMENTS = '[role="alert"], [role="status"], .field-error, .error-message, .alert-error, .empty-state, .search-empty, .no-results, [data-empty-state], [aria-invalid="true"]';
@@ -62,7 +63,7 @@ export default defineContentScript({
       const refuse = { ok: false, paused: true, error: "Lotse pausiert auf dieser Seite." };
       switch (message.type) {
         case "lotse:policy": applyPolicy(message.policy); sendResponse({ ok: true }); break;
-        case "lotse:snapshot": sendResponse(blocked ? refuse : buildSnapshot()); break;
+        case "lotse:snapshot": sendResponse(blocked ? refuse : withPrivacy(buildSnapshot())); break;
         case "lotse:highlight": sendResponse(blocked ? refuse : legacyHighlight(message.elementNumber, message.sentence, message.snapshotId)); break;
         case "lotse:point": sendResponse(blocked ? refuse : showPoint(message.elementNumber, message.label, message.hint, message.snapshotId, message.offerId)); break;
         case "lotse:say": if (!blocked) showSay(message.text, message.offerId); sendResponse(blocked ? refuse : { ok: true }); break;
@@ -327,7 +328,15 @@ function makeEvent(type: LotseEvent["type"], element?: HTMLElement, label?: stri
 function sendObservation(event?: LotseEvent, snapshot?: ObservationSnapshot) {
   if (!recording || paused()) return;
   if (event && snapshot) event.snapshotId = snapshot.id;
-  send({ type: "lotse:observe", event, snapshot });
+  send({ type: "lotse:observe", event, snapshot: snapshot && withPrivacy(snapshot) });
+}
+
+/**
+ * D-26: the page's content strings (record links, table cells, record headings …) and the rects to paint over in
+ * screenshots travel with every snapshot to the service worker, which pseudonymizes before anything leaves the browser.
+ */
+function withPrivacy(snapshot: ObservationSnapshot): WithPrivacy<ObservationSnapshot> {
+  return { ...snapshot, privacy: collectPagePrivacy(numbered, accessibleName, isVisible) };
 }
 
 function send(message: LotseMessage) {

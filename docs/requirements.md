@@ -48,7 +48,7 @@ Status: `open` · `in progress` · `done`.
 | R-LRN-1 | Admin-started exploration of an app → feature suggestions + design findings (`/api/lotse/explore`) | Demo | server + dashboard done, extension open |
 | R-LRN-2 | Continuous learning every 10 min + "Jetzt auswerten": insights from real usage, agent errors, stale click paths, unknown features (`/api/lotse/learn`) | Demo | done (server + dashboard) |
 | R-LRN-3 | Knowledge gaps from unanswered questions (pseudonymized topic only) | Pitch | open (server logging needed) |
-| R-LRN-4 | Pseudonymize in the browser before sending (`[Kunde-1]` …) | Demo | open (extension) |
+| R-LRN-4 | Pseudonymize in the browser before sending (`[Kunde-1]` …) | Demo | done (extension `utils/pseudonymize.ts`; not browser-tested) |
 | **Insights** ||||
 | R-INS-1 | Aggregated pain points per feature and role (stuck rate, abandoned flows, frequent questions) | Pitch (seed data) | done (dashboard) |
 | R-INS-2 | Training suggestions ("Rolle X hängt bei Y → Schulung Z") | Pitch | done (dashboard) |

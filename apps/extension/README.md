@@ -26,6 +26,7 @@ Load `apps/extension/.output/chrome-mv3` via `chrome://extensions` → Developer
 | Overlay | `utils/overlay.ts` | Shadow-DOM agent cursor (glides ~600 ms), frame, bubble with buttons, status chips; moves into open modal `<dialog>`s |
 | Matching | `utils/match.ts` | Fuzzy label match (case, umlauts, diacritics, quotes, whitespace, role prefixes), route compare |
 | Messages/settings | `utils/messages.ts` | Extension-internal message types and the unified settings object |
+| Pseudonymization | `utils/pseudonymize.ts` | D-26: page content strings + mask rects (content script); session mapping, `pseudonymize()`/`reidentify()` in `callRuntime`, frame masks (worker) |
 | Side panel | `entrypoints/sidepanel/` | Start/pause, question (text + 🎙), toggles, threshold, snooze, offer and plan controls |
 | Voice | `utils/voice/` (voice session) | Wake word / hotkey → Gemini Live transcript → explicit question; `speak()` for `say` |
 
@@ -47,7 +48,20 @@ User controls (D-20/D-22):
 
 **Voice**: `setupVoice({ onTranscript, onState, onError })` in the service worker; a transcript runs the same path as a typed question (`source: "voice"`). `say` text is spoken only for voice questions with `speak` on. The voice state shows as a chip in the side panel and on the page.
 
-Privacy: input values and search terms are never recorded; query strings are dropped from routes. Screenshots are unmasked — use sample data only (the demo CRM).
+Privacy: input values and search terms are never recorded; query strings are dropped from routes.
+
+**Pseudonymization (D-26)** — server and Gemini only see placeholders such as `[Kunde-1]`, `[Person-2]`, `[IBAN-1]`:
+- With every snapshot the content script reports the page's **content strings** (record links = links with an id in the URL, table cells except categories/dates/amounts, `<dd>` values, the `h1` of a record page, the signed-in user's name, `[data-lotse-pii="Kunde"]`) and the screen rects of content (those, plus filled form fields, `[data-lotse-private]` and text holding a pattern). UI labels — buttons, tabs, menus, field labels, column headers — stay readable.
+- The service worker keeps one mapping per browser session in `chrome.storage.session` (`lotse-pseudonyms`): same value → same token; surname and company name without legal form map to the full value's token. `callRuntime()` pseudonymizes **every** request body right before `fetch` (snapshots, events, questions, state/intent/decide context, analytics) and re-identifies every response, so hints, `say`, plan steps and offers show the real names again. Patterns catch values that are not on the page: e-mail, IBAN, "Herr/Frau <Name>", company forms (GmbH, AG, eG …), street + number, postcode + city, phone numbers, numbers with ≥ 6 digits.
+- Frames: the content rects are painted over (labelled with their token) before a frame is buffered; without a privacy report the frame is dropped. Spoken answers are sent to `/api/lotse/tts` pseudonymized ("Kunde 1").
+- Exploration page maps: `learnPrivacy()` + `pseudonymizeExploredPages()` (or any upload through `callRuntime`).
+
+Limits — **pseudonymized, not anonymous**:
+- The mapping lives in the browser; anyone with the browser profile (or the extension's session storage) can re-identify. It is cleared when the browser closes.
+- Detection is heuristic. A name typed freely that is not on the page and matches no pattern (e.g. "Müller" without "Herr") leaves the browser in clear text; so does content outside tables/lists/record headings in an unusual layout (mark it with `data-lotse-pii`). Context can still identify a person (route + time + role).
+- Tokens are per session: analytics on record links aggregate to placeholders, not to customers.
+- Voice: the microphone audio goes to Gemini Live for transcription before any pseudonymization (D-16); only the resulting question text is pseudonymized.
+- Masks follow the rects at snapshot time (union of the last two reports); content that moves or appears in the ~100 ms before the capture can be visible in a frame. Use sample data in demos.
 
 ## Manual checklist (demo CRM, http://localhost:4000)
 

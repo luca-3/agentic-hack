@@ -10,6 +10,7 @@ import { ObservationBuffer, findStuckSignal } from "../utils/observation";
 import { DEFAULT_SETTINGS, DEMO_CONTEXT_KEY, type ExtensionSettings, type LotseMessage, type PagePolicy, type PlanView } from "../utils/messages";
 import * as auth from "../utils/auth";
 import { PAUSED_TEXT, clearPolicies, hostOf, pageVerdict, policyFor } from "../utils/policy";
+import * as pseudo from "../utils/pseudonymize";
 import * as voice from "../utils/voice";
 import { setupVoice, speak, stopSpeaking } from "../utils/voice";
 
@@ -193,6 +194,7 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
       // Second line of defense after the content script: nothing from a blocked route enters the buffer.
       if (await blockedUrl(senderUrl)) { pauseForPolicy(); break; }
       const oldWorkflow = buffer.workflow?.id;
+      await pseudo.learn(incoming.snapshot); // D-26: content strings + mask rects; the schema below strips them
       const event = incoming.event ? LotseEventSchema.parse(incoming.event) : undefined;
       const snapshot = incoming.snapshot ? ObservationSnapshotSchema.parse(incoming.snapshot) : undefined;
       if (snapshot && !localUrl(snapshot.url)) break;
@@ -313,6 +315,7 @@ async function snapshotOf(tabId: number): Promise<ObservationSnapshot> {
   try { result = await browser.tabs.sendMessage(tabId, { type: "lotse:snapshot" } satisfies LotseMessage); }
   catch { throw new Error("Lotse ist auf dieser Seite noch nicht aktiv. Lade die App-Seite neu."); }
   if (result && typeof result === "object" && "paused" in result) throw new Error(PAUSED_TEXT);
+  await pseudo.learn(result);
   const snapshot = ObservationSnapshotSchema.safeParse(result);
   if (!snapshot.success || !localUrl(snapshot.data.url)) throw new Error("Lotse ist auf dieser Seite noch nicht aktiv. Lade die App-Seite neu.");
   return snapshot.data;
@@ -446,7 +449,10 @@ async function captureFrame(tabId: number, expected: ObservationSnapshot, target
     const after = await snapshotOf(tabId);
     const activeAfter = await activeAppTab().catch(() => null);
     if (epoch !== generation || before.id !== after.id || activeAfter?.id !== tabId || !settings.screenshots) return;
-    const frame = ScreenshotFrameSchema.safeParse({ snapshotId: before.id, capturedAt, dataUrl });
+    // D-26: content regions are painted over before the frame is buffered; no privacy report → no frame (fail closed).
+    const masked = await pseudo.maskFrame(dataUrl, before.id).catch(() => null);
+    if (!masked) { screenshotMessage = "Bild ohne Datenschutz-Maske ausgelassen. Lade die App-Seite neu."; return; }
+    const frame = ScreenshotFrameSchema.safeParse({ snapshotId: before.id, capturedAt, dataUrl: masked });
     if (!frame.success) { screenshotMessage = "Dieses Bild war zu groß und wurde ausgelassen."; return; }
     targetBuffer.record({ snapshot: after });
     targetBuffer.addScreenshot(frame.data);
@@ -742,7 +748,8 @@ async function deliver(ctx: HelpContext, event: RenderEvent) {
     await sendTab(ctx.tabId, { type: "lotse:plan-show", plan: planView(plan) });
   } else {
     await sendTab(ctx.tabId, { type: "lotse:say", text: event.text, offerId: ctx.offerId });
-    if (ctx.source === "voice" && settings.speak) void Promise.resolve().then(() => speak(event.text)).catch(() => undefined);
+    // TTS runs on the server: speak the pseudonymized text ("Kunde 1"), never the real name (D-26).
+    if (ctx.source === "voice" && settings.speak) void pseudo.spokenText(event.text).then((text) => speak(text)).catch(() => undefined);
   }
 }
 
@@ -813,7 +820,9 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (endpoint === "ask") headers.Accept = "application/x-ndjson";
     const url = `${LOTSE_DEFAULTS.serverUrl}/api/lotse/${endpoint}${query}`;
-    const init = { method, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal };
+    // D-26: the last step before the network — personal data becomes [Kunde-1], [IBAN-1] …; responses are re-identified.
+    const wire = body === undefined ? undefined : await pseudo.pseudonymize(body);
+    const init = { method, body: wire === undefined ? undefined : JSON.stringify(wire), signal: controller.signal };
     const token = await auth.accessToken().catch(() => null);
     let response = await fetch(url, { ...init, headers: token ? { ...headers, Authorization: `Bearer ${token}` } : headers });
     if (response.status === 401 && token) {
@@ -830,7 +839,7 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
     }
     if (endpoint === "events") return null;
     if (endpoint === "ask" && response.headers.get("content-type")?.includes("ndjson")) return await readGuidance(response, onGuidance);
-    return await response.json();
+    return pseudo.reidentify(await response.json());
   } catch (error) {
     if (controller.signal.aborted) throw new Error("Die Anfrage wurde abgebrochen oder dauerte zu lange.");
     if (error instanceof TypeError) throw new Error("Der Lotse-Server ist nicht erreichbar. Starte npm run dev:server.");
@@ -848,7 +857,7 @@ async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent)
   const answer: AskResponse = { elementNumber: null, sentence: "" };
   const consume = async (line: string) => {
     if (!line.trim()) return;
-    const event = GuidanceEventSchema.parse(JSON.parse(line));
+    const event = pseudo.reidentify(GuidanceEventSchema.parse(JSON.parse(line))); // real names for overlay + panel
     received = true;
     if (event.type === "error") {
       if (event.code === "budget_exceeded") throw new Error("Lotse macht Pause bis morgen (Tagesbudget erreicht).");
