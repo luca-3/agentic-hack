@@ -579,10 +579,10 @@
               <span id="admin-badge" class="badge-admin" hidden>Admin</span>
             </div>
             <form id="login">
-              <label for="email">Email</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="admin@demo.test" />
-              <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" maxlength="200" placeholder="demo1234" />
+              <label for="email">Email</label><input id="email" type="email" autocomplete="username" maxlength="200" />
+              <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" maxlength="200" />
               <div class="actions"><button id="login-button" class="small" type="submit">Sign in</button></div>
-              <p class="muted">Demo admin: <code>admin@demo.test</code> / <code>demo1234</code></p>
+              <p id="demo-hint" class="muted" hidden>Demo admin: <code>admin@demo.test</code> / <code>demo1234</code></p>
             </form>
             <div id="signed-in" class="account-card-row" hidden>
               <span id="account-avatar" class="avatar" aria-hidden="true">V</span>

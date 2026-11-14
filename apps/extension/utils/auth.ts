@@ -1,4 +1,5 @@
-import { AuthConfigResponseSchema, LOTSE_DEFAULTS, type AuthConfigResponse } from "@lotse/shared";
+import { AuthConfigResponseSchema, type AuthConfigResponse } from "@lotse/shared";
+import { SERVER_URL } from "./server-url";
 
 /**
  * Extension login (D-05): Supabase email/password via the Auth REST API — no SDK, no app cookies.
@@ -34,7 +35,7 @@ async function save(next: AuthSession | null) {
 
 async function authConfig(): Promise<AuthConfigResponse> {
   if (config) return config;
-  const response = await fetch(`${LOTSE_DEFAULTS.serverUrl}/api/lotse/auth-config`, { signal: AbortSignal.timeout(8_000) })
+  const response = await fetch(`${SERVER_URL}/api/lotse/auth-config`, { signal: AbortSignal.timeout(8_000) })
     .catch(() => { throw new Error("The Valo server is not reachable. Start npm run dev:server."); });
   if (!response.ok) throw new Error("Sign-in is not set up on the Valo server.");
   config = AuthConfigResponseSchema.parse(await response.json());
