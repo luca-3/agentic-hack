@@ -52,6 +52,8 @@ export class WakeWordDetector {
   private framesSinceReset = 0;
   private peakScore = 0;
   private peakSince = 0;
+  /** Keyword score of the last processed frame (diagnostics / offline harness). */
+  lastScore = 0;
   private lastHit = -Infinity;
   private vadH!: ort.Tensor;
   private vadC!: ort.Tensor;
@@ -148,6 +150,7 @@ export class WakeWordDetector {
       [inputName(this.s.keyword)]: new ort.Tensor("float32", features, [1, this.keywordWindow, EMBEDDING]),
     });
     const score = first(kwOut, this.s.keyword)[0] ?? 0;
+    this.lastScore = score;
 
     // Warm-up: the keyword window must be filled with real audio before a score counts.
     this.framesSinceReset++;

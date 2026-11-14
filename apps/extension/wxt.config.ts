@@ -29,7 +29,9 @@ export default defineConfig({
         description: "Valo zuhören lassen (Frage sprechen)",
       },
     },
-    // CSP: WXT's MV3 default for extension pages already allows 'wasm-unsafe-eval' (ONNX Runtime Web) — nothing to add.
+    // CSP: Chrome's MV3 default ("script-src 'self'; object-src 'self';") DISABLES WebAssembly → ONNX Runtime Web
+    // (wake word + Silero VAD in the offscreen document) could not load. 'wasm-unsafe-eval' is the minimum Chrome allows.
+    content_security_policy: { extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';" },
   },
   hooks: {
     "build:publicAssets": (_wxt, files) => {
