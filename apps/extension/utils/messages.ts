@@ -3,7 +3,8 @@
  * The shared `ExtensionMessage` union is reused where it fits (`lotse:clear`, `lotse:offer-feedback`,
  * `lotse:voice-state`, `lotse:wake-question`, …); these add plan control, offers and the unified settings.
  */
-import type { ExtensionMessage, GuidanceStep, LotseSettings } from "@lotse/shared";
+import type { ExtensionMessage, GuidanceStep, LotseEvent, LotseSettings, ObservationSnapshot } from "@lotse/shared";
+import type { PagePrivacyPayload } from "./pseudonymize";
 
 /** One settings object: the shared toggles (`chrome.storage.sync` key `lotse:settings`) plus the local demo context. */
 export type ExtensionSettings = LotseSettings & { screenshots: boolean; role: string; appKnowledge: string };
@@ -36,4 +37,8 @@ export type WorkerCommand =
   | { type: "lotse:snooze"; minutes: number } // 0 resumes proactive offers
   | { type: "lotse:listen" }; // side-panel mic button → voice module startListening("button")
 
-export type LotseMessage = ExtensionMessage | ContentCommand | WorkerCommand;
+export type LotseMessage =
+  | Exclude<ExtensionMessage, { type: "lotse:observe" }>
+  | { type: "lotse:observe"; event?: LotseEvent; snapshot?: ObservationSnapshot; privacy?: PagePrivacyPayload }
+  | ContentCommand
+  | WorkerCommand;

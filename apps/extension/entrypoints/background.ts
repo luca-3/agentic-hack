@@ -8,6 +8,7 @@ import {
 } from "@lotse/shared";
 import { ObservationBuffer, findStuckSignal } from "../utils/observation";
 import { DEFAULT_SETTINGS, DEMO_CONTEXT_KEY, type ExtensionSettings, type LotseMessage, type PlanView } from "../utils/messages";
+import { PseudonymSession, redactScreenshot, type PagePrivacyPayload } from "../utils/pseudonymize";
 import * as voice from "../utils/voice";
 import { setupVoice, speak, stopSpeaking } from "../utils/voice";
 
@@ -22,7 +23,7 @@ type HelpContext = { tabId: number; snapshotId: string; source: Source; offerId?
 type Prefetch = { offerId: string; ctx: HelpContext; events: RenderEvent[]; live: boolean; done: boolean; failed: string | null; chain: Promise<void>; answer: AskResponse | null };
 type SavedSession = {
   recording: boolean; recordingTab: number | null; buffer: unknown; decision: unknown; inference: unknown; sessionId: string;
-  plan: unknown; snoozeUntil: number; lastDecisionAt: number; threshold: number | null; analytics: unknown;
+  plan: unknown; snoozeUntil: number; lastDecisionAt: number; threshold: number | null; analytics: unknown; pseudonyms?: unknown;
 };
 export type LotseStatus = {
   recording: boolean; tabId: number | null; busy: boolean; settings: ExtensionSettings;
@@ -51,6 +52,8 @@ const OFFER_TTL_MS = 75_000;
 const PLAN_TTL_MS = 30 * 60_000;
 
 const buffer = new ObservationBuffer();
+const pseudonymizer = new PseudonymSession();
+const latestPagePrivacy = new Map<number, PagePrivacyPayload>();
 let settings: ExtensionSettings = { ...DEFAULT_SETTINGS };
 let recording = false;
 let recordingTab: number | null = null;
@@ -138,6 +141,7 @@ export default defineBackground(() => {
     }
   });
   browser.tabs.onRemoved.addListener((tabId) => {
+    latestPagePrivacy.delete(tabId);
     void ready.then(() => {
       if (plan?.tabId === tabId) { plan = null; schedulePersistence(); }
       if (pendingOffer?.tabId === tabId) dropOffer(false);
@@ -157,9 +161,13 @@ async function handle(incoming: LotseMessage, senderTab?: number): Promise<Lotse
     case "lotse:update-settings": await updateSettings(incoming.settings); break;
     case "lotse:observe": {
       if (!recording || senderTab !== recordingTab) break;
+      if (incoming.privacy) {
+        pseudonymizer.ingest(incoming.privacy.entries);
+        if (senderTab !== undefined) latestPagePrivacy.set(senderTab, incoming.privacy);
+      }
       const oldWorkflow = buffer.workflow?.id;
-      const event = incoming.event ? LotseEventSchema.parse(incoming.event) : undefined;
-      const snapshot = incoming.snapshot ? ObservationSnapshotSchema.parse(incoming.snapshot) : undefined;
+      const event = incoming.event ? pseudonymizer.pseudonymizeEvent(LotseEventSchema.parse(incoming.event)) : undefined;
+      const snapshot = incoming.snapshot ? pseudonymizer.pseudonymizeSnapshot(ObservationSnapshotSchema.parse(incoming.snapshot)) : undefined;
       if (snapshot && !localUrl(snapshot.url)) break;
       if (snapshot) lastAppHost = new URL(snapshot.url).host;
       buffer.record({ event, snapshot });
@@ -273,7 +281,12 @@ async function activeAppTab() {
 
 async function snapshotOf(tabId: number): Promise<ObservationSnapshot> {
   try {
-    const snapshot = ObservationSnapshotSchema.parse(await browser.tabs.sendMessage(tabId, { type: "lotse:snapshot" } satisfies LotseMessage));
+    const raw = await browser.tabs.sendMessage(tabId, { type: "lotse:snapshot" } satisfies LotseMessage) as (ObservationSnapshot & { privacy?: PagePrivacyPayload }) | null;
+    if (raw && typeof raw === "object" && "privacy" in raw && raw.privacy) {
+      pseudonymizer.ingest(raw.privacy.entries);
+      latestPagePrivacy.set(tabId, raw.privacy);
+    }
+    const snapshot = pseudonymizer.pseudonymizeSnapshot(ObservationSnapshotSchema.parse(raw));
     if (!localUrl(snapshot.url)) throw new Error("App nicht freigegeben.");
     return snapshot;
   } catch { throw new Error("Lotse ist auf dieser Seite noch nicht aktiv. Lade die App-Seite neu."); }
@@ -346,7 +359,10 @@ async function captureFrame(tabId: number, expected: ObservationSnapshot, target
     const after = await snapshotOf(tabId);
     const activeAfter = await activeAppTab().catch(() => null);
     if (epoch !== generation || before.id !== after.id || activeAfter?.id !== tabId || !settings.screenshots) return;
-    const frame = ScreenshotFrameSchema.safeParse({ snapshotId: before.id, capturedAt, dataUrl });
+    const privacy = latestPagePrivacy.get(tabId);
+    const redactedUrl = await redactScreenshot(dataUrl, privacy?.rects ?? [], privacy?.viewport);
+    if (!redactedUrl) { screenshotMessage = "Bild konnte nicht pseudonymisiert werden und wurde ausgelassen."; return; }
+    const frame = ScreenshotFrameSchema.safeParse({ snapshotId: before.id, capturedAt, dataUrl: redactedUrl });
     if (!frame.success) { screenshotMessage = "Dieses Bild war zu groß und wurde ausgelassen."; return; }
     targetBuffer.record({ snapshot: after });
     targetBuffer.addScreenshot(frame.data);
@@ -439,7 +455,7 @@ async function maybeIntervene() {
     // Offer first; the guidance is prefetched meanwhile and only shown after "Ja".
     const question = (result.intent || understood.intent.goal || understood.workflowName).trim().slice(0, 500) || "Wie komme ich auf dieser Seite weiter?";
     const offerId = result.offerId ?? "local-" + crypto.randomUUID();
-    const text = (result.offer || `Soll ich dir zeigen, wie es weitergeht? (${question})`).slice(0, 140);
+    const text = pseudonymizer.restoreText(result.offer || `Soll ich dir zeigen, wie es weitergeht? (${question})`).slice(0, 140);
     const shown = await sendTab(tabId, { type: "lotse:show-offer", offerId, offer: text });
     if (!current()) return;
     if (!shown?.ok) { message = "Lotse hält das Angebot zurück, weil gerade ein Hinweis sichtbar ist."; return; }
@@ -559,7 +575,7 @@ async function loadPrefs(value?: number) {
 async function explicitQuestion(question: string, source: Source = "text", options: { offerId?: string; intent?: InferredIntent } = {}): Promise<AskResponse> {
   if (typeof question !== "string" || !question.trim() || question.length > 500) throw new Error("Bitte stelle eine Frage mit höchstens 500 Zeichen.");
   try { stopSpeaking(); } catch { /* voice module not ready */ }
-  if (source !== "proactive") { lastQuestion = { text: question.trim(), source }; dropOffer(true); }
+  if (source !== "proactive") { lastQuestion = { text: pseudonymizer.restoreText(question.trim()), source }; dropOffer(true); }
   if (busy && busyMode === "proactive") { generation++; requestController?.abort(); busy = false; inferencePending = true; }
   if (busy) throw new Error("Lotse bearbeitet gerade einen Hinweis. Versuche es gleich noch einmal.");
   busy = true; busyMode = "question"; const owner = ++busyOwner;
@@ -598,7 +614,11 @@ async function requestHelp(
 ): Promise<AskResponse> {
   const epoch = generation;
   if (observation && !settings.screenshots) observation = { ...observation, screenshots: [] };
-  const body = AskRequestSchema.parse({ question, source, snapshot, observation: observation ?? undefined, recentEvents: observation?.workflow.events.slice(-50), intent, ...appContext() });
+  const safeQuestion = pseudonymizer.pseudonymizeText(question).trim().slice(0, 500) || question.trim().slice(0, 500);
+  const safeObservation = observation ? pseudonymizer.pseudonymizePayload(observation) : undefined;
+  const safeIntent = intent ? pseudonymizer.pseudonymizePayload(intent) : undefined;
+  const safeContext = pseudonymizer.pseudonymizePayload(appContext());
+  const body = AskRequestSchema.parse({ question: safeQuestion, source, snapshot, observation: safeObservation, recentEvents: safeObservation?.workflow.events.slice(-50), intent: safeIntent, ...safeContext });
   const ctx: HelpContext = extra.prefetch?.ctx ?? { tabId, snapshotId: snapshot.id, source, offerId: extra.offerId, cleared: false };
   let streamed = false;
   const route = async (event: RenderEvent) => {
@@ -608,12 +628,12 @@ async function requestHelp(
     if (job.live) { job.chain = job.chain.then(() => deliver(ctx, event)).catch(() => undefined); await job.chain; }
     else job.events.push(event);
   };
-  const answer = AskResponseSchema.parse(await callRuntime("ask", {
+  const answer = pseudonymizer.restoreAskResponse(AskResponseSchema.parse(await callRuntime("ask", {
     body,
     onGuidance: async (event) => {
       if (event.type === "point" || event.type === "plan" || event.type === "say") { streamed = true; await route(event); }
     },
-  }));
+  })));
   if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
   if (answer.snapshotId && answer.snapshotId !== snapshot.id) throw new Error("Der Hinweis gehört zu einem anderen Seitenzustand.");
   if (!streamed) {
@@ -640,7 +660,10 @@ async function deliver(ctx: HelpContext, event: RenderEvent) {
     await sendTab(ctx.tabId, { type: "lotse:plan-show", plan: planView(plan) });
   } else {
     await sendTab(ctx.tabId, { type: "lotse:say", text: event.text, offerId: ctx.offerId });
-    if (ctx.source === "voice" && settings.speak) void Promise.resolve().then(() => speak(event.text)).catch(() => undefined);
+    if (ctx.source === "voice" && settings.speak) {
+      const speechText = pseudonymizer.toSpeechSafeText(event.text);
+      void Promise.resolve().then(() => speak(speechText)).catch(() => undefined);
+    }
   }
 }
 
@@ -702,8 +725,9 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
     if (appHost) headers[LOTSE_HEADERS.app] = appHost;
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (endpoint === "ask") headers.Accept = "application/x-ndjson";
+    const safeBody = body === undefined ? undefined : pseudonymizer.pseudonymizePayload(body);
     const response = await fetch(`${LOTSE_DEFAULTS.serverUrl}/api/lotse/${endpoint}`, {
-      method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal,
+      method, headers, body: safeBody === undefined ? undefined : JSON.stringify(safeBody), signal: controller.signal,
     });
     if (!response.ok) {
       if (response.status === 404 && endpoint !== "feedback") throw new Error("Lotse wartet auf den /api/lotse/" + endpoint + "-Endpunkt.");
@@ -730,7 +754,7 @@ async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent)
   const answer: AskResponse = { elementNumber: null, sentence: "" };
   const consume = async (line: string) => {
     if (!line.trim()) return;
-    const event = GuidanceEventSchema.parse(JSON.parse(line));
+    const event = pseudonymizer.restoreGuidanceEvent(GuidanceEventSchema.parse(JSON.parse(line)));
     received = true;
     if (event.type === "error") {
       if (event.code === "budget_exceeded") throw new Error("Lotse macht Pause bis morgen (Tagesbudget erreicht).");
@@ -777,12 +801,17 @@ function clock(timestamp: number) {
 function status(): LotseStatus {
   const context = buffer.getContext({ includeScreenshots: false });
   const step = plan?.steps[plan.index];
-  return { recording, tabId: recordingTab, busy, busyMode, settings, decision, inference, stateCount: buffer.states.length, message, screenshotMessage,
+  return { recording, tabId: recordingTab, busy, busyMode, settings,
+    decision: pseudonymizer.restoreDecision(decision),
+    inference: pseudonymizer.restoreInference(inference),
+    stateCount: buffer.states.length,
+    message: pseudonymizer.restoreText(message),
+    screenshotMessage,
     eventCount: buffer.events.length, snapshotCount: buffer.snapshots.length, screenshotCount: buffer.screenshots.length,
     elementCount: context?.snapshot.elements.length ?? 0, workflowId: context?.workflow.id ?? null,
     events: context?.workflow.events.slice(-8) ?? [],
-    offer: pendingOffer ? { offerId: pendingOffer.id, text: pendingOffer.text } : null,
-    plan: plan && step ? { index: plan.index, total: plan.steps.length, label: step.label, hint: step.hint } : null,
+    offer: pendingOffer ? { offerId: pendingOffer.id, text: pseudonymizer.restoreText(pendingOffer.text) } : null,
+    plan: plan && step ? { index: plan.index, total: plan.steps.length, label: pseudonymizer.restoreText(step.label), hint: step.hint ? pseudonymizer.restoreText(step.hint) : undefined } : null,
     threshold, prefsMessage, snoozedUntil: snoozeUntil > Date.now() ? snoozeUntil : null,
     voiceState, lastQuestion, analyticsQueued: analytics.length,
   };
@@ -792,7 +821,10 @@ function schedulePersistence() {
   if (persistenceTimer !== undefined) clearTimeout(persistenceTimer);
   persistenceTimer = setTimeout(() => {
     persistenceTimer = undefined;
-    const saved: SavedSession = { recording, recordingTab, buffer: buffer.serialize(), decision, inference, sessionId, plan, snoozeUntil, lastDecisionAt, threshold, analytics };
+    const saved: SavedSession = {
+      recording, recordingTab, buffer: buffer.serialize(), decision, inference, sessionId,
+      plan, snoozeUntil, lastDecisionAt, threshold, analytics, pseudonyms: pseudonymizer.serialize(),
+    };
     void browser.storage.session.set({ [STORE]: saved }).catch(() => { message = "Der lokale Verlauf konnte nicht gespeichert werden."; });
   }, 700);
 }
@@ -816,6 +848,7 @@ async function restore() {
   try {
     const saved = (await browser.storage.session.get(STORE))[STORE] as Partial<SavedSession> | undefined;
     if (!saved || typeof saved !== "object") return;
+    pseudonymizer.restore(saved.pseudonyms);
     buffer.restore(saved.buffer);
     recordingTab = typeof saved.recordingTab === "number" ? saved.recordingTab : null;
     recording = saved.recording === true && recordingTab !== null;

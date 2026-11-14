@@ -2,6 +2,7 @@ import type { InteractiveElement, LotseEvent, ObservationSnapshot } from "@lotse
 import { findElementByLabel, hasPlaceholder, labelScore, prettyRoute, routeMatches } from "../utils/match";
 import type { LotseMessage, PlanCommand, PlanView } from "../utils/messages";
 import { LotseOverlay, type OverlayAction, type OverlayButton, type OverlayView } from "../utils/overlay";
+import { collectPagePrivacy } from "../utils/page-privacy";
 
 const INTERACTIVE = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
 const SIGNAL_ELEMENTS = '[role="alert"], [role="status"], .field-error, .error-message, .alert-error, .empty-state, .search-empty, .no-results, [data-empty-state], [aria-invalid="true"]';
@@ -51,7 +52,7 @@ export default defineContentScript({
   main(ctx) {
     const onMessage = (message: LotseMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
       switch (message.type) {
-        case "lotse:snapshot": sendResponse(buildSnapshot()); break;
+        case "lotse:snapshot": sendResponse({ ...buildSnapshot(), privacy: collectPagePrivacy() }); break;
         case "lotse:highlight": sendResponse(legacyHighlight(message.elementNumber, message.sentence, message.snapshotId)); break;
         case "lotse:point": sendResponse(showPoint(message.elementNumber, message.label, message.hint, message.snapshotId, message.offerId)); break;
         case "lotse:say": showSay(message.text, message.offerId); sendResponse({ ok: true }); break;
@@ -252,7 +253,7 @@ function makeEvent(type: LotseEvent["type"], element?: HTMLElement, label?: stri
 function sendObservation(event?: LotseEvent, snapshot?: ObservationSnapshot) {
   if (!recording) return;
   if (event && snapshot) event.snapshotId = snapshot.id;
-  send({ type: "lotse:observe", event, snapshot });
+  send({ type: "lotse:observe", event, snapshot, privacy: collectPagePrivacy() });
 }
 
 function send(message: LotseMessage) {
