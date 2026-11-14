@@ -50,6 +50,8 @@ export class WakeWordDetector {
   private mel: Float32Array[] = [];
   private embeddings: Float32Array[] = [];
   private framesSinceReset = 0;
+  private peakScore = 0;
+  private peakSince = 0;
   private lastHit = -Infinity;
   private vadH!: ort.Tensor;
   private vadC!: ort.Tensor;
@@ -150,6 +152,13 @@ export class WakeWordDetector {
     // Warm-up: the keyword window must be filled with real audio before a score counts.
     this.framesSinceReset++;
     const now = performance.now();
+    // Diagnostics for tuning on the demo machine: peak keyword score every 3 s (only when something scored at all).
+    this.peakScore = Math.max(this.peakScore, score);
+    if (now - this.peakSince >= 3_000) {
+      if (this.peakScore >= 0.05) console.info(`[lotse voice] wake score peak ${this.peakScore.toFixed(2)} (threshold ${this.threshold})`);
+      this.peakScore = 0;
+      this.peakSince = now;
+    }
     if (this.framesSinceReset < this.keywordWindow || score < this.threshold || now - this.lastHit < this.cooldownMs) return false;
     this.lastHit = now;
     return true;
