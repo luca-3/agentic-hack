@@ -34,15 +34,34 @@ export function shortenForSpeech(text: string, maxSentences = TTS_MAX_SENTENCES,
   return out;
 }
 
-/** Text → playable audio (WAV) via Gemini TTS. Caller must pass already-shortened, non-empty text. */
+/**
+ * The agent answers in the language of the question (prompt.ts), so speech follows the text: a cheap guess from
+ * umlauts and common function words. German wins ties (the demo apps are German).
+ */
+export function speechLanguage(text: string): "de-DE" | "en-US" {
+  const t = ` ${text.toLowerCase().replace(/[^\p{L}\s]/gu, " ")} `;
+  if (/[äöüß]/.test(t)) return "de-DE";
+  const hits = (re: RegExp) => (t.match(re) ?? []).length;
+  const de = hits(/\s(?=(der|die|das|und|ist|nicht|du|dich|dir|ein|eine|zu|auf|mit|für|kannst|klick|hier|wie|bitte|oder|nur)\s)/g);
+  const en = hits(/\s(?=(the|and|is|not|you|your|a|an|to|on|with|for|can|click|here|how|please|this|or|only)\s)/g);
+  return en > de ? "en-US" : "de-DE";
+}
+
+const STYLE = {
+  "de-DE": "Freundlich, ruhig und zügig, wie eine hilfsbereite Kollegin.",
+  "en-US": "Friendly, calm and brisk, like a helpful colleague.",
+} as const;
+
+/** Text → playable audio (WAV) via Gemini TTS, spoken in the text's language. Caller passes shortened, non-empty text. */
 export async function synthesizeSpeech(text: string, abortSignal?: AbortSignal): Promise<{ audio: Uint8Array; mediaType: string }> {
+  const language = speechLanguage(text);
   const result = await generateSpeech({
     model: google.speech(TTS_MODEL),
     text,
     voice: TTS_VOICE,
-    language: "de-DE",
+    language,
     outputFormat: "wav",
-    instructions: "Freundlich, ruhig und zügig, wie eine hilfsbereite Kollegin.",
+    instructions: STYLE[language],
     maxRetries: 1,
     abortSignal,
   });
