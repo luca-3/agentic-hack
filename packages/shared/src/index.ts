@@ -201,6 +201,48 @@ export const ProactivePrefsSchema = z.object({
 });
 export type ProactivePrefs = z.infer<typeof ProactivePrefsSchema>;
 
+/**
+ * Data access + deletion per person (GET / DELETE /api/lotse/me). Counts only — never contents, never hashes.
+ * The seven runtime tables that can hold rows of a signed-in person (by user id, "u:<sub>" or its subject hash).
+ */
+export const MY_DATA_TABLES = [
+  "agent_usage",
+  "lotse_events",
+  "lotse_user_prefs",
+  "lotse_offers",
+  "lotse_offer_feedback",
+  "agent_memory_evidence",
+  "knowledge_gap_subjects",
+] as const;
+export type MyDataTable = (typeof MY_DATA_TABLES)[number];
+const rowCount = z.number().int().nonnegative();
+export const MyDataCountsSchema = z.object({
+  agent_usage: rowCount,
+  lotse_events: rowCount,
+  lotse_user_prefs: rowCount,
+  lotse_offers: rowCount,
+  lotse_offer_feedback: rowCount,
+  agent_memory_evidence: rowCount,
+  knowledge_gap_subjects: rowCount,
+});
+export type MyDataCounts = z.infer<typeof MyDataCountsSchema>;
+
+/** GET /api/lotse/me — what Valo stores about the signed-in person. */
+export const MyDataSchema = z.object({
+  userId: z.string(),
+  counts: MyDataCountsSchema,
+  proactiveThreshold: z.number().min(0).max(1).nullable(), // own stored threshold (D-22); null = default in use
+});
+export type MyData = z.infer<typeof MyDataSchema>;
+
+/** DELETE /api/lotse/me[?userId=] — rows deleted per table; agent_memory / knowledge_gaps rows whose person counters were recounted. */
+export const DeleteMyDataResponseSchema = z.object({
+  userId: z.string(),
+  deleted: MyDataCountsSchema,
+  recounted: z.object({ agentMemory: rowCount, knowledgeGaps: rowCount }),
+});
+export type DeleteMyDataResponse = z.infer<typeof DeleteMyDataResponseSchema>;
+
 // ---------------------------------------------------------------------------
 // Guidance (question → streamed guidance events)
 // ---------------------------------------------------------------------------

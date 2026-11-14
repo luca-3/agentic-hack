@@ -10,7 +10,7 @@ export function corsHeaders(origin: string | null): Record<string, string> {
   if (!origin || !ALLOWED_ORIGINS.some((re) => re.test(origin))) return {};
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": `Content-Type, Authorization, Accept, ${LOTSE_HEADERS.session}, ${LOTSE_HEADERS.app}`,
     "Access-Control-Expose-Headers": "Retry-After, x-lotse-context, x-lotse-cache",
     Vary: "Origin",
