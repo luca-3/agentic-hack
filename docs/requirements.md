@@ -65,7 +65,8 @@ Status: `open` · `in progress` · `done`.
 ## Hackathon rules (team-internal)
 
 - From **17:00** only fix bugs in demo flows; from **19:00** no building, only testing and rehearsing. Opt-in deadline 19:00, demos 20:00. Fallback: demo video.
-- Roles: P1 extension + page reading · P2 rules + Gemini · P3 overlay + voice · P4 self-execution, tests, pitch.
+- Team of 3, split by component (2026-11-14): **Extension** (observe, snapshot, overlay, question input) · **Server/runtime** (`/api/lotse/*`, stuck decision, Gemini, events/hints tables) · **Dashboard** — Ismail (orgs/users/roles, apps + feature lists, training catalog, insights). Demo prep and pitch shared.
+- Table ownership to avoid migration clashes: Server owns `sessions`, `events`, `hints`; Dashboard owns `orgs`, `org_members`, `apps`, `app_features`, `training_catalog`, `insights`.
 
 ## Out of scope (today)
 
