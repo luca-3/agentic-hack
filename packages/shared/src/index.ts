@@ -484,6 +484,11 @@ export const PolicyResponseSchema = z.object({
   role: z.string().nullable(), // org_members.role (null = anonymous / not a member)
   reason: z.string().max(200).optional(), // why allowed=false, for the side panel
   ttlSec: z.number().int().min(10).max(3_600), // client cache lifetime
+  // D-29 auto-activation: true = this host is an app of the caller's org (or, in dev, an app the runtime knows) →
+  // the extension starts observing by itself, no "Start" click. Missing (older server) = allowed && known.
+  autoStart: z.boolean().optional(),
+  // Signed in: the domains of all apps of the caller's orgs (dashboard apps.domains), e.g. for the side panel.
+  appDomains: z.array(z.string().max(200)).max(50).optional(),
 });
 export type PolicyResponse = z.infer<typeof PolicyResponseSchema>;
 

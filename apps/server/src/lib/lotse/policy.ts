@@ -1,5 +1,6 @@
 import "server-only";
 import type { PolicyResponse } from "@lotse/shared";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { memberRole } from "./context";
 import { devAuthAllowed, type Caller } from "./guard";
 import { knowledgeSource } from "./knowledge";
@@ -47,6 +48,33 @@ function isCorpus(host: string, appName: string | null | undefined) {
   return csv("LOTSE_CORPUS_HOSTS", DEFAULT_CORPUS_HOSTS).map(normalizeHost).includes(host) || /^\s*corpus\b/i.test(appName ?? "");
 }
 
+const DOMAINS_CACHE_MS = 60_000;
+const domainsCache = new Map<string, { until: number; domains: string[] }>();
+
+/** Domains of all apps in the caller's orgs (dashboard `apps.domains`), normalized; [] on error. Cached 60 s per user. */
+async function memberAppDomains(userId: string): Promise<string[]> {
+  const hit = domainsCache.get(userId);
+  if (hit && Date.now() < hit.until) return hit.domains;
+  try {
+    const db = createAdminClient();
+    const signal = AbortSignal.timeout(2_000);
+    const { data: orgs, error } = await db.from("org_members").select("org_id").eq("user_id", userId).abortSignal(signal);
+    if (error) throw new Error(error.message);
+    const orgIds = (orgs ?? []).map((row) => row.org_id as string);
+    let domains: string[] = [];
+    if (orgIds.length) {
+      const { data: apps, error: appsError } = await db.from("apps").select("domains").in("org_id", orgIds).abortSignal(signal);
+      if (appsError) throw new Error(appsError.message);
+      domains = [...new Set((apps ?? []).flatMap((row) => (row.domains as string[] | null) ?? []).map(normalizeHost))].slice(0, 50);
+    }
+    domainsCache.set(userId, { until: Date.now() + DOMAINS_CACHE_MS, domains });
+    return domains;
+  } catch (e) {
+    console.warn("[lotse] app domains lookup failed:", (e as Error).message);
+    return [];
+  }
+}
+
 function allowUnknownApps() {
   const v = process.env.LOTSE_ALLOW_UNKNOWN_APPS?.trim();
   return v ? v === "1" : process.env.NODE_ENV !== "production";
@@ -75,6 +103,11 @@ export async function resolvePolicy(appParam: string, caller: Caller): Promise<P
     reason = "Melde dich mit einem Konto dieser Organisation an.";
   }
 
+  // D-29: start observing without a click on the apps of the caller's org; in dev also on apps the runtime knows
+  // (dashboard row or bundled fixture, e.g. the demo CRM on localhost:4000) — never on unknown hosts.
+  const autoStart = allowed && (member || (devAuthAllowed() && (known || app.source === "fixture")));
+  const appDomains = caller.userId ? await memberAppDomains(caller.userId) : undefined;
+
   return {
     app: host,
     allowed,
@@ -87,5 +120,7 @@ export async function resolvePolicy(appParam: string, caller: Caller): Promise<P
     role: member ? role : null,
     ...(reason ? { reason } : {}),
     ttlSec: TTL_SEC,
+    autoStart,
+    ...(appDomains ? { appDomains } : {}),
   };
 }

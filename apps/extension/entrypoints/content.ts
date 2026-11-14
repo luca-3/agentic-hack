@@ -3,6 +3,7 @@ import { routeBlocked } from "@lotse/shared/route"; // zod-free: keeps the schem
 import { findElementByLabel, hasPlaceholder, labelScore, prettyRoute, routeMatches } from "../utils/match";
 import type { LotseMessage, PagePolicy, PlanCommand, PlanView } from "../utils/messages";
 import { LotseOverlay, type OverlayAction, type OverlayButton, type OverlayView } from "../utils/overlay";
+import { ORB_HOST_ID, setupOrb } from "../utils/orb";
 import { collectPagePrivacy, type WithPrivacy } from "../utils/pseudonymize";
 
 const INTERACTIVE = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
@@ -206,6 +207,8 @@ export default defineContentScript({
     }, 500);
 
     requestPolicy();
+    // D-29 status orb: always visible on org app pages; it replaces the overlay's status chips while shown.
+    const orb = setupOrb({ onVisibleChange: (visible) => overlay.setChipsHidden(visible) });
     // A multi-step plan continues across full page loads: the service worker keeps it in chrome.storage.session.
     void browser.runtime.sendMessage({ type: "lotse:plan-resume" } satisfies LotseMessage)
       .then((result: { plan?: PlanView | null } | undefined) => { if (result?.plan && !plan) startPlan(result.plan, true); })
@@ -220,6 +223,7 @@ export default defineContentScript({
       observer.disconnect();
       browser.runtime.onMessage.removeListener(onMessage);
       for (const [target, type, listener, capture] of listeners) target.removeEventListener(type, listener, capture);
+      orb.destroy();
       overlay.destroy();
     });
   },
@@ -290,7 +294,7 @@ function uiText(text: string | null | undefined, max = 160) {
 
 function isLotseNode(node: Node) {
   const element = node instanceof Element ? node : node.parentElement;
-  return Boolean(element?.closest("#" + HOST_ID));
+  return Boolean(element?.closest(`#${HOST_ID}, #${ORB_HOST_ID}`));
 }
 
 function isLotseEvent(event: Event) {

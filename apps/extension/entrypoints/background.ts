@@ -11,6 +11,7 @@ import { DEFAULT_SETTINGS, DEMO_CONTEXT_KEY, type ExtensionSettings, type LotseM
 import * as auth from "../utils/auth";
 import { PAUSED_TEXT, clearPolicies, hostOf, pageVerdict, policyFor } from "../utils/policy";
 import * as pseudo from "../utils/pseudonymize";
+import { noteError, setupActivation } from "../utils/activation";
 import * as voice from "../utils/voice";
 import { setupVoice, speak, stopSpeaking } from "../utils/voice";
 
@@ -108,11 +109,20 @@ export default defineBackground(() => {
   // Registered synchronously so the voice listeners exist when Chrome wakes the worker.
   const voiceHandlers = {
     // Returning the request keeps the voice state on "thinking" until the answer arrives.
-    onTranscript: (text: string) => ready.then(() => explicitQuestion(text.slice(0, 500), "voice")).catch((error: unknown) => { message = errorText(error); }),
+    onTranscript: (text: string) => ready.then(() => explicitQuestion(text.slice(0, 500), "voice")).catch((error: unknown) => { message = errorText(error); noteError(message); }),
     onState: (state: VoiceState) => { voiceState = state; void broadcastVoiceState(); },
-    onError: (text: string) => { message = text; },
+    onError: (text: string) => { message = text; noteError(text); },
   };
   try { setupVoice(voiceHandlers); } catch { voiceState = "off"; }
+  // D-29: auto-start on the org's app domains + the status orb's messages (utils/activation.ts).
+  setupActivation({
+    ready, start, stop, policy: pagePolicy,
+    recording: () => ({ on: recording, tabId: recordingTab }),
+    live: () => ({
+      busy: busy && busyMode === "question", offerTab: pendingOffer?.tabId ?? null, offer: pendingOffer?.text ?? null,
+      voice: voiceState, voiceOn: settings.voice, signedIn: account !== null,
+    }),
+  });
   browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => undefined);
   browser.runtime.onMessage.addListener((incoming: LotseMessage, sender, respond) => {
     // Leave messages of other modules (the voice offscreen document uses `target`) to their own listeners.

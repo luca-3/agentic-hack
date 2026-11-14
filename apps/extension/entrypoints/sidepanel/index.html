@@ -45,7 +45,7 @@
       .callout p { margin: 0 0 8px; }
       .paused { border-color: #fcd34d; background: #fffbeb; }
       .paused h2 { color: #92400e; }
-      #org-line:empty, #paused-reason:empty, #role-note:empty { display: none; }
+      #org-line:empty, #paused-reason:empty, #role-note:empty, #auto-line:empty { display: none; }
       :focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
     </style>
   </head>
@@ -82,7 +82,8 @@
     </section>
     <section aria-labelledby="observe-title">
       <h2 id="observe-title">Hilfe während der Arbeit</h2>
-      <p class="muted">Starte Lotse im aktiven App-Tab. Aktionen und Bildverlauf bleiben zunächst in deinem Browser.</p>
+      <p class="muted">Lotse startet auf den Apps deiner Organisation von selbst; „Pausieren“ hält es an, bis du wieder startest. Aktionen und Bildverlauf bleiben zunächst in deinem Browser.</p>
+      <p id="auto-line" class="muted"></p>
       <div class="actions"><button id="start" type="button">Beobachtung starten</button><button id="stop" class="secondary" type="button" disabled>Pausieren</button></div>
       <div class="stats" aria-label="Lokaler Verlauf">
         <div><strong id="event-count">0</strong>Aktionen</div>
@@ -106,6 +107,9 @@
     <p id="image-status" class="muted"></p>
     <section aria-labelledby="behaviour-title">
       <h2 id="behaviour-title">Lotse-Verhalten</h2>
+      <label class="toggle"><input id="auto-activate" type="checkbox" checked />Automatisch aktiv auf den Apps meiner Organisation</label>
+      <label class="toggle"><input id="show-orb" type="checkbox" checked />Status-Kreis auf der Seite anzeigen</label>
+      <p id="orb-hidden-line" class="muted row" hidden><span id="orb-hidden-text"></span><button id="orb-unhide" class="secondary small" type="button">Wieder einblenden</button></p>
       <label class="toggle"><input id="proactive" type="checkbox" />Proaktiv Hilfe anbieten</label>
       <label class="toggle"><input id="voice" type="checkbox" />Sprache: Wake Word &amp; Hotkey</label>
       <label class="toggle"><input id="speak" type="checkbox" />Antworten vorlesen (nur bei Sprachfragen)</label>

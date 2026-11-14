@@ -15,7 +15,7 @@ npm run demo:crm          # demo CRM on :4000 (test target)
 npm run build -w @lotse/extension
 ```
 
-Load `apps/extension/.output/chrome-mv3` via `chrome://extensions` → Developer mode → Load unpacked (or `npm run dev:extension`). Open the demo CRM, click the Lotse toolbar icon (side panel; also grants the screenshot permission for the tab). `Alt+L` opens the panel.
+Load `apps/extension/.output/chrome-mv3` via `chrome://extensions` → Developer mode → Load unpacked (or `npm run dev:extension`). Open the demo CRM — Lotse starts by itself there and the status orb appears bottom right (D-29). The toolbar icon opens the side panel (login, settings; the click also grants the screenshot permission for the tab); `Alt+L` opens it too.
 
 ## How it works
 
@@ -27,8 +27,10 @@ Load `apps/extension/.output/chrome-mv3` via `chrome://extensions` → Developer
 | Matching | `utils/match.ts` | Fuzzy label match (case, umlauts, diacritics, quotes, whitespace, role prefixes), route compare |
 | Messages/settings | `utils/messages.ts` | Extension-internal message types and the unified settings object |
 | Pseudonymization | `utils/pseudonymize.ts` | D-26: page content strings + mask rects (content script); session mapping, `pseudonymize()`/`reidentify()` in `callRuntime`, frame masks (worker) |
-| Side panel | `entrypoints/sidepanel/` | Start/pause, question (text + 🎙), toggles, threshold, snooze, offer and plan controls |
+| Side panel | `entrypoints/sidepanel/` | Login, start/pause, question (text + 🎙), toggles (incl. auto-activation and orb), threshold, snooze, offer and plan controls |
 | Voice | `utils/voice/` (voice session) | Wake word / hotkey → Gemini Live transcript → explicit question; `speak()` for `say` |
+| Auto-activation | `utils/activation.ts` | Starts/stops observation for the focused org app tab (policy `autoStart`), manual pause, answers the orb's messages |
+| Status orb | `utils/orb/` | Floating status circle on app pages (top layer, draggable), push-to-talk click, menu; `sidepanel/presence.ts` = its switches |
 
 **Explicit question** (text, voice, wake word): `/ask` directly with the current snapshot, history, known intent and selected screenshots. No `/state`, `/intent` or `/decide` call.
 
@@ -47,6 +49,12 @@ User controls (D-20/D-22):
 **Settings** — one object: `proactive`, `voice`, `speak` in `chrome.storage.sync` key `lotse:settings` (the voice module reads it too); `screenshots`, `role`, `appKnowledge` in `chrome.storage.local` key `lotse:demo-context` (too large for sync). Session state (buffer, plan, snooze, cooldown, threshold, analytics queue) lives in `chrome.storage.session` key `lotse-observation-session`.
 
 **Voice**: `setupVoice({ onTranscript, onState, onError })` in the service worker; a transcript runs the same path as a typed question (`source: "voice"`). `say` text is spoken only for voice questions with `speak` on. The voice state shows as a chip in the side panel and on the page.
+
+**Auto-activation (D-29)** — no "Start" click on the org's apps. `GET /api/lotse/policy` now also returns `autoStart` (signed in: the host is an app of your org = dashboard `apps.domains`; dev without login: apps the runtime knows, e.g. the demo CRM on `localhost:4000`; never unknown hosts) and `appDomains` (signed in: all app domains of your orgs). `utils/activation.ts` re-evaluates on tab switch, window focus, navigation, content-script load, login/logout and every 4 s: focused tab is an app, route not blocked → `start()` (retried 3× while the content script loads); the tab it started leaves the org's apps → `stop()`; a blocked route never starts (it resumes on an allowed page); unreachable server → nothing starts. "Pausieren" (side panel or orb) is a **manual pause** that holds until you resume — stored in `chrome.storage.session` key `lotse:activation`, so it survives page loads. Switch "Automatisch aktiv" (default on) in `chrome.storage.sync` key `lotse:presence`.
+
+**Status orb (D-29)** — a 48 px circle bottom right on org app pages (and wherever Lotse records). Own Shadow DOM host `#lotse-orb-host`, `popover="manual"` + `showPopover()` (top layer, above page z-indexes); when a modal `<dialog>` opens it moves into the dialog and is shown again, so it stays visible and clickable. States (colour · icon · animation · tooltip · `aria-live`): **aktiv** (blue, compass, breathing), **bereit** (slate), **pausiert** (grey, pause), **pausiert auf dieser Seite** (amber, crossed eye — blocked route or app not allowed), **nicht verbunden** (grey, dashed ring — server unreachable), **nicht angemeldet** (dark, person — the app needs a login), **hört zu** (teal, mic, pulsing rings — pushed at once on the wake word / Alt+Shift+L), **denkt nach** (violet, spinner), **spricht** (cyan, waves), **Vorschlag** (amber, bulb, badge — open proactive offer), **Fehler** (red, shake, text for 8 s). Click/Enter = push-to-talk (`lotse:listen` → `startListening`, click again ends the question). Menu via right click, long press, the "⋯" button or Shift+F10/↑: Pausieren/Fortsetzen, Frage sprechen, Seitenbereich öffnen (`sidePanel.open` from the click's gesture; if Chrome refuses, the orb says "Alt+L"), Auf dieser Seite ausblenden. Drag to move; position per host and hidden hosts in `chrome.storage.local` key `lotse:orb`. Side panel: "Status-Kreis anzeigen" (default on) and "Wieder einblenden". While the orb is visible the overlay's status chips are hidden; the cursor still glides out of the bottom-right corner. Messages `lotse:orb-status`, `lotse:orb-pause`, `lotse:open-panel`, `lotse:activation` are answered by `utils/activation.ts` (its own `runtime.onMessage` listener); the orb polls status every 1.5 s while visible.
+
+**Beyond localhost (not built yet):** the content script `matches`, `host_permissions` and `activeAppTab()`/`localUrl()` are localhost-only. For real org domains: add `optional_host_permissions: ["https://*/*"]` + the `scripting` permission; after login request the origins from `appDomains` (`chrome.permissions.request` from a side-panel click), then `chrome.scripting.registerContentScripts({ id: "lotse", js: ["content-scripts/content.js"], matches: appDomains.map(d => "https://" + d + "/*"), persistAcrossSessions: true })`, and replace the localhost checks in `background.ts` with "host is in `appDomains` and has a granted permission". `utils/activation.ts` already reads `appDomains`.
 
 Privacy: input values and search terms are never recorded; query strings are dropped from routes.
 
@@ -78,6 +86,7 @@ Reset the demo data and set the role first (see `demo-crm/SCENARIOS.md`). Run th
 9. **Schalter:** “Proaktiv Hilfe anbieten” off → panel says so and no offers appear; explicit questions still work.
 10. **Analytics:** while recording, check the server log / `lotse_events` after ~30 s; nothing is sent while paused.
 11. **Voice:** “Hey Jarvis” / hotkey / 🎙 → chip “hört zu …” in panel and page → answer marked; with “Antworten vorlesen” on, `say` text is spoken.
+12. **Auto-Start + Orb (D-29):** reload the extension, open `http://localhost:4000` → without any click the orb turns blue (“Lotse ist aktiv”), panel shows “Lotse aktiv”. Switch to a non-app tab and back to a second demo-CRM tab → observation moves along. Orb menu → Pausieren → reload the page → still paused; Fortsetzen → active. Say “Hey Jarvis” → orb pulses teal at once, then violet while thinking. Open “Neue Aufgabe” (modal dialog) → orb stays on top and clickable. Stop the server → orb grey with dashed ring (“nicht verbunden”). Drag the orb, reload → same place; “Auf dieser Seite ausblenden” → gone, panel “Wieder einblenden” brings it back.
 
 ## Validation
 

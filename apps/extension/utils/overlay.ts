@@ -69,6 +69,7 @@ export class LotseOverlay {
   private paused = false;
   private pausedVisible = false;
   private voiceText = "";
+  private chipsHidden = false;
 
   constructor(private readonly options: OverlayOptions) {}
 
@@ -138,12 +139,21 @@ export class LotseOverlay {
     this.syncHost();
   }
 
+  /** The status orb (utils/orb, D-29) shows recording/paused/voice itself — hide the chips while it is visible. */
+  setChipsHidden(hidden: boolean) {
+    this.chipsHidden = hidden;
+    if (!this.host) return;
+    this.syncChip();
+    this.voiceChip.hidden = hidden || !this.voiceText;
+    this.syncHost();
+  }
+
   setVoiceState(state: VoiceState) {
     this.voiceText = VOICE_TEXT[state] ?? "";
     if (!this.host && !this.voiceText) return;
     this.ensure();
     this.voiceChip.textContent = this.voiceText;
-    this.voiceChip.hidden = !this.voiceText;
+    this.voiceChip.hidden = this.chipsHidden || !this.voiceText;
     this.syncHost();
   }
 
@@ -204,7 +214,7 @@ export class LotseOverlay {
 
   private syncChip() {
     this.recordingChip.textContent = this.paused ? "⏸ Lotse pausiert auf dieser Seite" : "● Lotse zeichnet lokal auf";
-    this.recordingChip.hidden = !(this.recording || this.pausedVisible);
+    this.recordingChip.hidden = this.chipsHidden || !(this.recording || this.pausedVisible);
   }
 
   private fill(view: OverlayView) {
@@ -278,7 +288,7 @@ export class LotseOverlay {
       Object.assign(bubble.style, { left: left + "px", top: top + "px" });
     } else {
       this.frame.style.display = "none";
-      Object.assign(bubble.style, { left: Math.max(8, innerWidth - width - 16) + "px", top: Math.max(8, innerHeight - height - 56) + "px" });
+      Object.assign(bubble.style, { left: Math.max(8, innerWidth - width - 16) + "px", top: Math.max(8, innerHeight - height - 84) + "px" }); // clears the status orb
     }
   }
 

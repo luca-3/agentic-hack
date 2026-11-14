@@ -1,6 +1,7 @@
 import type { VoiceState } from "@lotse/shared";
 import type { LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
+import "./presence"; // D-29 switches: "Automatisch aktiv", "Status-Kreis anzeigen"
 
 const get = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
 const startButton = get<HTMLButtonElement>("#start");

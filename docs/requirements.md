@@ -26,7 +26,7 @@ Status: `open` · `in progress` · `done`.
 | **Guide & act** ||||
 | R-UI-1 | Overlay: frame + arrow on the target element, follows scroll/resize, click-through; validates snapshot identity | Demo | done (extension) |
 | R-UI-2 | Hint bubble with one plain sentence; step-by-step tours ("Schritt 2 von 4", next/back) | Demo | open |
-| R-UI-3 | Status indicator "Lotse aktiv / hört zu" (transparency) | Demo | in progress (recording status done; voice open) |
+| R-UI-3 | Status indicator "Lotse aktiv / hört zu" (transparency) | Demo | done (status orb D-29: connected/active/paused/listening/thinking/speaking/offer/error; not verified in a browser) |
 | R-UI-4 | Side panel with chat/history (text input) | Pitch | in progress (questions and observation history done; chat persistence open) |
 | ~~R-ACT-1~~ | ~~Lotse clicks an element itself~~ — dropped, show only (D-17) | – | dropped |
 | ~~R-ACT-2~~ | ~~Lotse completes a short flow itself~~ — dropped (D-17); demo step 4 becomes a multi-step guided plan | – | dropped |
