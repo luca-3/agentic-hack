@@ -1,7 +1,7 @@
 import { LOTSE_DEFAULTS, type VoiceState } from "@lotse/shared";
 import type { LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
-import { applyShortcutLabels } from "../../utils/shortcuts";
+import { applyShortcutLabels, shortcutLabels } from "../../utils/shortcuts";
 import "./presence"; // D-29 switches: "Automatisch aktiv", "Status-Kreis anzeigen"
 
 const get = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -68,7 +68,7 @@ function renderAccount(status: LotseStatus) {
   exploreBox.hidden = !isAdmin;
   if (isAdmin) {
     const exp = status.explore;
-    exploreStart.disabled = exp.running || status.busy || Boolean(status.page?.paused);
+    exploreStart.disabled = exp.running;
     exploreStop.disabled = !exp.running;
     const activePhase = exp.phase === "crawling" || exp.phase === "analyzing";
     exploreBarWrap.hidden = !activePhase;
@@ -116,7 +116,7 @@ function render(status: LotseStatus) {
   const voiceChip = get("#voice-state");
   voiceChip.textContent = status.settings.voice ? VOICE_LABEL[status.voiceState] : "";
   voiceChip.hidden = !voiceChip.textContent;
-  startButton.disabled = status.busy || status.recording || status.explore.running;
+  startButton.disabled = status.recording || status.explore.running;
   stopButton.disabled = !status.recording;
   askButton.disabled = (status.busy && status.busyMode === "question") || status.explore.running;
   get("#event-count").textContent = String(status.eventCount);
@@ -171,13 +171,27 @@ function render(status: LotseStatus) {
   }
 }
 
+const RELOAD_HINT = `Erweiterung wurde aktualisiert – bitte Seitenleiste schließen (✕) und neu öffnen (${shortcutLabels().ask}).`;
+
+function contextInvalidated(): boolean {
+  try { return !browser.runtime?.id; } catch { return true; }
+}
+
 async function act(message: LotseMessage) {
   notice.textContent = "";
+  if (contextInvalidated()) {
+    notice.textContent = RELOAD_HINT;
+    return;
+  }
   try {
     const result = await send(message);
     if (result.ok) render(result.status);
     else notice.textContent = result.error;
-  } catch { notice.textContent = "Valo ist noch nicht erreichbar. Lade die Erweiterung neu."; }
+  } catch {
+    notice.textContent = contextInvalidated()
+      ? RELOAD_HINT
+      : "Valo ist noch nicht erreichbar. Lade die Erweiterung neu.";
+  }
 }
 
 loginForm.addEventListener("submit", (event) => {
@@ -195,7 +209,10 @@ stopButton.addEventListener("click", () => { void act({ type: "lotse:stop" }); }
 askForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = question.value.trim();
-  if (text) { askButton.disabled = true; void act({ type: "lotse:ask", question: text }); }
+  if (text) {
+    askButton.disabled = true;
+    void act({ type: "lotse:ask", question: text }).finally(() => { askButton.disabled = false; });
+  }
 });
 settingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -223,6 +240,10 @@ get("#plan-next").addEventListener("click", () => { void act({ type: "lotse:plan
 get("#plan-end").addEventListener("click", () => { void act({ type: "lotse:plan-command", action: "end" }); });
 
 async function refresh() {
+  if (contextInvalidated()) {
+    notice.textContent = RELOAD_HINT;
+    return;
+  }
   try { const result = await send({ type: "lotse:status" }); if (result.ok) render(result.status); }
   catch { /* A transient service-worker restart should not erase the UI. */ }
 }
