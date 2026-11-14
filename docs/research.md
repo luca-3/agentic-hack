@@ -53,3 +53,30 @@ Listed but untested: lite (`gemini-3.5-flash-lite`, `gemini-3.1-flash-lite`), Li
 - Employee monitoring → works council codetermination, § 87 (1) 6 BetrVG → aggregate, pseudonymize, no performance evaluation.
 - Cookies/local storage on end-user sites need prior consent (§ 25 TDDDG).
 - Gemini via AI Studio paid tier: no training on data, but not EU-resident; EU residency → Vertex AI region.
+
+## Competitors (2026-11-14)
+
+Three parallel research passes (digital adoption platforms · AI screen agents · friction analytics). **Caveat:** no working web search that day — all claims come from vendor pages fetched directly; several pages 404'd or timed out (tts performance suite, Tandem). Items marked *unverified* are from prior knowledge. Summary and pitch line: [README → Does this exist already?](../README.md#does-this-exist-already-competitor-check-2026-11-14).
+
+| Product | Deploy | Guidance | Proactive "stuck" | Points on screen | Fades | Company analytics | Source |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| WalkMe (SAP) | extension or snippet | hand-built + chat builder; AI executes steps | "Proactive AI" named, not described | yes | no | per person (Discovery: click-by-click by user/department) | [walkme.com](https://www.walkme.com/), [Discovery](https://support.walkme.com/knowledge-base/walkme-discovery/) |
+| Whatfix | extension or snippet | AI authoring agent; Mirror = training copy of the app | ScreenSense: "stuck, exploring…" intent; Insights Agent | yes | no | friction analytics, session replay; says "anonymized" but has user segments | [whatfix.com/ai](https://whatfix.com/ai), [screensense](https://whatfix.com/screensense), [analytics](https://whatfix.com/products/product-analytics/) |
+| Userlane (Munich) | extension via GPO/MDM or snippet | hand-built; AI assistant on own docs | rule-based "Contextual Actions" | yes | no | **pseudonymized, audience level** ("nurses in cardiology… not which individual"); no keystrokes/values/recordings | [userlane.com](https://www.userlane.com/), [application intelligence](https://www.userlane.com/application-intelligence/) |
+| Pendo | snippet | AI guide builder (beta) | rage clicks, replay (after the fact) | yes | no | per visitor/account | [in-app guides](https://www.pendo.io/product/in-app-guides), [for employees](https://www.pendo.io/pendo-for-your-employees/) |
+| Apty | n/a | AI-assisted | Pulse risk alerts (admin) | yes | no | workflow monitoring | [apty.ai](https://apty.ai/) |
+| Lemon Learning | no code changes | record a flow once | no | yes | no | heatmaps, drop-offs | [lemonlearning.com](https://www.lemonlearning.com/) |
+| Userpilot / Appcues / Chameleon | SDK/snippet | AI agents build flows | replay frustration / Compass "stuck" report | yes | no | per user | [userpilot.com](https://userpilot.com/), [appcues.com](https://www.appcues.com/), [chameleon.io](https://www.chameleon.io/) |
+| Spekit / Guidde / Tango | extension | knowledge cards / AI video guides / "Guide Me" | no / no / on request | no / no / yes | no | engagement / – / – | [spekit.com](https://www.spekit.com/), [guidde.com](https://www.guidde.com/), [tango.ai](https://www.tango.ai/) |
+| Fullstory Workforce | approved browser apps | – | where work "repeats, waits, gets stuck" | no | no | session recording; "analyze the work, not the workers" | [fullstory.com/platform/workforce](https://www.fullstory.com/platform/workforce/) |
+| MS Adoption Score / Viva | M365 telemetry | generic M365 tips | no | no | no | **org level only**, min. group 5, opt-out — M365 only | [Adoption Score](https://learn.microsoft.com/en-us/microsoft-365/admin/adoption/adoption-score), [Viva privacy](https://learn.microsoft.com/en-us/viva/insights/advanced/setup-maint/privacy-settings) |
+| PostHog / Heap / LogRocket / Contentsquare | SDK | – | rage/dead clicks, AI friction ranking | no | no | per person/session, customer-facing apps | [PostHog autocapture](https://posthog.com/docs/product-analytics/autocapture) |
+| Gemini in Chrome | built in | chat + auto browse (acts) | no, on request | no ("select part of page" coming) | no | none | [google.com/chrome/ai-innovations](https://www.google.com/chrome/ai-innovations/) |
+| Copilot Vision (Windows/Edge) | built in | "Highlights" shows where to click (*unverified*) | no | yes (*unverified*) | no | none | Microsoft Copilot Vision page (timed out) |
+| Claude for Chrome / ChatGPT Atlas / Comet / Opera Neon / Mariner | extension or browser | agents that **act** | no, task-driven | no | no | none (Claude: admin allow/block lists) | [claude.com/chrome](https://claude.com/chrome), [perplexity.ai/comet](https://www.perplexity.ai/comet), [operaneon.com](https://www.operaneon.com/) |
+
+**Gaps (nobody found doing it):** fading per person/task; "still stuck after the hint" metric (design flaw vs. training need); live in-the-moment stuck detection with an LLM gate and zero setup; per-person data that never leaves the browser + k-anonymous reports; SMB/Handwerk pricing.
+
+**Works council / GDPR:** § 87 (1) 6 BetrVG covers systems *able* to monitor behaviour or performance — intent doesn't matter (BAG case law, cited from memory, not checked). With a works council an agreement is needed whatever we promise; aggregate-only by design makes it easy. Vendors handle it via org-level data + min. group size + opt-out (Microsoft) or pseudonymization without recordings (Userlane); none sells works-council readiness as a feature.
+
+**To verify before pitching:** Userlane's anonymization/works-council claims; whether Copilot Vision Highlights is available in the EU.

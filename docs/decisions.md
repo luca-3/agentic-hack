@@ -68,3 +68,10 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - EU data residency: Gemini Live via Vertex AI in an EU region — availability not verified.
 - Production runtime: stay on Next.js or move agents to Google Agent Runtime (ADK)?
 - Foundation agent (`src/lib/lotse/`, `DataSource` interface, mock data) — planned, not built yet.
+- **Name:** Ismail doesn't like "Lotse" — new name to be decided later (keep "Lotse" until then).
+- **Execution (R-ACT-1/2):** Ismail chose "show only, never execute" (also a differentiator vs. browser agents, see research → Competitors). Keep R-ACT as Demo or drop it?
+- **Promote to Demo?** Fading per person/task (R-INS-4, local learning state) and a "still stuck after the hint" metric (hints + later events) — the two features no competitor has.
+- **Second app:** is the EBV-Portal the same as the Erasmus funding helper Ismail mentioned, or two apps?
+- **Schedule:** submission deadline 19:10, opt-in 19:00 → "no building from 19:00" is too late; proposal: feature freeze 16:30, code freeze 17:30, submit by 18:45.
+- **Models:** the Google builder guide recommends `gemini-4-hydrogen` + `gemini-decision-1` (Decisions API, calibrated yes/no + choice with confidence) — neither is in the model list for our key; check ListModels / ask mentors before switching.
+- **Pre-kickoff code:** starter commits are from 2026-11-13; the guide forbids "code written before kickoff" → disclose "starter template from 13.11., product code from kickoff 14.11." in the submission and confirm with organizers.

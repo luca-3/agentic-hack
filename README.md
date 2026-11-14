@@ -7,6 +7,32 @@ Hackathon starter for the [{Tech: Europe} Agentic AI Hack Karlsruhe](https://lum
 > **Using a coding agent?** It should read [AGENTS.md](AGENTS.md) (Claude Code picks it up via `CLAUDE.md`).
 > **What are we building?** Lotse — see the product wiki in [docs/](docs/README.md) (requirements, architecture, decisions).
 
+## Does this exist already? (competitor check, 2026-11-14)
+
+Short answer: **no single product does what we do, but every building block exists somewhere.** Our edge is the combination. Details and sources: [docs/research.md → Competitors](docs/research.md#competitors-2026-11-14).
+
+| Closest competitor | What it already does | What it lacks |
+| --- | --- | --- |
+| **Whatfix** (ScreenSense, AI Insights) | Claims to detect when users are stuck; AI writes guides; friction analytics | Guides still authored by admins; "stuck" is an admin report, not help in the moment; no fading; enterprise pricing |
+| **Userlane** (Munich) | Browser extension via group policy, no app code; on-screen guidance; GDPR; pseudonymized audience-level analytics | Rule-based triggers, hand-built content, no fading; per-person data still exists server-side |
+| **Copilot Vision / Gemini in Chrome** | Zero setup, sees any page; Copilot reportedly points at the right button (*unverified*) | Only on request; no learning state; nothing for the company; biggest threat because free and bundled |
+
+Also checked: WalkMe, Pendo, Apty, Lemon Learning, Userpilot, Appcues, Chameleon, Spekit, Guidde, Tango (guides or analytics, mostly per user); Microsoft Adoption Score (aggregate only, but M365 only); Claude for Chrome, ChatGPT Atlas, Perplexity Comet, Opera Neon (they *act* instead of showing).
+
+**What nobody has (= our pitch):**
+
+1. **Help that gets quieter as the person learns** — per task, learning state stays in the browser. No vendor claims this.
+2. **"Still stuck after the hint"** as a metric — separates a design flaw in the app (still stuck) from a training need (hint helped).
+3. **Help at the moment of being stuck, with zero setup** — elsewhere "stuck" is an after-the-fact admin report, and proactive help runs on rules admins write.
+4. **Aggregate-only by design** — no per-person data on the server; makes a works-council agreement (§ 87 (1) 6 BetrVG) easy.
+5. **Shows, doesn't act** — every browser agent executes; we guide so people learn.
+6. **Built for SMBs / Handwerk**, not enterprise sales.
+
+**Pitch answer to "Doesn't WalkMe do that?"**
+> WalkMe, Whatfix and Userlane need admins who build tours, and they measure people. Copilot and Gemini wait until you ask. Lotse notices on its own when someone is stuck, shows the way with zero setup, gets quieter the better you get — and the company only learns where the **app** loses people, never who.
+
+**Honest risk:** pointing and stuck detection can be copied by the big vendors within a release. What protects us is the combination of fading, privacy by design and SMB pricing — not a single feature.
+
 ## Prerequisites
 
 - Node.js 22+

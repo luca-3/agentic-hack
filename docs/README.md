@@ -8,7 +8,7 @@ Status: 2026-11-14 (hackathon day). Repo setup and conventions: `AGENTS.md`, `SE
 | [requirements.md](requirements.md) | What Lotse is, users, requirement catalog (with priority), demo script, hackathon rules |
 | [architecture.md](architecture.md) | The 3 components, extension internals, main flows, data model, agent tools |
 | [decisions.md](decisions.md) | Decision log (D-xx) incl. open questions — **the source of truth for "why"** |
-| [research.md](research.md) | Technical findings with sources (extension limits, Gemini Live, PostHog, ADK …) |
+| [research.md](research.md) | Technical findings with sources (extension limits, Gemini Live, PostHog, ADK, competitors …) |
 
 ## Lotse in one paragraph
 
