@@ -124,16 +124,9 @@ export function Notice({ tone = "info", title, children, role }: { tone?: keyof 
 export const Card = ({ className, ...p }: ComponentProps<"section">) => (
   <section className={cx("rounded-lg border border-line bg-surface p-6", className)} {...p} />
 );
-export const PageHeader = ({ title, lead }: { title: string; lead?: string }) => (
-  <div><h1 className="m-0 text-2xl font-semibold tracking-tight">{title}</h1>{lead && <p className="mt-1.5 mb-0 text-md text-muted">{lead}</p>}</div>
-);
 /** Datenschutz-Hinweis als Pill (Violett). */
 export const Footnote = ({ children }: { children: ReactNode }) => (
   <p className="m-0 inline-flex items-center gap-2 justify-self-start rounded-full border border-priv-line bg-priv-soft py-2 pr-4 pl-3 text-sm font-medium text-priv-text"><IconShield className="size-[18px] text-priv-accent" />{children}</p>
-);
-/** Platzhalter für entfernte Daten, z. B. [Kunde-1], [IBAN-1]. */
-export const PrivacyChip = ({ children }: { children: ReactNode }) => (
-  <span className="rounded-full border border-priv-line bg-priv-chip px-2.5 py-0.5 font-mono text-xs font-medium text-priv-text">{children}</span>
 );
 
 /* ---------- Kachel ---------- */
@@ -173,14 +166,6 @@ export const num = (v?: number | null) => (v == null ? "–" : String(v));
 /** DB rate 0..1 → whole percent. */
 export const toPct = (v?: number) => (v === undefined ? null : Math.round(v * 100));
 
-export function Metric({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) {
-  return (
-    <div className={cx("grid gap-0.5 rounded-md border px-3 py-2.5", emphasis ? "border-primary-line bg-primary-soft" : "border-line")}>
-      <span className={cx("text-xs", emphasis ? "font-semibold text-primary-text" : "text-muted")}>{label}</span>
-      <span className={cx("tabular-nums", emphasis ? "text-[26px] font-bold text-primary-text" : "text-[22px] font-semibold")}>{value}</span>
-    </div>
-  );
-}
 
 /** Ehrlicher Vergleich: gleiche Skala 0–100 %, gleiche Balkenstärke, Bezugsgröße benannt. */
 export function CompareBars({ stuck, stuckAgain }: { stuck: number | null; stuckAgain: number | null }) {
