@@ -163,6 +163,11 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** "Die komplette App muss auf Englisch sein, nicht auf Deutsch." (user, 2026-11-14).
 - **Consequence:** customer app content stays as it is (German demo CRM labels, feature names, fixtures, seeds, pseudonym kinds like `[Kunde-1]`, click-path placeholders like `<Kundenname>`); enum values in contracts (`schulung`, `hoch`/`mittel`/`niedrig`) and internal `lotse` names are unchanged. Rows written before this change (e.g. German topics, memory texts, the old "Fragen allgemein" insight label) keep their German text until they are refreshed. German keyword matchers (tier cues, stop words, close/generic labels) stay so German questions keep working.
 
+### D-35 · Trainings come from employee questions; backing visible to all org members (2026-11-14)
+- **Decision:** `/trainings` suggests trainings derived from what employees ask Valo, each backed by distinct people and question counts over a period (`training_catalog.source = 'questions'`, `asked_by`, `asked_count`, `period_days`; bundles via `bundle_of`). Only one suggested training is shown prominently (most people, then most questions); the rest and the manual catalog are collapsed. The backing is visible to every org member, not only admins (existing read policy on `training_catalog`).
+- **Why:** "Die Trainings sollen aus Nutzerfragen entstehen … mit einem Backing" and "es reicht aus, wenn ein Training wirklich vorgeschlagen wird … die anderen … eingeklappt" (user, 2026-11-14); visibility for everyone confirmed by the user ("Keep for everyone").
+- **Consequence:** aggregates only, never who asked; question-based trainings with fewer than 5 people stay hidden (D-12). Insights stay admin-only.
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?
