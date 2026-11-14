@@ -52,6 +52,23 @@ const dashboardPage = {
   ],
 };
 
+// Scenario 10: offer ANG-2026-044 (Becker, status "Zur Freigabe") — "Freigeben" only for Vertriebsleitung/Admin.
+const offerPage = (() => {
+  const route = "/angebot.html?id=o8";
+  return {
+    url: `${CRM}${route}`,
+    title: "ANG-2026-044 – Kundenwerk CRM",
+    capturedAt: Date.now(),
+    elements: [
+      ...shell(route),
+      el(40, "button", "Freigeben", route),
+      el(41, "button", "Versenden", route),
+      el(42, "button", "Aktionen", route),
+      el(43, "link", "Becker Maschinenbau AG", route),
+    ],
+  };
+})();
+
 const headers = (extra = {}) => ({
   "content-type": "application/json",
   "x-lotse-session": SESSION,
@@ -59,6 +76,7 @@ const headers = (extra = {}) => ({
   ...extra,
 });
 
+let context; // x-lotse-context of the first /ask (knowledge source, org found, role source)
 async function ask(body) {
   const t0 = performance.now();
   const res = await fetch(`${BASE}/api/lotse/ask`, {
@@ -82,6 +100,7 @@ async function ask(body) {
       events.push(ev);
     }
   }
+  context ??= res.headers.get("x-lotse-context");
   return { status: res.status, events, firstMs, totalMs: performance.now() - t0 };
 }
 
@@ -119,6 +138,23 @@ const short = (events) => events.map((e) => JSON.stringify(e)).join("\n    ");
   const say = r.events.find((e) => e.type === "say");
   const ok = !!say && /buchhaltung|admin/i.test(say.text) && say.text.length <= 200 && !r.events.some((e) => e.type === "plan");
   report("(c) Vertrieb + Zahlungsdaten → say Buchhaltung/Admin", ok, `first ${ms(r.firstMs)} · total ${ms(r.totalMs)}\n    ${short(r.events)}`);
+}
+
+// (i) scenario 10, role Vertrieb wants to approve an offer → say naming Vertriebsleitung/Admin, no path
+{
+  const r = await ask({ question: "Wie gebe ich das Angebot für Becker frei?", role: "Vertrieb", snapshot: offerPage });
+  const say = r.events.find((e) => e.type === "say");
+  const ok = !!say && /vertriebsleitung|admin/i.test(say.text) && !r.events.some((e) => e.type === "plan" || e.type === "point");
+  report("(i) Vertrieb + Angebot freigeben → say Vertriebsleitung/Admin", ok, `first ${ms(r.firstMs)} · total ${ms(r.totalMs)}\n    ${short(r.events)}`);
+}
+
+// (j) scenario 10, role Vertriebsleitung → marks "Freigeben" (point, or plan whose step is Freigeben)
+{
+  const r = await ask({ question: "Wie gebe ich das Angebot für Becker frei?", role: "Vertriebsleitung", snapshot: offerPage });
+  const point = r.events.find((e) => e.type === "point");
+  const plan = r.events.find((e) => e.type === "plan");
+  const ok = point?.label === "Freigeben" || !!plan?.steps.some((s) => s.label === "Freigeben");
+  report("(j) Vertriebsleitung + Angebot freigeben → Freigeben", ok, `first ${ms(r.firstMs)} · total ${ms(r.totalMs)}\n    ${short(r.events)}`);
 }
 
 // (d) decide: 3 empty searches → intervene (Decisions API), with offerId + threshold
@@ -198,5 +234,6 @@ report(
   report("(h) invalid body → 400 + error event", r.status === 400 && r.events[0]?.type === "error" && r.events[0].code === "bad_request", `${r.status} ${short(r.events).slice(0, 160)}`);
 }
 
+console.log(`\ncontext: ${context ?? "(no x-lotse-context header — server older than this script?)"}`);
 console.log(failed ? `\n${failed} check(s) failed` : "\nall checks passed");
 process.exit(failed ? 1 : 0);

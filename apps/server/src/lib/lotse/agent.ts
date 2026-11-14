@@ -20,9 +20,11 @@ export interface GuidanceInput {
   question: string;
   snapshot: PageSnapshot; // already capped by capSnapshot()
   features: Feature[];
-  orgId?: string | null; // knowledge base is per org — without it searchKnowledge finds nothing
+  orgId?: string | null; // knowledge base is per org — without it searchKnowledge finds nothing (see RequestContext.knowledgeOrgId)
   dashboardAppId?: string | null;
-  role?: string;
+  appName?: string | null; // dashboard app name, if known
+  appNotes?: string; // AskRequest.appKnowledge (extension settings) — untrusted, capped in the prompt
+  role?: string; // resolved role (org_members, else client role in dev)
   recentEvents?: LotseEvent[];
   decision: TierDecision;
   signal?: AbortSignal; // client disconnect
@@ -153,13 +155,13 @@ function buildTools(input: GuidanceInput, check: ReturnType<typeof makeValidator
       execute: async ({ query }) => {
         const hits = searchFeatures(input.features, query);
         if (hits.length === 0) return "No matching feature.";
-        return hits
-          .map(
-            (f) =>
-              `${f.name} | route ${f.route} | path: ${f.clickPath.join(" → ")} | roles: ${f.requiredRole?.join(", ") ?? "alle"}` +
-              (input.role && !roleAllowed(f, input.role) ? ` | NOT ALLOWED for ${input.role}` : ""),
-          )
-          .join("\n");
+        return `<features>\n${hits
+          .map((f) => {
+            const roles = cleanText(f.requiredRole?.join(", ") || "alle", 100);
+            if (input.role && !roleAllowed(f, input.role)) return `${cleanText(f.name, 120)} | roles: ${roles} | NOT ALLOWED for ${cleanText(input.role, 40)}`;
+            return `${cleanText(f.name, 120)} | route ${cleanText(f.route, 100)} | path: ${f.clickPath.map((l) => cleanText(l, 60)).join(" → ")} | roles: ${roles}`;
+          })
+          .join("\n")}\n</features>`;
       },
     }),
     searchKnowledge: tool({

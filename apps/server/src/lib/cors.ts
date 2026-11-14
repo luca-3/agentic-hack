@@ -12,7 +12,7 @@ export function corsHeaders(origin: string | null): Record<string, string> {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
     "Access-Control-Allow-Headers": `Content-Type, Authorization, Accept, ${LOTSE_HEADERS.session}, ${LOTSE_HEADERS.app}`,
-    "Access-Control-Expose-Headers": "Retry-After",
+    "Access-Control-Expose-Headers": "Retry-After, x-lotse-context",
     Vary: "Origin",
   };
 }

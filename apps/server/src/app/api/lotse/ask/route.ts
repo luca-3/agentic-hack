@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { AskRequestSchema, LOTSE_HEADERS, type AskResponse, type GuidanceEvent } from "@lotse/shared";
+import { AskRequestSchema, type AskResponse, type GuidanceEvent } from "@lotse/shared";
 import { runGuidance, type RunResult } from "@/lib/lotse/agent";
 import { corsHeaders, preflight } from "@/lib/cors";
 import { capSnapshot, chargeBudget, guard, GuardError, readJson, toGuardError, type Caller } from "@/lib/lotse/guard";
-import { knowledgeSource, resolveAppId } from "@/lib/lotse/knowledge";
+import { contextHeader, resolveContext } from "@/lib/lotse/context";
 import { chooseTier, TIERS } from "@/lib/lotse/orchestrator";
 import { logUsage } from "@/lib/lotse/usage";
 
@@ -30,9 +30,10 @@ export async function POST(request: Request) {
   }
 
   const snapshot = capSnapshot(body.snapshot);
-  const appId = resolveAppId(body.appId, request.headers.get(LOTSE_HEADERS.app), snapshot.url);
-  const app = await knowledgeSource().getApp(appId);
-  const decision = await chooseTier({ question: body.question, snapshot, features: app.features, role: body.role });
+  // app → org → features + role (org_members beats the client role); never throws, falls back to the fixture.
+  const ctx = await resolveContext(request, caller, { appId: body.appId, role: body.role, url: snapshot.url });
+  const { app, appId, role } = ctx;
+  const decision = await chooseTier({ question: body.question, snapshot, features: app.features, role });
   if (decision.classifier) {
     void logUsage({ route: "ask", tier: "classify", ...decision.classifier, caller, appId, orgId: app.orgId });
   }
@@ -44,9 +45,11 @@ export async function POST(request: Request) {
       question: body.question,
       snapshot,
       features: app.features,
-      orgId: app.orgId,
+      orgId: ctx.knowledgeOrgId,
       dashboardAppId: app.dashboardAppId,
-      role: body.role,
+      appName: app.appName,
+      appNotes: body.appKnowledge,
+      role,
       recentEvents: body.recentEvents,
       decision,
       signal: request.signal,
@@ -101,7 +104,13 @@ export async function POST(request: Request) {
       },
     });
     return new Response(stream, {
-      headers: { ...cors, "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store", "X-Accel-Buffering": "no" },
+      headers: {
+        ...cors,
+        ...contextHeader(ctx),
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Accel-Buffering": "no",
+      },
     });
   }
 
@@ -124,7 +133,7 @@ export async function POST(request: Request) {
     return Response.json({ error: { code: error.code, message: error.message } }, { status: error.code === "timeout" ? 504 : 500, headers: cors });
   }
   const res: AskResponse = { elementNumber, sentence: sentence || hint };
-  return Response.json(res, { headers: cors });
+  return Response.json(res, { headers: { ...cors, ...contextHeader(ctx) } });
 }
 
 function errorResponse(g: GuardError, ndjson: boolean, cors: Record<string, string>) {

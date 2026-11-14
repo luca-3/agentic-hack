@@ -33,7 +33,7 @@ export class GuardError extends Error {
 // Auth
 // ---------------------------------------------------------------------------
 
-function devAuthAllowed() {
+export function devAuthAllowed() {
   return process.env.NODE_ENV !== "production" || process.env.LOTSE_DEV_AUTH === "1";
 }
 

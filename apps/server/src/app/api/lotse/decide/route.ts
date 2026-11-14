@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { DecideRequestSchema, LOTSE_HEADERS } from "@lotse/shared";
+import { DecideRequestSchema } from "@lotse/shared";
 import { corsHeaders, preflight } from "@/lib/cors";
 import { decide } from "@/lib/lotse/decide";
 import { capSnapshot, chargeBudget, errorJson, guard, GuardError, readJson } from "@/lib/lotse/guard";
-import { knowledgeSource, resolveAppId } from "@/lib/lotse/knowledge";
+import { contextHeader, resolveContext } from "@/lib/lotse/context";
 
 export const OPTIONS = preflight;
 
@@ -17,12 +17,13 @@ export async function POST(request: Request) {
     const caller = await guard(request, "decide");
     const parsed = DecideRequestSchema.safeParse(await readJson(request));
     if (!parsed.success) throw new GuardError("bad_request", z.prettifyError(parsed.error), 400);
-    const req = { ...parsed.data, snapshot: parsed.data.snapshot ? capSnapshot(parsed.data.snapshot) : undefined };
-    const appId = resolveAppId(req.appId, request.headers.get(LOTSE_HEADERS.app), req.snapshot?.url);
-    const app = await knowledgeSource().getApp(appId);
-    const { response, tokens } = await decide(req, app.features, { caller, appId, orgId: app.orgId });
+    const snapshot = parsed.data.snapshot ? capSnapshot(parsed.data.snapshot) : undefined;
+    // app → org → features (Choice options) + role (org_members beats the client role)
+    const ctx = await resolveContext(request, caller, { appId: parsed.data.appId, role: parsed.data.role, url: snapshot?.url });
+    const req = { ...parsed.data, snapshot, role: ctx.role };
+    const { response, tokens } = await decide(req, ctx.app.features, { caller, appId: ctx.appId, orgId: ctx.app.orgId });
     chargeBudget(caller, tokens);
-    return Response.json(response, { headers: { ...cors, "Cache-Control": "no-store" } });
+    return Response.json(response, { headers: { ...cors, ...contextHeader(ctx), "Cache-Control": "no-store" } });
   } catch (e) {
     return errorJson(e, cors);
   }

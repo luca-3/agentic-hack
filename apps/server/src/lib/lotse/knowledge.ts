@@ -1,22 +1,27 @@
 import "server-only";
-import { FeatureListSchema, type Feature } from "@lotse/shared";
+import { FeatureListSchema, FeatureSchema, type Feature } from "@lotse/shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 import kundenwerkFeatures from "./fixtures/kundenwerk-features.json";
 
 /**
- * App knowledge for the Lotse agent: which features an app has, where they live and who may use them.
- * The agent only depends on `KnowledgeSource` — swap the source without touching agent/orchestrator.
+ * App knowledge for the Lotse agent: which org/app the request is in, which features the app has, where they live
+ * and who may use them. The agent only depends on `KnowledgeSource` — swap the source without touching agent/orchestrator.
  *
- * Sources:
- *  - fixture (default): bundled JSON per app host (demo CRM on localhost:4000).
- *  - db (`LOTSE_KNOWLEDGE_SOURCE=db`): dashboard tables `apps` (domains[]) + `app_features`, read-only via the
- *    admin client; falls back to the fixture when the app/features are missing or the DB errors.
+ * `LOTSE_KNOWLEDGE_SOURCE`:
+ *  - auto (default): dashboard tables (`apps.domains` → `apps.org_id` → `app_features`, read-only via the admin client);
+ *    bundled fixture when the app is not in the DB, has no valid features, or the DB is unreachable (warning logged).
+ *  - db: same as auto, but also warns when the app is missing in the DB (use it to catch misconfiguration).
+ *  - fixture: never touches the DB (bundled JSON per app host, demo CRM on localhost:4000).
+ * Results (hits, misses and errors) are cached in memory per app id — a dashboard change shows up after ≤ 60 s.
  */
 export interface AppKnowledge {
   appId: string; // host or dashboard app id the request named
-  orgId: string | null; // dashboard org (db source only)
-  dashboardAppId?: string | null; // apps.id in the dashboard DB (db source only) — scopes the knowledge search
+  orgId: string | null; // dashboard org (db only) — scopes the knowledge base and the member role lookup
+  orgName?: string | null;
+  dashboardAppId?: string | null; // apps.id in the dashboard DB (db only) — scopes the knowledge search
+  appName?: string | null;
   features: Feature[];
+  /** Where `features` came from. orgId can be set while features fall back to the fixture (app row without features). */
   source: "db" | "fixture" | "none";
 }
 
@@ -37,49 +42,90 @@ export const fixtureKnowledge: KnowledgeSource = {
 };
 
 const CACHE_MS = 60_000;
-const cache = new Map<string, { at: number; value: AppKnowledge }>();
+const ERROR_CACHE_MS = 15_000; // DB down → don't pay the timeout on every request
+const DB_TIMEOUT_MS = 2_000;
+const cache = new Map<string, { until: number; value: AppKnowledge }>();
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Reads the dashboard's tables (owned by the dashboard — read only). */
-export const dbKnowledge: KnowledgeSource = {
-  async getApp(appId) {
-    const hit = cache.get(appId);
-    if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
-    try {
-      const db = createAdminClient();
-      const { data: apps, error } = await db.from("apps").select("id, org_id").contains("domains", [appId]).limit(1);
-      if (error) throw new Error(error.message);
-      const app = apps?.[0];
-      if (!app) return fixtureKnowledge.getApp(appId);
-      const { data: rows, error: fErr } = await db
-        .from("app_features")
-        .select("name, description, route, click_path, required_roles")
-        .eq("app_id", app.id);
-      if (fErr) throw new Error(fErr.message);
-      const parsed = FeatureListSchema.safeParse(
-        (rows ?? []).map((r) => ({
-          name: r.name,
-          description: r.description ?? "",
-          route: r.route,
-          clickPath: r.click_path,
-          requiredRole: r.required_roles,
-        })),
-      );
-      if (!parsed.success || parsed.data.length === 0) {
-        const fallback = await fixtureKnowledge.getApp(appId);
-        return { ...fallback, orgId: app.org_id as string, dashboardAppId: app.id as string };
+/** Dashboard rows → Feature (invalid rows are skipped, not fatal). */
+function toFeatures(rows: { name: string; description: string | null; route: string; click_path: string[] | null; required_roles: string[] | null }[]) {
+  const out: Feature[] = [];
+  for (const r of rows) {
+    const f = FeatureSchema.safeParse({
+      name: r.name,
+      description: r.description ?? "",
+      route: r.route,
+      clickPath: r.click_path ?? [],
+      requiredRole: r.required_roles,
+    });
+    if (f.success) out.push(f.data);
+  }
+  return out;
+}
+
+async function lookupDb(appId: string, strict: boolean): Promise<AppKnowledge> {
+  const db = createAdminClient();
+  const signal = AbortSignal.timeout(DB_TIMEOUT_MS);
+  const key = appId.toLowerCase();
+  // Dashboard stores what admins typed ("localhost:4000"); accept a scheme prefix too. A uuid appId = apps.id.
+  const query = db.from("apps").select("id, name, org_id, orgs(name)").limit(1).abortSignal(signal);
+  const { data: apps, error } = await (UUID.test(key)
+    ? query.eq("id", key)
+    : query.overlaps("domains", [key, `http://${key}`, `https://${key}`]));
+  if (error) throw new Error(error.message);
+  const app = apps?.[0];
+  if (!app) {
+    if (strict) console.warn(`[lotse] knowledge: app "${appId}" not found in the dashboard DB, using fixture`);
+    return fixtureKnowledge.getApp(appId);
+  }
+  const { data: rows, error: fErr } = await db
+    .from("app_features")
+    .select("name, description, route, click_path, required_roles")
+    .eq("app_id", app.id)
+    .order("id")
+    .abortSignal(signal);
+  if (fErr) throw new Error(fErr.message);
+  const org = { orgId: app.org_id as string, orgName: (app.orgs as unknown as { name: string } | null)?.name ?? null };
+  const scope = { ...org, dashboardAppId: app.id as string, appName: app.name as string };
+  const features = toFeatures(rows ?? []);
+  if (features.length === 0) {
+    console.warn(`[lotse] knowledge: app "${appId}" has no valid features in the DB, using fixture features`);
+    return { ...(await fixtureKnowledge.getApp(appId)), ...scope };
+  }
+  return { appId, ...scope, features, source: "db" };
+}
+
+function dbKnowledge(strict: boolean): KnowledgeSource {
+  return {
+    async getApp(appId) {
+      const key = appId.toLowerCase();
+      const hit = cache.get(key);
+      if (hit && Date.now() < hit.until) return hit.value;
+      let value: AppKnowledge;
+      let ttl = CACHE_MS;
+      try {
+        value = await lookupDb(appId, strict);
+        console.info(
+          `[lotse] knowledge ${appId} → ${value.source}` +
+            (value.orgId ? ` (org ${value.orgName ?? value.orgId}, app ${value.appName ?? value.dashboardAppId})` : "") +
+            `, ${value.features.length} features`,
+        );
+      } catch (e) {
+        console.warn("[lotse] knowledge db lookup failed, using fixture:", (e as Error).message);
+        value = await fixtureKnowledge.getApp(appId);
+        ttl = ERROR_CACHE_MS;
       }
-      const value: AppKnowledge = { appId, orgId: app.org_id as string, dashboardAppId: app.id as string, features: parsed.data, source: "db" };
-      cache.set(appId, { at: Date.now(), value });
+      cache.set(key, { until: Date.now() + ttl, value });
       return value;
-    } catch (e) {
-      console.warn("[lotse] knowledge db lookup failed, using fixture:", (e as Error).message);
-      return fixtureKnowledge.getApp(appId);
-    }
-  },
-};
+    },
+  };
+}
+
+const sources = { auto: dbKnowledge(false), db: dbKnowledge(true), fixture: fixtureKnowledge };
 
 export function knowledgeSource(): KnowledgeSource {
-  return process.env.LOTSE_KNOWLEDGE_SOURCE === "db" ? dbKnowledge : fixtureKnowledge;
+  const mode = process.env.LOTSE_KNOWLEDGE_SOURCE?.trim().toLowerCase();
+  return mode === "fixture" ? sources.fixture : mode === "db" ? sources.db : sources.auto;
 }
 
 /** App id = explicit appId, else x-lotse-app header, else the snapshot URL's host. */
