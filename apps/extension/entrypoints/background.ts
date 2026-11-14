@@ -1393,7 +1393,12 @@ function parsePlan(value: unknown): PlanRecord | null {
   if (!value || typeof value !== "object") return null;
   const candidate = value as Partial<PlanRecord>;
   if (typeof candidate.id !== "string" || typeof candidate.tabId !== "number" || typeof candidate.index !== "number" || typeof candidate.updatedAt !== "number") return null;
-  const steps = GuidanceEventSchema.safeParse({ type: "plan", steps: candidate.steps });
+  const normalizedSteps = Array.isArray(candidate.steps)
+    ? candidate.steps.map((s) => (s && typeof s === "object" && typeof (s as { hint?: unknown }).hint === "string"
+      ? { ...s, hint: (s as { hint: string }).hint.slice(0, 120) }
+      : s))
+    : candidate.steps;
+  const steps = GuidanceEventSchema.safeParse({ type: "plan", steps: normalizedSteps });
   if (!steps.success || steps.data.type !== "plan" || Date.now() - candidate.updatedAt > PLAN_TTL_MS) return null;
   return {
     id: candidate.id, tabId: candidate.tabId, updatedAt: candidate.updatedAt, steps: steps.data.steps,

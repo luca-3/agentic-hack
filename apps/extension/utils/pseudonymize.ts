@@ -32,25 +32,60 @@ export type WithPrivacy<T> = T & { privacy?: PagePrivacy };
 const KINDS: readonly PseudonymKind[] = ["Kunde", "Person", "Firma", "Adresse", "IBAN", "E-Mail", "Telefon", "Wert"];
 /** Same shape as PSEUDONYM_TOKEN in @lotse/shared (kept local: that module pulls in zod). */
 const TOKEN = /\[(Kunde|Person|Firma|Adresse|IBAN|E-Mail|Telefon|Wert)-(\d{1,4})\]/g;
+const TOKEN_SPLIT = /(\[(?:Kunde|Person|Firma|Adresse|IBAN|E-Mail|Telefon|Wert)-\d{1,4}\])/g;
+const TOKEN_EXACT = /^\[(?:Kunde|Person|Firma|Adresse|IBAN|E-Mail|Telefon|Wert)-\d{1,4}\]$/;
 const MAX_TERMS = 3_000;
 const MAX_TOKENS = 5_000;
 const MAX_RECTS = 400;
+
+/** Core UI terms and token kind names that must never enter the content dictionary. */
+const PROTECTED_UI_TERMS = new Set([
+  "kunde", "kunden", "person", "firma", "adresse", "iban", "e-mail", "email", "mail", "telefon", "wert",
+  "lotse", "valo", "kundenwerk", "kundenwerk crm", "crm", "corpus", "dashboard", "startseite", "übersicht", "uebersicht",
+  "aufgaben", "aufgabe", "angebote", "angebot", "verträge", "vertraege", "vertrag", "dokumente", "dokument",
+  "einstellungen", "verwaltung", "benutzer", "benutzer & rollen", "import/export", "import", "export",
+  "mein konto", "konto", "profil", "sicherheit", "benachrichtigungen", "abwesenheit", "vertretung", "signatur",
+  "api-zugang", "allgemein", "abrechnung", "integrationen", "ansprechpartner", "zahlungsdaten", "verlauf",
+  "stammdaten", "auf einen blick", "kennzahlen", "positionen", "details", "statusverlauf", "zusammenfassung",
+  "speichern", "abbrechen", "weiter", "zurück", "fertig", "schließen", "löschen", "entfernen", "kündigen",
+  "bearbeiten", "hinzufügen", "anlegen", "erstellen", "suchen", "filtern", "übernehmen", "verwerfen", "freigeben",
+]);
+const NON_STREET_WORDS = new Set([
+  "klickweg", "lernpfad", "datenpfad", "dateipfad", "suchpfad", "arbeitsplatz", "speicherplatz", "steckplatz",
+  "parkplatz", "spielplatz", "warenkorb", "zeitraum", "spielraum", "hintergrund",
+]);
+const NON_STREET_PREP_NOUNS = new Set([
+  "jahr", "monat", "quartal", "tag", "woche", "schritt", "stufe", "teil", "abschnitt", "kapitel", "zeile", "spalte",
+  "seite", "platz", "rang", "versuch", "punkt", "fall", "dialog", "tab", "reiter", "feld", "bereich", "menü",
+  "status", "angebot", "auftrag", "vertrag", "konto", "profil", "dashboard", "ende", "anfang", "rahmen",
+]);
 
 // ---------------------------------------------------------------------------
 // Pattern detectors (both sides). Order matters: wide spans first, numbers last.
 // ---------------------------------------------------------------------------
 
-type Detector = { kind: PseudonymKind; re: RegExp; group?: number; late?: boolean };
+type Detector = { kind: PseudonymKind; re: RegExp; group?: number; late?: boolean; guard?: (match: string, groups: unknown[]) => boolean };
 const NAME = "\\p{Lu}[\\p{L}'’-]+";
 const DETECTORS: Detector[] = [
   { kind: "E-Mail", re: /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.\p{L}{2,}/gu },
   { kind: "IBAN", re: /(?<![\p{L}\p{N}])[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?(?![\p{L}\p{N}])/gu },
+  { kind: "IBAN", re: /(?<![\p{L}\p{N}])[A-Z]{2}\d{2}[\s\u00A0]*(?:[•*xX]{2,4}[\s\u00A0]+){1,6}\d{2,4}(?![\p{L}\p{N}])/gu },
   // "Herr Müller", "Frau Dr. Anna Schmidt" — the salutation stays, the name becomes [Person-n].
   { kind: "Person", group: 2, re: new RegExp(`(?<![\\p{L}])(Herrn?|Frau|Hr\\.|Fr\\.|Dr\\.|Prof\\.)\\s+((?:(?:Dr|Prof)\\.\\s+)*${NAME}(?:\\s+${NAME})?)`, "gu") },
-  { kind: "Firma", re: /(?:\p{Lu}[\p{L}\p{N}&.'’-]*\s+){1,4}(?:GmbH(?:\s*&\s*Co\.?\s*KG)?|gGmbH|AG|KGaA|KG|eG|e\.\s?V\.|SE|OHG|GbR|UG(?:\s*\(haftungsbeschränkt\))?|mbH|Ltd\.?|Inc\.?|LLC)(?![\p{L}])/gu },
-  { kind: "Adresse", re: /\p{Lu}[\p{L}.-]*(?:straße|strasse|str\.|weg|allee|platz|gasse|ring|damm|ufer|chaussee|pfad|steig|markt)\s+\d{1,4}\s?[a-z]?(?![\p{L}\p{N}])/gu },
+  { kind: "Firma", re: /(?:\p{Lu}[\p{L}\p{N}&.'’-]*\s+){1,4}(?:GmbH(?:\s*&\s*Co\.?\s*KG)?|gGmbH|AG|KGaA|KG|eG|e\.\s?V\.|SE|OHG|GbR|UG(?:\s*\(haftungsbeschränkt\))?|mbB|mbH|Ltd\.?|Inc\.?|LLC)(?![\p{L}])/gu },
+  {
+    kind: "Adresse",
+    re: /\p{Lu}[\p{L}.-]*(?:straße|strasse|str\.|weg|allee|platz|gasse|ring|damm|ufer|chaussee|pfad|steig|markt|hof|wall)\s+\d{1,4}\s?[a-z]?(?![\p{L}\p{N}])/gu,
+    guard: (match) => !NON_STREET_WORDS.has(match.split(/\s+/)[0]!.toLocaleLowerCase("de-DE")),
+  },
+  // Prepositional German street names like "Am Hafenrand 12", "Unter den Linden 77"
+  {
+    kind: "Adresse",
+    re: /(?<![\p{L}])(?:Am|An\s+der|An\s+den|Auf\s+dem|Auf\s+der|Im|In\s+der|In\s+den|Unter\s+den|Unter\s+der|Zum|Zur)\s+(\p{Lu}[\p{L}-]{2,30})(?:\s+\p{Lu}[\p{L}-]{2,30})?\s+[1-9]\d{0,2}\s?[a-z]?(?![\p{L}\p{N}.])/gu,
+    guard: (_match, groups) => typeof groups[0] === "string" && !NON_STREET_PREP_NOUNS.has(groups[0].toLocaleLowerCase("de-DE")),
+  },
   { kind: "Adresse", re: /(?<![\p{N}])\d{5}\s+(?!Euro|EUR|Stück|Ergebnisse|Treffer|Zeichen|Kunden|Einträge)\p{Lu}[\p{L}-]+(?:\s+(?:am|an der|im|in der|bei)\s+\p{Lu}[\p{L}-]+)?/gu },
-  { kind: "Telefon", late: true, re: /(?<![\p{L}\p{N}])(?:(?:\+|00)\d{1,3}[ \-/]?(?:\(0\)\s?)?|0)\d{2,5}(?:[ \-/]?\d{2,8}){1,3}(?![\p{L}\p{N}])/gu },
+  { kind: "Telefon", late: true, re: /(?<![\p{L}\p{N}])(?:(?:\+|00)\d{1,3}[ \-/()]*(?:\(0\)\s?)?|0)\d{2,5}(?:[ \-/]?\d{2,8}){1,3}(?![\p{L}\p{N}])/gu },
   { kind: "Wert", late: true, re: /(?<![\p{L}\p{N}])\d{6,}(?![\p{N}])/gu },
 ];
 const whole = (detector: Detector) => new RegExp(`^(?:${detector.re.source})$`, "u");
@@ -113,6 +148,23 @@ function inViewport(rect: DOMRect, viewport: { width: number; height: number }) 
   return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0 && rect.top < viewport.height && rect.left < viewport.width;
 }
 
+type RawBox = { left: number; top: number; right: number; bottom: number };
+
+/** Clip background box `box` around an occluding top-layer surface `occ` (modal dialog, open menu, overlay bubble). */
+function subtractBox(box: RawBox, occ: RawBox): RawBox[] {
+  if (box.right <= occ.left || box.left >= occ.right || box.bottom <= occ.top || box.top >= occ.bottom) return [box];
+  const pieces: RawBox[] = [];
+  if (box.top < occ.top) pieces.push({ left: box.left, top: box.top, right: box.right, bottom: occ.top });
+  if (box.bottom > occ.bottom) pieces.push({ left: box.left, top: occ.bottom, right: box.right, bottom: box.bottom });
+  const midTop = Math.max(box.top, occ.top);
+  const midBottom = Math.min(box.bottom, occ.bottom);
+  if (midBottom > midTop) {
+    if (box.left < occ.left) pieces.push({ left: box.left, top: midTop, right: occ.left, bottom: midBottom });
+    if (box.right > occ.right) pieces.push({ left: occ.right, top: midTop, right: box.right, bottom: midBottom });
+  }
+  return pieces.filter((p) => p.right - p.left > 2 && p.bottom - p.top > 2);
+}
+
 /**
  * Content strings and mask rects of the current page. `numbered` = the snapshot's interactive elements; their labels
  * count as UI (never pseudonymized as a whole) unless the element is a record link.
@@ -126,19 +178,55 @@ export function collectPagePrivacy(numbered: HTMLElement[], labelOf: (element: H
     const anchor = element.closest("a[href]");
     return Boolean(anchor && !anchor.closest(UI_CONTAINER) && RECORD.test(anchor.getAttribute("href") ?? ""));
   };
-  const uiLabels = new Set(numbered.filter((element) => !isRecordLink(element)).map((element) => keyOf(labelOf(element))));
+  const uiLabels = new Set([
+    ...PROTECTED_UI_TERMS,
+    ...numbered.filter((element) => !isRecordLink(element)).map((element) => keyOf(labelOf(element))),
+  ]);
+
+  // Top-layer modal dialogs, open menus/dropdowns and Lotse's own bubble must never be painted over by background rects.
+  const occluders: Array<{ el: Element; box: RawBox }> = [];
+  const addOccluder = (el: Element | null | undefined) => {
+    if (!el || !(el instanceof HTMLElement)) return;
+    const style = getComputedStyle(el);
+    if (style.display === "none" || style.visibility === "hidden") return;
+    const r = el.getBoundingClientRect();
+    if (inViewport(r, viewport)) occluders.push({ el, box: { left: r.left, top: r.top, right: r.right, bottom: r.bottom } });
+  };
+  for (const dlg of document.querySelectorAll("dialog[open]")) addOccluder(dlg);
+  for (const popup of document.querySelectorAll('.menu-popup:not([hidden]), .dropdown-panel:not([hidden]), [role="menu"]:not([hidden])')) addOccluder(popup);
+  addOccluder(document.getElementById("lotse-overlay-host")?.shadowRoot?.querySelector(".bubble"));
+
+  const pushRect = (sourceEl: Element, rect: DOMRect, text?: string) => {
+    if (rects.length >= MAX_RECTS || !inViewport(rect, viewport)) return;
+    let pieces: RawBox[] = [{
+      left: Math.max(0, rect.left),
+      top: Math.max(0, rect.top),
+      right: Math.min(viewport.width, rect.right),
+      bottom: Math.min(viewport.height, rect.bottom),
+    }];
+    for (const occ of occluders) {
+      if (occ.el.contains(sourceEl)) continue;
+      pieces = pieces.flatMap((piece) => subtractBox(piece, occ.box));
+      if (!pieces.length) return;
+    }
+    for (const p of pieces) {
+      if (rects.length >= MAX_RECTS) break;
+      rects.push({ x: p.left, y: p.top, width: p.right - p.left, height: p.bottom - p.top, text: text?.slice(0, 80) });
+    }
+  };
+
   const mask = (element: Element, text?: string) => {
     if (masked.has(element) || rects.length >= MAX_RECTS || (element instanceof HTMLElement && !isVisible(element))) return;
     const rect = element.getBoundingClientRect();
     if (!inViewport(rect, viewport)) return;
     masked.add(element);
-    rects.push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height, text: text?.slice(0, 80) });
+    pushRect(element, rect, text);
   };
   /** `weak` = only a guess (unknown column, short form): skipped when the same text is a UI label on this page. */
   const add = (text: string, kind: PseudonymKind, element?: Element, of?: string, weak = false) => {
     const value = clean(text);
     const key = keyOf(value);
-    if (value.length < 3 || /^[\p{P}\p{S}\s]+$/u.test(value) || ((weak || of) && uiLabels.has(key)) || found.size >= 600) return;
+    if (value.length < 3 || PROTECTED_UI_TERMS.has(key) || /^[\p{P}\p{S}\s]+$/u.test(value) || ((weak || of) && uiLabels.has(key)) || found.size >= 600) return;
     if (!found.has(key)) found.set(key, { text: value, kind: patternKind(value) ?? kind, of });
     if (element) mask(element, value);
   };
@@ -175,16 +263,26 @@ export function collectPagePrivacy(numbered: HTMLElement[], labelOf: (element: H
     while (term && term.tagName !== "DT") term = term.previousElementSibling;
     addValue(contentText(value), clean(term?.textContent), value);
   }
-  // 4. Record headings: the h1 of a detail page (id in the URL) and headings named like a record.
+  // 4. Record headings, card titles & breadcrumb record spans.
   const where = location.pathname + location.search + location.hash;
-  for (const heading of document.querySelectorAll<HTMLElement>("h1, h2, h3")) {
+  for (const heading of document.querySelectorAll<HTMLElement>("h1, h2, h3, [data-record-title], [class*='record-title'], [class*='card-title']")) {
     if (heading.closest(UI_CONTAINER) || !isVisible(heading)) continue;
-    const named = /(?:customer|kunde|client|contact|kontakt|person|record|patient|offer|angebot|case|vorgang)[-_]?(?:name|title|heading)/i.test(heading.id + " " + heading.className);
-    if (!named && !(heading.tagName === "H1" && RECORD.test(where))) continue;
-    add(contentText(heading), kindFromHint(heading.id + " " + location.pathname + location.hash) ?? "Wert", heading);
+    const greet = /^(?:Guten\s+(?:Morgen|Tag|Abend)|Hallo|Willkommen),?\s+(\p{Lu}[\p{L}'’-]{2,40})!?$/u.exec(clean(heading.textContent));
+    if (greet?.[1]) { add(greet[1], "Person", heading); continue; }
+    const named = /(?:customer|kunde|client|contact|kontakt|person|record|patient|offer|angebot|case|vorgang|card)[-_]?(?:name|title|heading)/i.test(heading.id + " " + heading.className) || heading.hasAttribute("data-record-title");
+    const cardItem = Boolean(heading.matches("article h2, article h3, .card h3") && !heading.closest("form, dialog") && !heading.closest("article, .card")?.querySelector("table, form, dl"));
+    if (!named && !cardItem && !(heading.tagName === "H1" && RECORD.test(where))) continue;
+    add(contentText(heading), kindFromHint(heading.id + " " + location.pathname + location.hash) ?? "Wert", heading, undefined, cardItem);
   }
-  // 5. The signed-in employee (top bar) — also by first and last name, e.g. in "Guten Tag, Jana".
-  for (const element of document.querySelectorAll('.user-name, .username, [class*="user-name"], [class*="account-name"], [data-user-name]')) {
+  for (const crumb of document.querySelectorAll<HTMLElement>('.breadcrumb span, [aria-label*="Brotkrumen"] span, [aria-label*="Breadcrumb"] span')) {
+    if (!isVisible(crumb)) continue;
+    const text = contentText(crumb);
+    if (text && text !== "…" && !uiLabels.has(keyOf(text))) {
+      add(text, kindFromHint(crumb.id + " " + location.pathname) ?? "Wert", crumb, undefined, true);
+    }
+  }
+  // 5. The signed-in employee (top bar / account page) — also by first and last name, e.g. in "Guten Tag, Jana".
+  for (const element of document.querySelectorAll('.user-name, .username, #account-name, .menu-info strong, [class*="user-name"], [class*="account-name"], [data-user-name]')) {
     const name = contentText(element);
     add(name, "Person", element);
     for (const part of name.split(" ")) if (part.length >= 3 && part !== name && /^\p{Lu}/u.test(part)) add(part, "Person", undefined, name);
@@ -194,6 +292,19 @@ export function collectPagePrivacy(numbered: HTMLElement[], labelOf: (element: H
   for (const element of document.querySelectorAll<HTMLElement>("[data-lotse-pii]")) {
     add(contentText(element), KINDS.find((kind) => kind === element.dataset.lotsePii) ?? "Wert", element);
   }
+  // 7. Entity <select> options (customer / person dropdowns) so typed names match even when filtered out.
+  for (const select of [...document.querySelectorAll<HTMLSelectElement>("select")].slice(0, 30)) {
+    if (select.closest("#lotse-overlay-host")) continue;
+    const selectHint = clean(select.labels?.[0]?.textContent ?? select.getAttribute("aria-label"));
+    const selectKind = kindFromHint(selectHint);
+    if (selectKind !== "Kunde" && selectKind !== "Person" && selectKind !== "Firma") continue;
+    for (const opt of [...select.options].slice(0, 80)) {
+      const raw = clean(opt.textContent);
+      if (!raw || !opt.value || /^(?:alle|bitte\s+wählen|–|--|keine\b)/i.test(raw)) continue;
+      const stripped = clean(raw.replace(/\s*\([^)]*\)\s*$/, ""));
+      add(stripped, selectKind, undefined, undefined, true);
+    }
+  }
   // Short forms: surname of a person, company name without its legal form — same token as the full value.
   for (const term of [...found.values()]) {
     if (term.of) continue;
@@ -202,8 +313,8 @@ export function collectPagePrivacy(numbered: HTMLElement[], labelOf: (element: H
       const surname = words.at(-1)!;
       if (surname.length >= 4) add(surname, "Person", undefined, term.text);
     }
-    const base = term.text.replace(/\s+(?:GmbH(?:\s*&\s*Co\.?\s*KG)?|gGmbH|AG|KGaA|KG|eG|e\.\s?V\.|SE|OHG|GbR|UG|mbH|Ltd\.?|Inc\.?|LLC)$/u, "");
-    if (base !== term.text && base.length >= 6) add(base, term.kind, undefined, term.text);
+    const base = term.text.replace(/\s+(?:GmbH(?:\s*&\s*Co\.?\s*KG)?|gGmbH|AG|KGaA|KG|eG|e\.\s?V\.|SE|OHG|GbR|UG|mbB|mbH|Ltd\.?|Inc\.?|LLC)$/u, "");
+    if (base !== term.text && base.length >= 5) add(base, term.kind, undefined, term.text);
   }
 
   // Masks without terms: entered values, private regions, free text holding a pattern or a known term.
@@ -226,7 +337,7 @@ export function collectPagePrivacy(numbered: HTMLElement[], labelOf: (element: H
     const range = document.createRange();
     range.selectNodeContents(node);
     const rect = range.getBoundingClientRect();
-    if (inViewport(rect, viewport)) rects.push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height, text: text.slice(0, 80) });
+    pushRect(parent, rect, text);
   }
   return { terms: [...found.values()], rects, viewport };
 }
@@ -267,18 +378,29 @@ function scheduleSave() {
   }, 500);
 }
 
+function canonicalKey(value: string, kind: PseudonymKind): string {
+  if (kind === "IBAN") return value.replace(/[\s\u00A0]+/g, "").toUpperCase();
+  if (kind === "Telefon") {
+    const digits = value.replace(/[^\d+]/g, "");
+    return digits.length >= 7 ? `tel:${digits}` : keyOf(value);
+  }
+  return keyOf(value);
+}
+
 /** Stable token for a real value; a value known from the page keeps the page's kind ("Kunde" beats a detected "Firma"). */
 function tokenFor(value: string, kind: PseudonymKind): string {
   const term = terms.get(keyOf(value));
   const canonical = term?.of ?? term?.text ?? value; // display the value as the page shows it
   const key = keyOf(canonical);
-  const known = byKey.get(key);
-  if (known) return known;
   const finalKind = terms.get(key)?.kind ?? term?.kind ?? kind;
+  const normLookup = canonicalKey(canonical, finalKind);
+  const known = byKey.get(normLookup) ?? byKey.get(key);
+  if (known) return known;
   if (byKey.size >= MAX_TOKENS) return `[${finalKind}-0]`; // mapping full: still never the real value
   const n = (counters[finalKind] = (counters[finalKind] ?? 0) + 1);
   const token = `[${finalKind}-${n}]`;
   byKey.set(key, token);
+  if (normLookup !== key) byKey.set(normLookup, token);
   byToken.set(token, clean(canonical));
   scheduleSave();
   return token;
@@ -287,8 +409,12 @@ function tokenFor(value: string, kind: PseudonymKind): string {
 function registerTerm(term: PrivacyTerm) {
   if (!term || typeof term.text !== "string" || !KINDS.includes(term.kind)) return;
   const text = clean(term.text).slice(0, 160);
-  if (text.length < 3) return;
+  if (text.length < 3 || TOKEN_SPLIT.test(text)) {
+    TOKEN_SPLIT.lastIndex = 0;
+    return;
+  }
   const key = keyOf(text);
+  if (PROTECTED_UI_TERMS.has(key)) return;
   const of = typeof term.of === "string" ? clean(term.of).slice(0, 160) : undefined;
   const existing = terms.get(key);
   if (existing && existing.kind === term.kind && existing.of === of) return;
@@ -309,29 +435,39 @@ function pattern(): RegExp | null {
   return termPattern;
 }
 
+function mapUntokenized(input: string, fn: (segment: string) => string): string {
+  const parts = input.split(TOKEN_SPLIT);
+  if (parts.length === 1) return fn(input);
+  return parts.map((part) => (TOKEN_EXACT.test(part) ? part : fn(part))).join("");
+}
+
 function applyDetectors(text: string, late: boolean): string {
   let out = text;
   for (const detector of DETECTORS) {
     if (Boolean(detector.late) !== late) continue;
-    out = out.replace(detector.re, (match: string, ...groups: unknown[]) => {
-      if (!detector.group) return tokenFor(match, detector.kind);
-      const name = groups[detector.group - 1];
-      return typeof name === "string" ? match.replace(name, tokenFor(name, detector.kind)) : match;
-    });
+    out = mapUntokenized(out, (segment) =>
+      segment.replace(detector.re, (match: string, ...groups: unknown[]) => {
+        if (detector.guard && !detector.guard(match, groups)) return match;
+        if (!detector.group) return tokenFor(match, detector.kind);
+        const name = groups[detector.group - 1];
+        return typeof name === "string" ? match.replace(name, tokenFor(name, detector.kind)) : match;
+      }),
+    );
   }
   return out;
 }
 
 /**
- * Real text → text with tokens. A string at a server field limit (snapshot messages: 160, question: 500) stays within
- * it: the result is at most max(input length, 160) characters; a cut token is dropped, never sent half.
+ * Real text → text with tokens (idempotent: existing `[Kind-n]` placeholders are never altered).
+ * A string at a server field limit (snapshot messages: 160, question: 500) stays within it: the result is at most
+ * max(input length, 160) characters; a cut token is dropped, never sent half.
  */
 export function pseudonymizeText(text: string): string {
   if (!text) return text;
-  let out = applyDetectors(text, false);
   const known = pattern();
-  if (known) out = out.replace(known, (match) => tokenFor(match, "Wert"));
-  out = applyDetectors(out, true);
+  let out = mapUntokenized(text, (segment) => applyDetectors(segment, false));
+  if (known) out = mapUntokenized(out, (segment) => segment.replace(known, (match) => tokenFor(match, "Wert")));
+  out = mapUntokenized(out, (segment) => applyDetectors(segment, true));
   const limit = Math.max(text.length, 160);
   if (out.length > limit) out = out.slice(0, limit).replace(/\[[^\]]*$/, "").trimEnd();
   return out;
