@@ -83,8 +83,8 @@
 }
 
 @layer base {
-  @media (prefers-color-scheme: dark) {
-    :root {
+  /* Dark tokens: opt-in via <html data-theme="dark"> (not set) – the content panel stays white even when the OS is dark. */
+  [data-theme="dark"] {
     color-scheme: dark;
     --color-navy-50: #F2F6F9;
     --color-navy-100: #E1EAF0;
@@ -144,7 +144,6 @@
     --color-ink-fg: #0F2A3D;
     --color-ink-muted: #456E8C;
   }
-  }
 }
 
 /* Farbpaletten für Kopfzeile + Seitenleiste (Standard: nachtblau): <html data-shell="nachtblau|petrol|schiefer|tanne|aubergine|hell">.
@@ -167,7 +166,7 @@
 }
 
 @layer base {
-  html { background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); font-size: 100%; line-height: 1.5; }
+  html { color-scheme: light; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); font-size: 100%; line-height: 1.5; }
   body { font-size: var(--text-base); }
   :focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
   input::placeholder, textarea::placeholder { color: var(--color-muted); opacity: 1; }
