@@ -1,5 +1,5 @@
 "use server";
-import { FeatureListSchema } from "@lotse/shared";
+import { FeatureListSchema, LOTSE_DEFAULTS } from "@lotse/shared";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -8,6 +8,10 @@ import { requireAdmin } from "@/lib/org";
 
 const text = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim();
 const liste = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Membership update/delete error → /team error key (last-admin trigger raises P0001 "... last admin ..."). */
+const mitgliedFehler = (e: { code?: string; message?: string }) =>
+  e.code === "P0001" && /last admin/i.test(e.message ?? "") ? "last-admin" : "save";
 
 export async function anmelden(fd: FormData) {
   const supabase = await createClient();
@@ -87,13 +91,14 @@ export async function mitgliedSpeichern(fd: FormData) {
   const { supabase, orgId, userId } = await requireAdmin();
   const memberId = text(fd, "userId");
   const isAdmin = fd.get("isAdmin") === "on";
-  if (memberId === userId && !isAdmin) throw new Error("You can't remove your own admin rights.");
+  if (!UUID.test(memberId)) redirect("/team?error=save");
+  if (memberId === userId && !isAdmin) redirect("/team?error=self-admin");
   const { error } = await supabase
     .from("org_members")
     .update({ role: text(fd, "role") || "Employee", is_admin: isAdmin })
     .eq("org_id", orgId)
     .eq("user_id", memberId);
-  if (error) throw new Error(error.message);
+  if (error) redirect(`/team?error=${mitgliedFehler(error)}`);
   revalidatePath("/team");
   redirect("/team?ok=saved");
 }
@@ -173,13 +178,44 @@ export async function mitgliedEinladen(fd: FormData) {
   redirect(neu ? "/team?ok=invited" : "/team?ok=added");
 }
 
-/** Removes a person from the org (only the membership — the login account stays). */
+/**
+ * Removes a person from the org (only the membership — the login account stays).
+ * deleteData=on: first deletes their Valo data via the server (D-33) — while the membership still exists,
+ * because the server checks that the caller is admin of a shared org. If that fails, the membership stays.
+ */
 export async function mitgliedEntfernen(fd: FormData) {
   const { supabase, orgId, userId } = await requireAdmin();
   const memberId = text(fd, "userId");
   if (!memberId || memberId === userId) redirect("/team?error=self");
-  const { error } = await supabase.from("org_members").delete().eq("org_id", orgId).eq("user_id", memberId);
-  if (error) redirect("/team?error=save");
+  if (!UUID.test(memberId)) redirect("/team?error=save");
+  const deleteData = fd.get("deleteData") === "on";
+  // null = not a member of *this* org (the team list may show other orgs) or caller not its admin.
+  const { data: otherOrgs, error: e0 } = await supabase.rpc("member_other_org_count", { org: orgId, member: memberId });
+  if (e0 || otherOrgs == null) redirect("/team?error=save");
+  if (deleteData) {
+    // The server delete is not org-scoped — refuse it while the person still belongs to another org.
+    if (otherOrgs > 0) redirect("/team?error=data-shared");
+    let status = 0;
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const base = process.env.LOTSE_SERVER_URL ?? LOTSE_DEFAULTS.serverUrl;
+      const res = await fetch(`${base}/api/lotse/me?userId=${encodeURIComponent(memberId)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      status = res.status;
+    } catch {
+      status = 0;
+    }
+    if (status === 429) redirect("/team?error=rate-limited");
+    if (status < 200 || status >= 300) redirect("/team?error=data");
+  }
+  const { error, count } = await supabase.from("org_members").delete({ count: "exact" }).eq("org_id", orgId).eq("user_id", memberId);
+  if (error || !count) {
+    const key = error ? mitgliedFehler(error) : "save";
+    redirect(`/team?error=${deleteData ? "removed-after-data" : key}`);
+  }
   revalidatePath("/team");
-  redirect("/team?ok=removed");
+  redirect(deleteData ? "/team?ok=removed&data=1" : "/team?ok=removed");
 }

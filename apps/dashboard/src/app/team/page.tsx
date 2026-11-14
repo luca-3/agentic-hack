@@ -8,6 +8,7 @@ const OK: Record<string, string> = {
   invited: "Account created and added to the organization. Share the email and start password with the person.",
   added: "This account already existed. It's now part of your organization (the existing password still applies).",
   removed: "Person removed from the organization. Their account remains.",
+  "removed-data": "Person removed from the organization and their Valo data deleted. Their account remains.",
 };
 const FEHLER: Record<string, string> = {
   email: "Please enter a valid email address.",
@@ -17,6 +18,12 @@ const FEHLER: Record<string, string> = {
   "already-member": "This person is already in your organization.",
   self: "You can't remove yourself.",
   save: "Saving didn't work. Please try again.",
+  "self-admin": "You can't remove your own admin rights.",
+  "last-admin": "An organization needs at least one admin.",
+  data: "Deleting their Valo data failed (part of it may already be deleted). The person was not removed. Please try again.",
+  "data-shared": "This person also belongs to another organization, so their Valo data can't be deleted from here. Untick the box to only remove them.",
+  "removed-after-data": "Their Valo data was deleted, but removing the person from the organization failed. Please click Remove again.",
+  "rate-limited": "Too many data requests in a short time. Please wait a minute and try again.",
 };
 
 export default function TeamPage({ searchParams }: PageProps<"/team">) {
@@ -28,9 +35,9 @@ export default function TeamPage({ searchParams }: PageProps<"/team">) {
 }
 
 async function Inhalt({ searchParams }: { searchParams: PageProps<"/team">["searchParams"] }) {
-  const [{ supabase, isAdmin, userId }, { ok, error }] = await Promise.all([getOrgContext(), searchParams]);
+  const [{ supabase, isAdmin, userId }, { ok, error, data }] = await Promise.all([getOrgContext(), searchParams]);
   const { data: members } = await supabase.from("org_members").select("user_id, email, role, is_admin").order("email");
-  const okText = typeof ok === "string" ? OK[ok] : undefined;
+  const okText = typeof ok === "string" ? (ok === "removed" && data === "1" ? OK["removed-data"] : OK[ok]) : undefined;
   const fehlerText = typeof error === "string" ? FEHLER[error] : undefined;
 
   return (
@@ -60,7 +67,16 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/team">["sear
                   <Td className="py-2 align-middle">
                     <div className="flex justify-end gap-2">
                       <form id={fid} action={mitgliedSpeichern}><input type="hidden" name="userId" value={m.user_id} /><Button type="submit" variant="secondary" size="sm">Save</Button></form>
-                      {!me && <form action={mitgliedEntfernen}><input type="hidden" name="userId" value={m.user_id} /><DangerButton type="submit" aria-label={`Remove ${email}`}>Remove</DangerButton></form>}
+                      {!me && (
+                        <form action={mitgliedEntfernen} className="flex items-center gap-2">
+                          <input type="hidden" name="userId" value={m.user_id} />
+                          <label className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted" title="Also delete this person's Valo data">
+                            <Checkbox name="deleteData" defaultChecked aria-label={`Also delete ${email}'s Valo data`} />
+                            Also delete this person&apos;s Valo data
+                          </label>
+                          <DangerButton type="submit" aria-label={`Remove ${email}`}>Remove</DangerButton>
+                        </form>
+                      )}
                     </div>
                   </Td>
                 </tr>

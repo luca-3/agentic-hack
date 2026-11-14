@@ -168,6 +168,16 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** "Die Trainings sollen aus Nutzerfragen entstehen … mit einem Backing" and "es reicht aus, wenn ein Training wirklich vorgeschlagen wird … die anderen … eingeklappt" (user, 2026-11-14); visibility for everyone confirmed by the user ("Keep for everyone").
 - **Consequence:** aggregates only, never who asked; question-based trainings with fewer than 5 people stay hidden (D-12). Insights stay admin-only.
 
+### D-36 · DB guard: an org always keeps at least one admin (2026-11-14)
+- **Decision:** migration `last_admin_guard` adds a `BEFORE UPDATE OR DELETE` row trigger on `public.org_members` (`guard_last_org_admin`, security definer). Demoting, deleting or moving an admin to another org raises `An organization needs at least one admin (last admin).` (`P0001`) when no other admin is left in that org. Cascades pass: if the parent org or auth user row is already gone (FK cascades run after the parent delete, so the trigger no longer sees it), the trigger allows the delete. A per-org `pg_advisory_xact_lock` serializes the checks, so two admins demoting each other at once can't both succeed (READ COMMITTED).
+- **Why:** before, only the dashboard blocked self-demotion; RLS "admins manage members" let any admin demote or remove every admin through the API, which could lock an org out of its own dashboard.
+- **Consequence:** the dashboard should show the error message when it gets one. Deleting the last admin's auth account still goes through (account deletion must not be blocked) and leaves the org without an admin, so a service-role fix is needed then. One statement that demotes all admins fails as a whole.
+
+### D-37 · Admin data delete from /team only for single-org members (2026-11-14)
+- **Decision:** "Remove" on /team can also delete the member's Valo data (`DELETE /api/lotse/me?userId=`, default ticked). The dashboard first calls `member_other_org_count(org, member)` (migration `member_other_orgs`, security definer): null → member isn't in the admin's current org → refuse; > 0 → person is in another org → refuse the data delete (`error=data-shared`), plain removal still works. Membership delete uses `count: "exact"`; 0 rows counts as failure.
+- **Why:** the server delete is keyed by user/subject only, not by org, so one org's admin would wipe data the person produced in other orgs.
+- **Consequence:** people in several orgs can only delete their own data (/my-data). Proper fix: org-scope the server delete (server owner).
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?
