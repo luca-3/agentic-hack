@@ -68,10 +68,10 @@ Status: `open` · `in progress` · `done`.
 
 ## Demo script (3 min)
 
-1. Someone searches CORPUS manually for a key → Valo speaks up and points to the right place.
+1. Someone searches CORPUS manually for a long time → Valo speaks up and shows the way.
 2. Voice question → Valo shows step by step how to create something.
 3. Same in a second, known app without setup (candidate: EBV-Portal, local, test data).
-4. Valo creates a task in CORPUS by itself.
+4. Valo completes a step in CORPUS by itself.
 5. (Pitch) Dashboard: pain points → training suggestions.
 
 ## Hackathon rules (team-internal)
