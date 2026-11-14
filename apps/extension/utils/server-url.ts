@@ -9,3 +9,6 @@ export const SERVER_URL: string = String(import.meta.env.WXT_LOTSE_SERVER_URL ||
 
 /** Demo credentials (seed) are only valid against a local server — hosted accounts get new passwords. */
 export const IS_LOCAL_SERVER = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(SERVER_URL);
+
+/** Dashboard: local dev on :3000; hosted it lives on the same domain as the server (path routing, ci.valo.yml). */
+export const DASHBOARD_URL: string = IS_LOCAL_SERVER ? LOTSE_DEFAULTS.dashboardUrl : SERVER_URL;

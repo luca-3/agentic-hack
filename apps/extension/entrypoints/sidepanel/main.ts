@@ -1,8 +1,8 @@
-import { LOTSE_DEFAULTS, type VoiceState } from "@lotse/shared";
+import type { VoiceState } from "@lotse/shared";
 import type { ChatEntry, LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
 import { applyShortcutLabels, isMac, shortcutLabels } from "../../utils/shortcuts";
-import { IS_LOCAL_SERVER } from "../../utils/server-url";
+import { DASHBOARD_URL, IS_LOCAL_SERVER } from "../../utils/server-url";
 import "./presence"; // D-29 switches: "Automatically active", "Show the status orb"
 
 const get = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -39,7 +39,7 @@ const exploreStart = get<HTMLButtonElement>("#explore-start");
 const exploreStop = get<HTMLButtonElement>("#explore-stop");
 const exploreSpinner = get<HTMLSpanElement>("#explore-spinner");
 const exploreView = get<HTMLAnchorElement>("#explore-view");
-exploreView.href = `${LOTSE_DEFAULTS.dashboardUrl}/apps`;
+exploreView.href = `${DASHBOARD_URL}/apps`;
 const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 ready", listening: "🎙 listening …", thinking: "… thinking", speaking: "🔊 speaking" };
 let settingsLoaded = false;
 let thresholdDirty = false;
