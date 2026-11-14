@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aufgaben – Kundenwerk CRM</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="aufgaben">
+    <header class="topbar" id="topbar"></header>
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <main class="main" id="main">
+      <div class="page-header">
+        <div>
+          <h1>Aufgaben</h1>
+          <p>Rückrufe, Nachfassen, To-dos im Team</p>
+        </div>
+        <button type="button" class="btn btn-primary" id="new-task-button">Neue Aufgabe</button>
+      </div>
+
+      <section class="card">
+        <div class="filters">
+          <div class="field">
+            <label for="task-filter-state">Anzeigen</label>
+            <select id="task-filter-state">
+              <option value="open">Offene Aufgaben</option>
+              <option value="done">Erledigte Aufgaben</option>
+              <option value="all">Alle Aufgaben</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="task-filter-priority">Priorität</label>
+            <select id="task-filter-priority">
+              <option value="">Alle</option>
+              <option>Hoch</option>
+              <option>Mittel</option>
+              <option>Niedrig</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="checkbox" for="task-filter-mine"><input type="checkbox" id="task-filter-mine" /> Nur meine Aufgaben</label>
+          </div>
+        </div>
+
+        <p class="result-count" id="task-count" aria-live="polite"></p>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 70px">Erledigt</th>
+              <th>Aufgabe</th>
+              <th>Kunde</th>
+              <th>Fällig am</th>
+              <th>Priorität</th>
+              <th>Zuständig</th>
+              <th class="num">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="task-rows"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <dialog id="task-dialog" aria-labelledby="task-dialog-title">
+      <form id="task-form" novalidate>
+        <div class="dialog-header">
+          <h2 id="task-dialog-title">Neue Aufgabe</h2>
+          <button type="button" class="icon-btn" id="task-dialog-close" aria-label="Dialog schließen"></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="task-title">Titel</label>
+              <input type="text" id="task-title" placeholder="z. B. Rückruf wegen Wartungsvertrag" aria-describedby="task-title-error" />
+              <p class="field-error" id="task-title-error" role="alert" hidden></p>
+            </div>
+            <div class="field full">
+              <label for="task-customer">Kunde</label>
+              <select id="task-customer" aria-describedby="task-customer-error">
+                <option value="">Bitte wählen …</option>
+              </select>
+              <p class="field-error" id="task-customer-error" role="alert" hidden></p>
+            </div>
+            <div class="field">
+              <label for="task-due">Fällig am</label>
+              <input type="date" id="task-due" aria-describedby="task-due-error" />
+              <p class="field-error" id="task-due-error" role="alert" hidden></p>
+            </div>
+            <div class="field">
+              <label for="task-priority">Priorität</label>
+              <select id="task-priority">
+                <option>Niedrig</option>
+                <option selected>Mittel</option>
+                <option>Hoch</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="task-note">Notiz (optional)</label>
+              <textarea id="task-note"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button type="button" class="btn" id="task-cancel">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Aufgabe speichern</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var CRM = window.CRM;
+        var ui = CRM.ui;
+        var esc = ui.escapeHtml;
+
+        var stateSel = document.getElementById("task-filter-state");
+        var prioSel = document.getElementById("task-filter-priority");
+        var mineChk = document.getElementById("task-filter-mine");
+
+        function render() {
+          var today = CRM.today();
+          var tasks = CRM.db()
+            .tasks.filter(function (t) {
+              if (stateSel.value === "open" && t.done) return false;
+              if (stateSel.value === "done" && !t.done) return false;
+              if (prioSel.value && t.priority !== prioSel.value) return false;
+              if (mineChk.checked && t.assignee !== CRM.CURRENT_USER.name) return false;
+              return true;
+            })
+            .sort(function (a, b) { return a.due.localeCompare(b.due); });
+
+          document.getElementById("task-count").textContent = tasks.length === 1 ? "1 Aufgabe" : tasks.length + " Aufgaben";
+          var tbody = document.getElementById("task-rows");
+          if (tasks.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Keine Aufgaben für diese Auswahl.</td></tr>';
+            return;
+          }
+          tbody.innerHTML = tasks
+            .map(function (t) {
+              var late = !t.done && t.due < today;
+              var dueLabel = t.due === today ? "Heute" : CRM.formatDate(t.due);
+              return (
+                '<tr id="task-row-' + t.id + '"' + (t.done ? ' class="done-row"' : "") + ">" +
+                '<td><input type="checkbox" data-id="' + t.id + '" aria-label="Erledigt: ' + esc(t.title) + '"' + (t.done ? " checked" : "") + " /></td>" +
+                "<td>" + esc(t.title) + "</td>" +
+                '<td><a href="kunde.html?id=' + t.customerId + '">' + esc(CRM.customerName(t.customerId)) + "</a></td>" +
+                "<td" + (late ? ' class="overdue"' : "") + ">" + dueLabel + (late ? " (überfällig)" : "") + "</td>" +
+                "<td>" + ui.priorityBadge(t.priority) + "</td>" +
+                "<td>" + esc(t.assignee) + "</td>" +
+                '<td class="num"><button type="button" class="icon-btn danger" data-delete="' + t.id + '" aria-label="Aufgabe löschen: ' + esc(t.title) + '">' +
+                ui.ICONS.trash + "</button></td>" +
+                "</tr>"
+              );
+            })
+            .join("");
+        }
+
+        [stateSel, prioSel, mineChk].forEach(function (el) { el.addEventListener("change", render); });
+
+        document.getElementById("task-rows").addEventListener("change", function (e) {
+          var id = e.target.getAttribute("data-id");
+          if (!id) return;
+          var task = CRM.db().tasks.filter(function (t) { return t.id === id; })[0];
+          task.done = e.target.checked;
+          if (task.done) CRM.logActivity("Aufgabe „" + task.title + "“ erledigt", task.customerId);
+          CRM.save();
+          ui.toast(task.done ? "Aufgabe „" + task.title + "“ erledigt." : "Aufgabe „" + task.title + "“ wieder geöffnet.");
+          render();
+        });
+
+        document.getElementById("task-rows").addEventListener("click", function (e) {
+          var btn = e.target.closest("[data-delete]");
+          if (!btn) return;
+          var d = CRM.db();
+          var id = btn.getAttribute("data-delete");
+          var task = d.tasks.filter(function (t) { return t.id === id; })[0];
+          d.tasks = d.tasks.filter(function (t) { return t.id !== id; });
+          CRM.save();
+          ui.toast("Aufgabe „" + task.title + "“ gelöscht.", "info");
+          render();
+        });
+
+        // ---------- Dialog „Neue Aufgabe“ ----------
+        var dialog = document.getElementById("task-dialog");
+        var form = document.getElementById("task-form");
+        var title = document.getElementById("task-title");
+        var customer = document.getElementById("task-customer");
+        var due = document.getElementById("task-due");
+        var priority = document.getElementById("task-priority");
+        var note = document.getElementById("task-note");
+        var errs = {
+          title: document.getElementById("task-title-error"),
+          customer: document.getElementById("task-customer-error"),
+          due: document.getElementById("task-due-error"),
+        };
+        document.getElementById("task-dialog-close").innerHTML = ui.ICONS.close;
+        customer.insertAdjacentHTML("beforeend", ui.customerOptions());
+
+        function openDialog(preselectCustomer) {
+          form.reset();
+          ui.setFieldError(title, errs.title, null);
+          ui.setFieldError(customer, errs.customer, null);
+          ui.setFieldError(due, errs.due, null);
+          due.value = CRM.today();
+          priority.value = "Mittel";
+          if (preselectCustomer && CRM.getCustomer(preselectCustomer)) customer.value = preselectCustomer;
+          dialog.showModal();
+          title.focus();
+        }
+
+        function closeDialog() {
+          dialog.close();
+          if (location.hash === "#neu") history.replaceState(null, "", location.pathname + location.search);
+        }
+
+        document.getElementById("new-task-button").addEventListener("click", function () { openDialog(); });
+        document.getElementById("task-cancel").addEventListener("click", closeDialog);
+        document.getElementById("task-dialog-close").addEventListener("click", closeDialog);
+        dialog.addEventListener("cancel", function () {
+          if (location.hash === "#neu") history.replaceState(null, "", location.pathname + location.search);
+        });
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var tMsg = title.value.trim() ? null : "Bitte geben Sie einen Titel ein.";
+          var cMsg = customer.value ? null : "Bitte wählen Sie einen Kunden aus.";
+          var dMsg = due.value ? null : "Bitte wählen Sie ein Fälligkeitsdatum.";
+          ui.setFieldError(title, errs.title, tMsg);
+          ui.setFieldError(customer, errs.customer, cMsg);
+          ui.setFieldError(due, errs.due, dMsg);
+          if (tMsg || cMsg || dMsg) return;
+
+          var task = {
+            id: "t" + CRM.nextId("task"),
+            title: title.value.trim(),
+            customerId: customer.value,
+            due: due.value,
+            priority: priority.value,
+            note: note.value.trim(),
+            done: false,
+            assignee: CRM.CURRENT_USER.name,
+          };
+          CRM.db().tasks.push(task);
+          CRM.logActivity("Aufgabe „" + task.title + "“ angelegt", task.customerId);
+          CRM.save();
+          closeDialog();
+          stateSel.value = "open";
+          render();
+          var row = document.getElementById("task-row-" + task.id);
+          if (row) {
+            row.style.background = "#eef7ee";
+            row.scrollIntoView({ block: "center" });
+          }
+          ui.toast("Aufgabe „" + task.title + "“ wurde angelegt.");
+        });
+
+        render();
+        if (location.hash === "#neu") {
+          openDialog(new URLSearchParams(location.search).get("kunde"));
+        }
+      })();
+    </script>
+  </body>
+</html>

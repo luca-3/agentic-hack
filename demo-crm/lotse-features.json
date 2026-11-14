@@ -1,0 +1,93 @@
+[
+  {
+    "name": "Kunden suchen und filtern",
+    "description": "Kundenliste öffnen und nach Firma, Ort oder Ansprechpartner suchen bzw. nach Status, Branche oder Betreuer filtern.",
+    "route": "/kunden.html",
+    "clickPath": ["Kunden", "Kunden durchsuchen", "Status"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Ansprechpartner eines Kunden ansehen",
+    "description": "Kundendetail öffnen und im Tab Ansprechpartner Namen, Position, E-Mail und Telefon sehen.",
+    "route": "/kunde.html",
+    "clickPath": ["Kunden", "<Kundenname>", "Ansprechpartner"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Bankverbindung (IBAN) eines Kunden ändern",
+    "description": "IBAN, BIC, Bank oder Kontoinhaber eines Kunden ändern. Liegt im Kundendetail im Tab Zahlungsdaten. Ungültige IBANs werden mit einer Fehlermeldung abgelehnt.",
+    "route": "/kunde.html",
+    "clickPath": ["Kunden", "<Kundenname>", "Zahlungsdaten", "Bankverbindung bearbeiten", "IBAN", "Speichern"],
+    "requiredRole": ["Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Notiz zu einem Kunden hinzufügen",
+    "description": "Gesprächsnotiz im Verlauf eines Kunden speichern.",
+    "route": "/kunde.html",
+    "clickPath": ["Kunden", "<Kundenname>", "Verlauf", "Neue Notiz", "Notiz speichern"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Neue Aufgabe anlegen",
+    "description": "Aufgabe (z. B. Rückruf) für einen Kunden mit Fälligkeitsdatum und Priorität anlegen. Öffnet einen Dialog.",
+    "route": "/aufgaben.html",
+    "clickPath": ["Aufgaben", "Neue Aufgabe", "Titel", "Kunde", "Fällig am", "Priorität", "Aufgabe speichern"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Aufgabe als erledigt markieren",
+    "description": "In der Aufgabenliste (oder auf dem Dashboard unter Meine Aufgaben heute) die Checkbox der Aufgabe anhaken.",
+    "route": "/aufgaben.html",
+    "clickPath": ["Aufgaben", "Erledigt: <Aufgabentitel>"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Angebot erstellen",
+    "description": "Neues Angebot in 3 Schritten anlegen: Kunde und Titel, Positionen, Prüfen und speichern. Wird als Entwurf gespeichert.",
+    "route": "/angebote.html",
+    "clickPath": ["Angebote", "Angebot erstellen", "Kunde", "Titel", "Weiter", "Beschreibung", "Menge", "Einzelpreis (€)", "Weiter", "Angebot speichern"],
+    "requiredRole": ["Vertrieb", "Admin"]
+  },
+  {
+    "name": "Angebote nach Status filtern",
+    "description": "Angebotsliste nach Entwurf, Versendet, Angenommen oder Abgelehnt filtern.",
+    "route": "/angebote.html",
+    "clickPath": ["Angebote", "Status"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Standard-Zahlungsziel ändern",
+    "description": "Standard-Zahlungsziel (Tage netto) für neue Kunden und Angebote ändern. Versteckt unter Einstellungen → Abrechnung → Erweitert (zugeklappt).",
+    "route": "/einstellungen.html",
+    "clickPath": ["Einstellungen", "Abrechnung", "Erweitert", "Standard-Zahlungsziel ändern", "Neues Standard-Zahlungsziel (Tage)", "Übernehmen"],
+    "requiredRole": ["Admin"]
+  },
+  {
+    "name": "Benutzer und Rollen ansehen",
+    "description": "Liste aller Benutzer mit ihren Rollen und die Rechte je Rolle.",
+    "route": "/einstellungen.html",
+    "clickPath": ["Einstellungen", "Benutzer & Rollen"],
+    "requiredRole": ["Admin"]
+  },
+  {
+    "name": "Globale Suche",
+    "description": "Über die Suche in der Kopfzeile Kunden, Aufgaben und Angebote finden. Findet keine Funktionen oder Einstellungen.",
+    "route": "*",
+    "clickPath": ["Globale Suche", "Suchen"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Rolle wechseln (Demo)",
+    "description": "Rolle des Demo-Benutzers in der Kopfzeile umschalten (Vertrieb, Buchhaltung, Admin). Navigation und Buttons passen sich an.",
+    "route": "*",
+    "clickPath": ["Rolle"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Demo-Daten zurücksetzen",
+    "description": "Alle Änderungen verwerfen und die ursprünglichen Demo-Daten wiederherstellen (Link unten in der Seitenleiste).",
+    "route": "*",
+    "clickPath": ["Demo-Daten zurücksetzen"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  }
+]

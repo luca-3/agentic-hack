@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kunden – Kundenwerk CRM</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="kunden">
+    <header class="topbar" id="topbar"></header>
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <main class="main" id="main">
+      <div class="page-header">
+        <div>
+          <h1>Kunden</h1>
+          <p>Alle Firmenkunden und Interessenten</p>
+        </div>
+      </div>
+
+      <section class="card">
+        <form class="filters" id="customer-filters" role="search" aria-label="Kunden filtern">
+          <div class="field search-field">
+            <label for="customer-search">Kunden durchsuchen</label>
+            <input type="search" id="customer-search" placeholder="Firma, Ort oder Ansprechpartner" />
+          </div>
+          <div class="field">
+            <label for="filter-status">Status</label>
+            <select id="filter-status">
+              <option value="">Alle</option>
+              <option>Aktiv</option>
+              <option>Interessent</option>
+              <option>Inaktiv</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filter-industry">Branche</label>
+            <select id="filter-industry"><option value="">Alle</option></select>
+          </div>
+          <div class="field">
+            <label for="filter-owner">Betreuer</label>
+            <select id="filter-owner"><option value="">Alle</option></select>
+          </div>
+          <button type="reset" class="btn" id="reset-filters">Filter zurücksetzen</button>
+        </form>
+
+        <p class="result-count" id="result-count" aria-live="polite"></p>
+        <table>
+          <thead>
+            <tr>
+              <th>Firma</th>
+              <th>Branche</th>
+              <th>Ort</th>
+              <th>Status</th>
+              <th>Betreuer</th>
+              <th class="num">Umsatz (12 Monate)</th>
+            </tr>
+          </thead>
+          <tbody id="customer-rows"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var CRM = window.CRM;
+        var ui = CRM.ui;
+        var esc = ui.escapeHtml;
+        var customers = CRM.db().customers;
+
+        function fillSelect(id, values) {
+          var sel = document.getElementById(id);
+          values.forEach(function (v) {
+            var opt = document.createElement("option");
+            opt.textContent = v;
+            sel.appendChild(opt);
+          });
+        }
+        function unique(key) {
+          return customers
+            .map(function (c) { return c[key]; })
+            .filter(function (v, i, a) { return a.indexOf(v) === i; })
+            .sort(function (a, b) { return a.localeCompare(b, "de"); });
+        }
+        fillSelect("filter-industry", unique("industry"));
+        fillSelect("filter-owner", unique("owner"));
+
+        var search = document.getElementById("customer-search");
+        var status = document.getElementById("filter-status");
+        var industry = document.getElementById("filter-industry");
+        var owner = document.getElementById("filter-owner");
+
+        function render() {
+          var q = CRM.normalizeText(search.value.trim());
+          var rows = customers
+            .filter(function (c) {
+              var hay = CRM.normalizeText(
+                [c.name, c.city, c.industry].concat(c.contacts.map(function (p) { return p.name; })).join(" ")
+              );
+              return (
+                (!q || hay.indexOf(q) >= 0) &&
+                (!status.value || c.status === status.value) &&
+                (!industry.value || c.industry === industry.value) &&
+                (!owner.value || c.owner === owner.value)
+              );
+            })
+            .sort(function (a, b) { return a.name.localeCompare(b.name, "de"); });
+
+          document.getElementById("result-count").textContent =
+            rows.length === 1 ? "1 Kunde" : rows.length + " Kunden";
+
+          var tbody = document.getElementById("customer-rows");
+          if (rows.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Keine Kunden gefunden. Passen Sie Suche oder Filter an.</td></tr>';
+            return;
+          }
+          tbody.innerHTML = rows
+            .map(function (c) {
+              return (
+                '<tr><td><a href="kunde.html?id=' + encodeURIComponent(c.id) + '">' + esc(c.name) + "</a></td>" +
+                "<td>" + esc(c.industry) + "</td><td>" + esc(c.city) + "</td><td>" + ui.statusBadge(c.status) + "</td>" +
+                "<td>" + esc(c.owner) + '</td><td class="num">' + CRM.formatEuro(c.revenue) + "</td></tr>"
+              );
+            })
+            .join("");
+        }
+
+        var form = document.getElementById("customer-filters");
+        form.addEventListener("input", render);
+        form.addEventListener("change", render);
+        form.addEventListener("submit", function (e) { e.preventDefault(); render(); });
+        form.addEventListener("reset", function () { setTimeout(render, 0); });
+
+        render();
+      })();
+    </script>
+  </body>
+</html>

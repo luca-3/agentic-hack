@@ -2,10 +2,22 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "next-dev",
+      "name": "lotse-dashboard",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": ["run", "dev:dashboard"],
       "port": 3000
+    },
+    {
+      "name": "lotse-server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:server"],
+      "port": 3001
+    },
+    {
+      "name": "demo-crm",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "demo:crm"],
+      "port": 4000
     }
   ]
 }

@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kunde – Kundenwerk CRM</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="kunden">
+    <header class="topbar" id="topbar"></header>
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <main class="main" id="main">
+      <nav class="breadcrumb" aria-label="Brotkrumen">
+        <a href="kunden.html">Kunden</a> / <span id="crumb-name">…</span>
+      </nav>
+
+      <div id="not-found" class="alert alert-error" role="alert" hidden>
+        Kunde nicht gefunden. <a href="kunden.html">Zurück zur Kundenliste</a>
+      </div>
+
+      <div id="customer-view" hidden>
+        <div class="page-header">
+          <div>
+            <h1 id="customer-name"></h1>
+            <p id="customer-sub"></p>
+          </div>
+          <a class="btn" id="new-task-for-customer" href="aufgaben.html">Aufgabe anlegen</a>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Kundenbereiche" id="customer-tabs">
+          <button type="button" role="tab" id="tab-overview" aria-controls="panel-overview" data-hash="uebersicht">Übersicht</button>
+          <button type="button" role="tab" id="tab-contacts" aria-controls="panel-contacts" data-hash="ansprechpartner">Ansprechpartner</button>
+          <button type="button" role="tab" id="tab-payment" aria-controls="panel-payment" data-hash="zahlungsdaten">Zahlungsdaten</button>
+          <button type="button" role="tab" id="tab-history" aria-controls="panel-history" data-hash="verlauf">Verlauf</button>
+        </div>
+
+        <!-- Übersicht -->
+        <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" class="card" hidden>
+          <div class="grid-2">
+            <div>
+              <h2>Stammdaten</h2>
+              <dl class="details" id="overview-details"></dl>
+            </div>
+            <div>
+              <h2>Auf einen Blick</h2>
+              <dl class="details" id="overview-stats"></dl>
+            </div>
+          </div>
+        </section>
+
+        <!-- Ansprechpartner -->
+        <section role="tabpanel" id="panel-contacts" aria-labelledby="tab-contacts" class="card" hidden>
+          <h2>Ansprechpartner</h2>
+          <table>
+            <thead><tr><th>Name</th><th>Position</th><th>E-Mail</th><th>Telefon</th></tr></thead>
+            <tbody id="contact-rows"></tbody>
+          </table>
+        </section>
+
+        <!-- Zahlungsdaten -->
+        <section role="tabpanel" id="panel-payment" aria-labelledby="tab-payment" class="card" hidden>
+          <div class="card-header">
+            <h2>Zahlungsdaten</h2>
+            <button type="button" class="btn btn-primary" id="edit-bank-button">Bankverbindung bearbeiten</button>
+          </div>
+          <p class="field-hint" id="payment-permission-hint" style="margin-bottom: 12px" hidden>
+            Nur die Rollen Buchhaltung und Admin dürfen Zahlungsdaten bearbeiten.
+          </p>
+          <div id="payment-permission-error" class="alert alert-error" role="alert" hidden></div>
+
+          <dl class="details" id="payment-details"></dl>
+
+          <form id="bank-form" class="card" style="margin-top: 20px; background: #fafbfc" novalidate hidden>
+            <h3>Bankverbindung bearbeiten</h3>
+            <div class="form-grid">
+              <div class="field full">
+                <label for="bank-holder">Kontoinhaber</label>
+                <input type="text" id="bank-holder" required />
+                <p class="field-error" id="bank-holder-error" role="alert" hidden></p>
+              </div>
+              <div class="field full">
+                <label for="bank-iban">IBAN</label>
+                <input type="text" id="bank-iban" class="mono" inputmode="text" autocomplete="off" aria-describedby="bank-iban-hint bank-iban-error" />
+                <p class="field-hint" id="bank-iban-hint">Format: DE + 20 Ziffern, Leerzeichen sind erlaubt.</p>
+                <p class="field-error" id="bank-iban-error" role="alert" hidden></p>
+              </div>
+              <div class="field">
+                <label for="bank-bic">BIC</label>
+                <input type="text" id="bank-bic" class="mono" autocomplete="off" aria-describedby="bank-bic-error" />
+                <p class="field-error" id="bank-bic-error" role="alert" hidden></p>
+              </div>
+              <div class="field">
+                <label for="bank-name">Bank</label>
+                <input type="text" id="bank-name" />
+              </div>
+            </div>
+            <div class="btn-row">
+              <button type="submit" class="btn btn-primary">Speichern</button>
+              <button type="button" class="btn" id="bank-cancel">Abbrechen</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Verlauf -->
+        <section role="tabpanel" id="panel-history" aria-labelledby="tab-history" class="card" hidden>
+          <h2>Verlauf</h2>
+          <form id="note-form" class="field" style="margin-bottom: 16px">
+            <label for="note-text">Neue Notiz</label>
+            <textarea id="note-text" placeholder="z. B. Telefonat mit Ansprechpartner …"></textarea>
+            <p class="field-error" id="note-error" role="alert" hidden></p>
+            <div><button type="submit" class="btn">Notiz speichern</button></div>
+          </form>
+          <ul class="list timeline" id="history-list"></ul>
+        </section>
+      </div>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var CRM = window.CRM;
+        var ui = CRM.ui;
+        var esc = ui.escapeHtml;
+
+        var id = new URLSearchParams(location.search).get("id");
+        var customer = id ? CRM.getCustomer(id) : null;
+
+        if (!customer) {
+          document.getElementById("crumb-name").textContent = "Unbekannt";
+          document.getElementById("not-found").hidden = false;
+          return;
+        }
+
+        document.title = customer.name + " – Kundenwerk CRM";
+        document.getElementById("customer-view").hidden = false;
+        document.getElementById("crumb-name").textContent = customer.name;
+        document.getElementById("customer-name").textContent = customer.name;
+        document.getElementById("customer-sub").innerHTML =
+          esc(customer.industry) + " · " + esc(customer.city) + " · " + ui.statusBadge(customer.status);
+        document.getElementById("new-task-for-customer").href = "aufgaben.html?kunde=" + encodeURIComponent(customer.id) + "#neu";
+
+        function dl(pairs) {
+          return pairs.map(function (p) { return "<dt>" + p[0] + "</dt><dd>" + p[1] + "</dd>"; }).join("");
+        }
+
+        // ---------- Übersicht ----------
+        function renderOverview() {
+          var d = CRM.db();
+          var openTasks = d.tasks.filter(function (t) { return t.customerId === customer.id && !t.done; }).length;
+          var openOffers = d.offers.filter(function (o) {
+            return o.customerId === customer.id && (o.status === "Entwurf" || o.status === "Versendet");
+          }).length;
+          document.getElementById("overview-details").innerHTML = dl([
+            ["Firma", esc(customer.name)],
+            ["Adresse", esc(customer.street) + "<br />" + esc(customer.zip + " " + customer.city)],
+            ["Branche", esc(customer.industry)],
+            ["Betreuer", esc(customer.owner)],
+            ["Kunde seit", CRM.formatDate(customer.customerSince)],
+          ]);
+          document.getElementById("overview-stats").innerHTML = dl([
+            ["Status", ui.statusBadge(customer.status)],
+            ["Umsatz (12 Monate)", CRM.formatEuro(customer.revenue)],
+            ["Offene Aufgaben", String(openTasks)],
+            ["Offene Angebote", String(openOffers)],
+            ["Hauptkontakt", customer.contacts[0] ? esc(customer.contacts[0].name) : "–"],
+          ]);
+        }
+
+        // ---------- Ansprechpartner ----------
+        function renderContacts() {
+          document.getElementById("contact-rows").innerHTML = customer.contacts
+            .map(function (p) {
+              return "<tr><td>" + esc(p.name) + "</td><td>" + esc(p.position) + "</td><td>" + esc(p.email) + "</td><td>" + esc(p.phone) + "</td></tr>";
+            })
+            .join("");
+        }
+
+        // ---------- Zahlungsdaten ----------
+        var editBtn = document.getElementById("edit-bank-button");
+        var bankForm = document.getElementById("bank-form");
+        var permError = document.getElementById("payment-permission-error");
+        var canEdit = CRM.can("editPayment");
+
+        if (!canEdit) {
+          editBtn.setAttribute("aria-disabled", "true");
+          editBtn.title = "Nur Buchhaltung oder Admin";
+          document.getElementById("payment-permission-hint").hidden = false;
+        }
+
+        function renderPayment() {
+          var p = customer.payment;
+          document.getElementById("payment-details").innerHTML = dl([
+            ["Kontoinhaber", esc(p.holder)],
+            ["IBAN", '<span class="mono" id="current-iban">' + esc(CRM.formatIban(p.iban)) + "</span>"],
+            ["BIC", '<span class="mono">' + esc(p.bic) + "</span>"],
+            ["Bank", esc(p.bank)],
+            ["Zahlungsart", esc(p.method)],
+            ["Zahlungsziel", p.paymentTermDays + " Tage netto"],
+          ]);
+        }
+
+        var holder = document.getElementById("bank-holder");
+        var iban = document.getElementById("bank-iban");
+        var bic = document.getElementById("bank-bic");
+        var bank = document.getElementById("bank-name");
+        var holderErr = document.getElementById("bank-holder-error");
+        var ibanErr = document.getElementById("bank-iban-error");
+        var bicErr = document.getElementById("bank-bic-error");
+
+        function openBankForm() {
+          var p = customer.payment;
+          holder.value = p.holder;
+          iban.value = CRM.formatIban(p.iban);
+          bic.value = p.bic;
+          bank.value = p.bank;
+          [[holder, holderErr], [iban, ibanErr], [bic, bicErr]].forEach(function (x) { ui.setFieldError(x[0], x[1], null); });
+          bankForm.hidden = false;
+          editBtn.setAttribute("aria-expanded", "true");
+          iban.focus();
+          iban.select();
+        }
+
+        function closeBankForm() {
+          bankForm.hidden = true;
+          editBtn.setAttribute("aria-expanded", "false");
+        }
+
+        editBtn.addEventListener("click", function () {
+          if (!canEdit) {
+            permError.textContent =
+              "Keine Berechtigung: Zahlungsdaten können nur von den Rollen Buchhaltung oder Admin geändert werden. Ihre Rolle: " +
+              CRM.getRole() + ".";
+            permError.hidden = false;
+            ui.toast("Keine Berechtigung zum Bearbeiten der Zahlungsdaten.", "error");
+            return;
+          }
+          openBankForm();
+        });
+
+        document.getElementById("bank-cancel").addEventListener("click", closeBankForm);
+
+        bankForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var holderMsg = holder.value.trim() ? null : "Bitte geben Sie den Kontoinhaber ein.";
+          var ibanMsg = CRM.validateIban(iban.value);
+          var bicVal = bic.value.replace(/\s+/g, "").toUpperCase();
+          var bicMsg = !bicVal || /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(bicVal)
+            ? null
+            : "Ungültige BIC: 8 oder 11 Zeichen, z. B. COBADEFFXXX.";
+          ui.setFieldError(holder, holderErr, holderMsg);
+          ui.setFieldError(iban, ibanErr, ibanMsg);
+          ui.setFieldError(bic, bicErr, bicMsg);
+          if (holderMsg || ibanMsg || bicMsg) {
+            (ibanMsg ? iban : holderMsg ? holder : bic).focus();
+            return;
+          }
+          var newIban = CRM.normalizeIban(iban.value);
+          var changed = newIban !== customer.payment.iban;
+          customer.payment.holder = holder.value.trim();
+          customer.payment.iban = newIban;
+          customer.payment.bic = bicVal;
+          customer.payment.bank = bank.value.trim();
+          customer.history.unshift({
+            date: CRM.today(),
+            type: "Änderung",
+            text: changed
+              ? "Bankverbindung geändert (neue IBAN endet auf " + newIban.slice(-4) + ")."
+              : "Bankverbindung bestätigt.",
+            author: CRM.CURRENT_USER.name,
+          });
+          CRM.logActivity("Bankverbindung aktualisiert", customer.id);
+          CRM.save();
+          closeBankForm();
+          renderPayment();
+          renderHistory();
+          ui.toast("Bankverbindung für " + customer.name + " gespeichert.");
+        });
+
+        // ---------- Verlauf ----------
+        function renderHistory() {
+          var items = customer.history.slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+          document.getElementById("history-list").innerHTML = items
+            .map(function (h) {
+              return (
+                "<li><span><strong>" + esc(h.type) + ":</strong> " + esc(h.text) + "</span>" +
+                '<span class="meta">' + CRM.formatDate(h.date) + " · " + esc(h.author) + "</span></li>"
+              );
+            })
+            .join("");
+        }
+
+        document.getElementById("note-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var text = document.getElementById("note-text");
+          var err = document.getElementById("note-error");
+          if (!text.value.trim()) {
+            ui.setFieldError(text, err, "Die Notiz darf nicht leer sein.");
+            return;
+          }
+          ui.setFieldError(text, err, null);
+          customer.history.unshift({ date: CRM.today(), type: "Notiz", text: text.value.trim(), author: CRM.CURRENT_USER.name });
+          CRM.logActivity("Notiz hinzugefügt", customer.id);
+          CRM.save();
+          text.value = "";
+          renderHistory();
+          ui.toast("Notiz gespeichert.");
+        });
+
+        renderOverview();
+        renderContacts();
+        renderPayment();
+        renderHistory();
+        ui.initTabs(document.getElementById("customer-tabs"), function () {
+          permError.hidden = true;
+        });
+      })();
+    </script>
+  </body>
+</html>

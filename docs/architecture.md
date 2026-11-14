@@ -19,7 +19,7 @@
 2. **Dashboard** — central admin per org: users/roles, apps + feature lists, training catalog, insights.
 3. **Runtime** — where the agent acts: decision API, LLM calls, tool execution on server data, Live token minting, event ingest, analytics jobs.
 
-Dashboard and runtime live in **this Next.js app** (one deployable). The extension is a separate build in this repo (proposed folder: `extension/`).
+Each component is its own app in the monorepo (`apps/extension`, `apps/dashboard`, `apps/server`), runnable on its own; they share only `packages/shared` (contract) and the Supabase DB (see D-14, D-15).
 
 ## Extension internals
 
@@ -63,7 +63,7 @@ Batch job aggregates events per org/app/feature/role → pain points → Gemini 
 
 Server-side agent code should depend on a **`DataSource` interface** (events, snapshot, knowledge, user context) so the observation source can change without touching the agent.
 
-## Models (see `MODELS` in `src/lib/ai/google.ts`)
+## Models (see `MODELS` in `apps/server/src/lib/ai/google.ts`)
 
 | Use | Model |
 | --- | --- |
@@ -77,12 +77,26 @@ Server-side agent code should depend on a **`DataSource` interface** (events, sn
 `orgs` · `org_members (user_id, org_id, role)` · `apps (org_id, name, domains[])` · `app_features (app_id, name, route, click_path, required_role)` · `sessions (pseudo_user_id, app_id, started_at)` · `events (session_id, type, route, element_label, ts)` · `hints (session_id, trigger, element_label, accepted)` · `training_catalog (org_id, title, topics)` · `insights (org_id, app_id, feature, role, metric, period)`.
 RAG: existing `documents` table + `match_documents()`.
 
-## Proposed code layout
+## Code layout (npm workspaces)
 
 ```
-extension/                 Chrome extension (MV3) — separate build
-src/app/api/lotse/*        runtime endpoints: ingest, decide, live-token, knowledge
-src/app/(dashboard)/*      org admin UI
-src/lib/lotse/*            agent, tools, DataSource interface, rules shared with tests
-supabase/migrations/       schema above
+apps/extension/            @lotse/extension — WXT 0.21, Chrome MV3 (WXT dev server :3002)
+  entrypoints/background.ts  service worker: side panel ⇄ content script, calls server /api/lotse/ask
+  entrypoints/content.ts     numbered snapshot of interactive elements, Shadow-DOM highlight overlay
+  entrypoints/sidepanel/     text question UI
+apps/server/               @lotse/server — Next.js 16 (:3001), runtime, all Gemini calls
+  src/app/api/lotse/ask/     question + snapshot → { elementNumber, sentence } (built)
+  src/app/api/lotse/*        planned: ingest, decide, live-token; api/knowledge/ingest (embeddings for the dashboard)
+  src/app/api/chat, chat/    playground agent + UI
+  src/lib/ai/                Gemini provider/MODELS, hackAgent, embeddings/RAG
+  src/lib/supabase/          server (RLS) + admin (secret key) clients;  src/lib/cors.ts
+  src/lib/lotse/*            planned: agent, tools, DataSource interface, rules
+apps/dashboard/            @lotse/dashboard — Next.js 16 (:3000), org admin UI
+  src/app/page.tsx           placeholder cards: Organisation & Nutzer, Apps & Funktionslisten, Schulungskatalog, Insights
+  src/lib/supabase/, src/proxy.ts   Supabase clients + session refresh
+packages/shared/           @lotse/shared — zod schemas + types = contract (AskRequest/Response, PageSnapshot, LotseEvent, ExtensionMessage, LOTSE_DEFAULTS), database.types.ts
+supabase/migrations/       schema above (shared local DB, ports 573xx)
+demo-crm/                  static demo CRM (:4000), test target for the extension
 ```
+
+Boundaries: extension → server only via HTTP (from the service worker); dashboard writes org/user/knowledge tables and calls the server for embeddings; server reads those tables.

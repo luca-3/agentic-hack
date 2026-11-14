@@ -60,14 +60,27 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 ### D-13 · Two kinds of insights (2026-11-14)
 - **Decision:** dashboard shows (a) training suggestions for people and (b) UX optimization potential for the app.
 
+### D-14 · Monorepo with npm workspaces (2026-11-14)
+- **Decision:** three apps + one contract package: `apps/extension` (WXT 0.21, Chrome MV3), `apps/server` (Next.js, :3001, runtime), `apps/dashboard` (Next.js, :3000, org admin), `packages/shared` (zod schemas + types, TS source). One `.env.local` at the repo root for all apps; Supabase stays at root `supabase/`. Refines D-06 (dashboard and runtime are now separate apps).
+- **Why:** three people work in parallel on technically separate, independently runnable parts; WXT gives MV3 bundling, HMR and manifest generation with little setup.
+- **Consequence:** apps talk only via HTTP + `@lotse/shared`; root scripts `dev:server` / `dev:dashboard` / `dev:extension`; `build`/`lint`/`typecheck` run across workspaces; `db:types` writes `packages/shared/src/database.types.ts`.
+
+### D-15 · Area ownership and boundaries (2026-11-14)
+- **Decision:**
+  - Extension dev owns `apps/extension` — talks to the server via HTTP (`/api/lotse/*`, only from the service worker).
+  - Server dev owns `apps/server` — **all Gemini/embedding calls**, event/hint tables; reads org/knowledge tables.
+  - Dashboard colleague owns `apps/dashboard` — org creation, onboarding of organizations, central knowledge base, user management; owns migrations for orgs/members/apps/app_features/knowledge tables; embeds knowledge via a server endpoint (planned `POST /api/knowledge/ingest`).
+  - Everyone owns `packages/shared` + `supabase/migrations` — change via small PR and tell the others.
+- **Why:** avoid merge conflicts; one place for keys and LLM spend.
+- **Consequence:** don't edit another area's folder without telling its owner; contract changes go into `packages/shared` first; schema only via new migrations, never edit merged ones; no Gemini key outside the server.
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?
 - Second demo app: EBV-Portal (local, test data)? Fuller's OK to show CORPUS publicly?
-- Extension build tooling in `extension/` (plain TS + esbuild vs. Vite/WXT) — decide when P1 starts.
 - EU data residency: Gemini Live via Vertex AI in an EU region — availability not verified.
 - Production runtime: stay on Next.js or move agents to Google Agent Runtime (ADK)?
-- Foundation agent (`src/lib/lotse/`, `DataSource` interface, mock data) — planned, not built yet.
+- Foundation agent (`apps/server/src/lib/lotse/`, `DataSource` interface, mock data) — planned, not built yet.
 - **Name:** Ismail doesn't like "Lotse" — new name to be decided later (keep "Lotse" until then).
 - **Execution (R-ACT-1/2):** Ismail chose "show only, never execute" (also a differentiator vs. browser agents, see research → Competitors). Keep R-ACT as Demo or drop it?
 - **Promote to Demo?** Fading per person/task (R-INS-4, local learning state) and a "still stuck after the hint" metric (hints + later events) — the two features no competitor has.

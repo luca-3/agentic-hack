@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Einstellungen – Kundenwerk CRM</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="einstellungen">
+    <header class="topbar" id="topbar"></header>
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <main class="main" id="main">
+      <div class="page-header">
+        <div>
+          <h1>Einstellungen</h1>
+          <p>Mandant, Benutzer und Abrechnung konfigurieren</p>
+        </div>
+      </div>
+
+      <div id="settings-denied" class="alert alert-error" role="alert" hidden>
+        Zugriff verweigert: Die Einstellungen sind nur für die Rolle Admin verfügbar.
+        <a href="index.html">Zum Dashboard</a>
+      </div>
+
+      <div class="settings-layout card" id="settings-view" hidden>
+        <div class="tabs" role="tablist" aria-label="Einstellungsbereiche" aria-orientation="vertical" id="settings-tabs">
+          <button type="button" role="tab" id="tab-general" aria-controls="panel-general" data-hash="allgemein">Allgemein</button>
+          <button type="button" role="tab" id="tab-users" aria-controls="panel-users" data-hash="benutzer">Benutzer &amp; Rollen</button>
+          <button type="button" role="tab" id="tab-notifications" aria-controls="panel-notifications" data-hash="benachrichtigungen">Benachrichtigungen</button>
+          <button type="button" role="tab" id="tab-billing" aria-controls="panel-billing" data-hash="abrechnung">Abrechnung</button>
+          <button type="button" role="tab" id="tab-integrations" aria-controls="panel-integrations" data-hash="integrationen">Integrationen</button>
+        </div>
+
+        <div>
+          <!-- Allgemein -->
+          <section role="tabpanel" id="panel-general" aria-labelledby="tab-general" hidden>
+            <form id="general-form">
+              <div class="settings-section">
+                <h2>Unternehmen</h2>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="set-company">Firmenname</label>
+                    <input type="text" id="set-company" />
+                  </div>
+                  <div class="field">
+                    <label for="set-language">Sprache</label>
+                    <select id="set-language"><option>Deutsch</option><option>English</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="set-timezone">Zeitzone</label>
+                    <select id="set-timezone"><option>Europe/Berlin</option><option>Europe/Vienna</option><option>Europe/Zurich</option></select>
+                  </div>
+                </div>
+              </div>
+              <div class="btn-row"><button type="submit" class="btn btn-primary">Allgemeine Einstellungen speichern</button></div>
+            </form>
+          </section>
+
+          <!-- Benutzer & Rollen -->
+          <section role="tabpanel" id="panel-users" aria-labelledby="tab-users" hidden>
+            <div class="settings-section">
+              <h2>Benutzer &amp; Rollen</h2>
+              <table>
+                <thead><tr><th>Name</th><th>E-Mail</th><th>Rolle</th></tr></thead>
+                <tbody id="user-rows"></tbody>
+              </table>
+            </div>
+            <div class="settings-section">
+              <h3>Rollenrechte</h3>
+              <ul class="list">
+                <li><strong>Vertrieb:</strong>&nbsp;Kunden, Aufgaben, Angebote erstellen</li>
+                <li><strong>Buchhaltung:</strong>&nbsp;Kunden, Aufgaben, Zahlungsdaten bearbeiten</li>
+                <li><strong>Admin:</strong>&nbsp;alles inkl. Einstellungen</li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- Benachrichtigungen -->
+          <section role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" hidden>
+            <form id="notifications-form" class="settings-section">
+              <h2>Benachrichtigungen</h2>
+              <div class="field"><label class="checkbox" for="notif-task"><input type="checkbox" id="notif-task" /> E-Mail bei fälligen Aufgaben</label></div>
+              <div class="field"><label class="checkbox" for="notif-offer"><input type="checkbox" id="notif-offer" /> Hinweis, wenn ein Angebot angenommen wurde</label></div>
+              <div class="field"><label class="checkbox" for="notif-weekly"><input type="checkbox" id="notif-weekly" /> Wöchentlicher Bericht</label></div>
+              <div class="btn-row"><button type="submit" class="btn btn-primary">Benachrichtigungen speichern</button></div>
+            </form>
+          </section>
+
+          <!-- Abrechnung -->
+          <section role="tabpanel" id="panel-billing" aria-labelledby="tab-billing" hidden>
+            <form id="billing-form">
+              <div class="settings-section">
+                <h2>Rechnungsstellung</h2>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="set-invoice-prefix">Rechnungsnummer-Präfix</label>
+                    <input type="text" id="set-invoice-prefix" />
+                  </div>
+                  <div class="field">
+                    <label for="set-invoice-template">Rechnungsvorlage</label>
+                    <select id="set-invoice-template"><option>Standard</option><option>Kompakt</option><option>Mit Logo</option></select>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h2>Steuern</h2>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="set-vat">Standard-Steuersatz</label>
+                    <select id="set-vat"><option value="19">19 %</option><option value="7">7 %</option><option value="0">0 % (steuerfrei)</option></select>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h2>Mahnwesen</h2>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="set-reminder">Zahlungserinnerung nach (Tagen)</label>
+                    <input type="number" id="set-reminder" min="1" max="90" />
+                    <p class="field-hint">Tage nach Fälligkeit, bis die erste Erinnerung versendet wird.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="btn-row"><button type="submit" class="btn btn-primary">Abrechnungseinstellungen speichern</button></div>
+            </form>
+
+            <details class="advanced" id="billing-advanced">
+              <summary>Erweitert</summary>
+              <div class="advanced-body">
+                <div class="settings-section">
+                  <h3>Skonto</h3>
+                  <p class="field-hint" id="discount-label"></p>
+                </div>
+                <div class="settings-section">
+                  <h3>Standard-Zahlungsziel</h3>
+                  <p>Gilt für neue Kunden und neue Angebote. Aktuell: <strong id="current-term"></strong></p>
+                  <button type="button" class="btn" id="change-term-button" aria-expanded="false" aria-controls="term-form">Standard-Zahlungsziel ändern</button>
+                  <form id="term-form" novalidate hidden style="margin-top: 12px">
+                    <div class="field" style="max-width: 280px">
+                      <label for="set-term">Neues Standard-Zahlungsziel (Tage)</label>
+                      <input type="number" id="set-term" min="1" max="120" aria-describedby="set-term-error" />
+                      <p class="field-error" id="set-term-error" role="alert" hidden></p>
+                    </div>
+                    <div class="btn-row">
+                      <button type="submit" class="btn btn-primary">Übernehmen</button>
+                      <button type="button" class="btn" id="term-cancel">Abbrechen</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </details>
+          </section>
+
+          <!-- Integrationen -->
+          <section role="tabpanel" id="panel-integrations" aria-labelledby="tab-integrations" hidden>
+            <div class="settings-section">
+              <h2>Integrationen</h2>
+              <ul class="list">
+                <li><strong>DATEV-Export</strong><span class="badge badge-gray" style="margin-left:auto">nicht verbunden</span></li>
+                <li><strong>E-Mail (SMTP)</strong><span class="badge badge-green" style="margin-left:auto">verbunden</span></li>
+                <li><strong>Kalender</strong><span class="badge badge-gray" style="margin-left:auto">nicht verbunden</span></li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var CRM = window.CRM;
+        var ui = CRM.ui;
+        var esc = ui.escapeHtml;
+
+        if (!CRM.can("viewSettings")) {
+          document.getElementById("settings-denied").hidden = false;
+          return;
+        }
+        document.getElementById("settings-view").hidden = false;
+
+        var s = CRM.db().settings;
+
+        function fill() {
+          document.getElementById("set-company").value = s.companyName;
+          document.getElementById("set-language").value = s.language;
+          document.getElementById("set-timezone").value = s.timezone;
+          document.getElementById("notif-task").checked = s.notifications.taskDue;
+          document.getElementById("notif-offer").checked = s.notifications.offerAccepted;
+          document.getElementById("notif-weekly").checked = s.notifications.weeklyReport;
+          document.getElementById("set-invoice-prefix").value = s.invoicePrefix;
+          document.getElementById("set-invoice-template").value = s.invoiceTemplate;
+          document.getElementById("set-vat").value = String(s.defaultVatRate);
+          document.getElementById("set-reminder").value = s.reminderAfterDays;
+          document.getElementById("current-term").textContent = s.defaultPaymentTermDays + " Tage netto";
+          document.getElementById("discount-label").textContent =
+            s.cashDiscountPercent + " % Skonto bei Zahlung innerhalb von " + s.cashDiscountDays + " Tagen.";
+        }
+
+        document.getElementById("user-rows").innerHTML = CRM.db()
+          .users.map(function (u) {
+            return "<tr><td>" + esc(u.name) + "</td><td>" + esc(u.email) + "</td><td>" + esc(u.role) + "</td></tr>";
+          })
+          .join("");
+
+        document.getElementById("general-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          s.companyName = document.getElementById("set-company").value.trim() || s.companyName;
+          s.language = document.getElementById("set-language").value;
+          s.timezone = document.getElementById("set-timezone").value;
+          CRM.save();
+          ui.toast("Allgemeine Einstellungen gespeichert.");
+        });
+
+        document.getElementById("notifications-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          s.notifications.taskDue = document.getElementById("notif-task").checked;
+          s.notifications.offerAccepted = document.getElementById("notif-offer").checked;
+          s.notifications.weeklyReport = document.getElementById("notif-weekly").checked;
+          CRM.save();
+          ui.toast("Benachrichtigungen gespeichert.");
+        });
+
+        document.getElementById("billing-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          s.invoicePrefix = document.getElementById("set-invoice-prefix").value.trim();
+          s.invoiceTemplate = document.getElementById("set-invoice-template").value;
+          s.defaultVatRate = Number(document.getElementById("set-vat").value);
+          s.reminderAfterDays = Number(document.getElementById("set-reminder").value) || s.reminderAfterDays;
+          CRM.save();
+          ui.toast("Abrechnungseinstellungen gespeichert.");
+        });
+
+        // Standard-Zahlungsziel (absichtlich versteckt unter Abrechnung → Erweitert)
+        var changeBtn = document.getElementById("change-term-button");
+        var termForm = document.getElementById("term-form");
+        var termInput = document.getElementById("set-term");
+        var termErr = document.getElementById("set-term-error");
+
+        changeBtn.addEventListener("click", function () {
+          termInput.value = s.defaultPaymentTermDays;
+          ui.setFieldError(termInput, termErr, null);
+          termForm.hidden = false;
+          changeBtn.setAttribute("aria-expanded", "true");
+          termInput.focus();
+          termInput.select();
+        });
+        document.getElementById("term-cancel").addEventListener("click", function () {
+          termForm.hidden = true;
+          changeBtn.setAttribute("aria-expanded", "false");
+        });
+        termForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var v = Number(termInput.value);
+          if (!termInput.value || !Number.isInteger(v) || v < 1 || v > 120) {
+            ui.setFieldError(termInput, termErr, "Bitte geben Sie eine ganze Zahl zwischen 1 und 120 Tagen ein.");
+            return;
+          }
+          ui.setFieldError(termInput, termErr, null);
+          s.defaultPaymentTermDays = v;
+          CRM.logActivity("Standard-Zahlungsziel auf " + v + " Tage geändert");
+          CRM.save();
+          termForm.hidden = true;
+          changeBtn.setAttribute("aria-expanded", "false");
+          fill();
+          ui.toast("Standard-Zahlungsziel auf " + v + " Tage netto geändert.");
+        });
+
+        fill();
+        ui.initTabs(document.getElementById("settings-tabs"));
+      })();
+    </script>
+  </body>
+</html>

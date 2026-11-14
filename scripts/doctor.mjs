@@ -88,5 +88,5 @@ if (!existsSync(".env.local")) {
   }
 }
 
-console.log(failed ? `\n${failed} problem(s) found.` : "\nAll good — run `npm run dev` and open http://localhost:3000");
+console.log(failed ? `\n${failed} problem(s) found.` : "\nAll good — start what you work on: `npm run dev:server` (http://localhost:3001), `npm run dev:dashboard` (http://localhost:3000), `npm run dev:extension`, `npm run demo:crm` (http://localhost:4000)");
 process.exitCode = failed ? 1 : 0;

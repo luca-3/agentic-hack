@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Angebote – Kundenwerk CRM</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="angebote">
+    <header class="topbar" id="topbar"></header>
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <main class="main" id="main">
+      <!-- Liste -->
+      <div id="offer-list-view">
+        <div class="page-header">
+          <div>
+            <h1>Angebote</h1>
+            <p>Entwürfe, versendete und abgeschlossene Angebote</p>
+          </div>
+          <button type="button" class="btn btn-primary" id="create-offer-button">Angebot erstellen</button>
+        </div>
+        <div id="offer-permission-error" class="alert alert-error" role="alert" hidden></div>
+
+        <section class="card">
+          <div class="filters">
+            <div class="field">
+              <label for="offer-filter-status">Status</label>
+              <select id="offer-filter-status">
+                <option value="">Alle</option>
+                <option>Entwurf</option>
+                <option>Versendet</option>
+                <option>Angenommen</option>
+                <option>Abgelehnt</option>
+              </select>
+            </div>
+          </div>
+          <p class="result-count" id="offer-count" aria-live="polite"></p>
+          <table>
+            <thead>
+              <tr>
+                <th>Nr.</th>
+                <th>Titel</th>
+                <th>Kunde</th>
+                <th>Status</th>
+                <th>Erstellt</th>
+                <th>Gültig bis</th>
+                <th class="num">Betrag (netto)</th>
+              </tr>
+            </thead>
+            <tbody id="offer-rows"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <!-- Wizard -->
+      <section id="offer-wizard" aria-labelledby="wizard-title" hidden>
+        <nav class="breadcrumb" aria-label="Brotkrumen"><a href="angebote.html">Angebote</a> / Neues Angebot</nav>
+        <div class="page-header">
+          <div>
+            <h1 id="wizard-title">Angebot erstellen</h1>
+            <p id="wizard-step-label">Schritt 1 von 3</p>
+          </div>
+        </div>
+
+        <ol class="steps" id="wizard-steps">
+          <li data-step="1">Kunde &amp; Titel</li>
+          <li data-step="2">Positionen</li>
+          <li data-step="3">Prüfen &amp; speichern</li>
+        </ol>
+
+        <form id="offer-form" class="card" novalidate>
+          <!-- Schritt 1 -->
+          <fieldset id="step-1" style="border: 0; padding: 0; margin: 0">
+            <legend class="sr-only">Schritt 1: Kunde und Titel</legend>
+            <div class="form-grid">
+              <div class="field full">
+                <label for="offer-customer">Kunde</label>
+                <select id="offer-customer" aria-describedby="offer-customer-error">
+                  <option value="">Bitte wählen …</option>
+                </select>
+                <p class="field-error" id="offer-customer-error" role="alert" hidden></p>
+              </div>
+              <div class="field full">
+                <label for="offer-title">Titel</label>
+                <input type="text" id="offer-title" placeholder="z. B. Wartungsvertrag 2027" aria-describedby="offer-title-error" />
+                <p class="field-error" id="offer-title-error" role="alert" hidden></p>
+              </div>
+              <div class="field">
+                <label for="offer-contact">Ansprechpartner</label>
+                <select id="offer-contact"><option value="">– zuerst Kunde wählen –</option></select>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Schritt 2 -->
+          <fieldset id="step-2" style="border: 0; padding: 0; margin: 0" hidden>
+            <legend class="sr-only">Schritt 2: Positionen</legend>
+            <div id="positions"></div>
+            <p class="field-error" id="positions-error" role="alert" hidden></p>
+            <button type="button" class="btn" id="add-position">Position hinzufügen</button>
+          </fieldset>
+
+          <!-- Schritt 3 -->
+          <fieldset id="step-3" style="border: 0; padding: 0; margin: 0" hidden>
+            <legend class="sr-only">Schritt 3: Prüfen und speichern</legend>
+            <div class="grid-2">
+              <div>
+                <h2>Zusammenfassung</h2>
+                <dl class="details" id="offer-summary"></dl>
+                <table class="summary-table" style="margin-top: 12px">
+                  <thead><tr><th>Position</th><th class="num">Menge</th><th class="num">Einzelpreis</th><th class="num">Summe</th></tr></thead>
+                  <tbody id="summary-positions"></tbody>
+                </table>
+              </div>
+              <div class="form-grid" style="grid-template-columns: 1fr; align-content: start">
+                <div class="field">
+                  <label for="offer-valid-until">Gültig bis</label>
+                  <input type="date" id="offer-valid-until" />
+                </div>
+                <div class="field">
+                  <label for="offer-payment-term">Zahlungsziel</label>
+                  <select id="offer-payment-term">
+                    <option value="14">14 Tage netto</option>
+                    <option value="30">30 Tage netto</option>
+                    <option value="45">45 Tage netto</option>
+                    <option value="60">60 Tage netto</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="btn-row" style="justify-content: space-between">
+            <button type="button" class="btn" id="wizard-cancel">Abbrechen</button>
+            <div style="display: flex; gap: 8px">
+              <button type="button" class="btn" id="wizard-back" hidden>Zurück</button>
+              <button type="button" class="btn btn-primary" id="wizard-next">Weiter</button>
+              <button type="submit" class="btn btn-primary" id="wizard-save" hidden>Angebot speichern</button>
+            </div>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var CRM = window.CRM;
+        var ui = CRM.ui;
+        var esc = ui.escapeHtml;
+
+        // ---------- Liste ----------
+        var statusSel = document.getElementById("offer-filter-status");
+        function renderList() {
+          var offers = CRM.db()
+            .offers.filter(function (o) { return !statusSel.value || o.status === statusSel.value; })
+            .sort(function (a, b) { return b.number.localeCompare(a.number); });
+          document.getElementById("offer-count").textContent = offers.length === 1 ? "1 Angebot" : offers.length + " Angebote";
+          var tbody = document.getElementById("offer-rows");
+          if (offers.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Keine Angebote mit diesem Status.</td></tr>';
+            return;
+          }
+          tbody.innerHTML = offers
+            .map(function (o) {
+              return (
+                '<tr id="offer-row-' + o.id + '"><td>' + esc(o.number) + "</td><td>" + esc(o.title) + "</td>" +
+                '<td><a href="kunde.html?id=' + o.customerId + '">' + esc(CRM.customerName(o.customerId)) + "</a></td>" +
+                "<td>" + ui.statusBadge(o.status) + "</td><td>" + CRM.formatDate(o.date) + "</td><td>" + CRM.formatDate(o.validUntil) + "</td>" +
+                '<td class="num">' + CRM.formatEuro(o.amount) + "</td></tr>"
+              );
+            })
+            .join("");
+        }
+        statusSel.addEventListener("change", renderList);
+
+        // ---------- Wizard ----------
+        var listView = document.getElementById("offer-list-view");
+        var wizard = document.getElementById("offer-wizard");
+        var createBtn = document.getElementById("create-offer-button");
+        var permError = document.getElementById("offer-permission-error");
+        var canCreate = CRM.can("createOffer");
+        var step = 1;
+
+        var customerSel = document.getElementById("offer-customer");
+        var titleInput = document.getElementById("offer-title");
+        var contactSel = document.getElementById("offer-contact");
+        var positionsEl = document.getElementById("positions");
+        customerSel.insertAdjacentHTML("beforeend", ui.customerOptions());
+
+        if (!canCreate) {
+          createBtn.setAttribute("aria-disabled", "true");
+          createBtn.title = "Nur Vertrieb oder Admin";
+        }
+
+        customerSel.addEventListener("change", function () {
+          var c = CRM.getCustomer(customerSel.value);
+          contactSel.innerHTML = c
+            ? c.contacts.map(function (p) { return "<option>" + esc(p.name) + "</option>"; }).join("")
+            : '<option value="">– zuerst Kunde wählen –</option>';
+          if (c) document.getElementById("offer-payment-term").value = String(c.payment.paymentTermDays);
+        });
+
+        var positionCount = 0;
+        function addPosition() {
+          positionCount += 1;
+          var n = positionCount;
+          var suffix = n > 1 ? '<span class="sr-only"> Position ' + n + "</span>" : "";
+          var row = document.createElement("div");
+          row.className = "position-row";
+          row.innerHTML =
+            '<div class="field"><label for="pos-desc-' + n + '">Beschreibung' + suffix + "</label>" +
+            '<input type="text" id="pos-desc-' + n + '" data-field="desc" placeholder="Leistung oder Produkt" /></div>' +
+            '<div class="field"><label for="pos-qty-' + n + '">Menge' + suffix + "</label>" +
+            '<input type="number" id="pos-qty-' + n + '" data-field="qty" min="1" value="1" /></div>' +
+            '<div class="field"><label for="pos-price-' + n + '">Einzelpreis (€)' + suffix + "</label>" +
+            '<input type="number" id="pos-price-' + n + '" data-field="price" min="0" step="0.01" /></div>' +
+            (n > 1
+              ? '<button type="button" class="icon-btn danger" aria-label="Position ' + n + ' entfernen">' + ui.ICONS.trash + "</button>"
+              : '<span style="width:36px"></span>');
+          positionsEl.appendChild(row);
+          var removeBtn = row.querySelector("button");
+          if (removeBtn) removeBtn.addEventListener("click", function () { row.remove(); });
+        }
+        document.getElementById("add-position").addEventListener("click", addPosition);
+
+        function readPositions() {
+          return Array.prototype.slice.call(positionsEl.querySelectorAll(".position-row")).map(function (row) {
+            return {
+              desc: row.querySelector('[data-field="desc"]').value.trim(),
+              qty: Number(row.querySelector('[data-field="qty"]').value),
+              price: row.querySelector('[data-field="price"]').value === "" ? NaN : Number(row.querySelector('[data-field="price"]').value),
+            };
+          });
+        }
+
+        function resetWizard() {
+          document.getElementById("offer-form").reset();
+          positionsEl.innerHTML = "";
+          positionCount = 0;
+          addPosition();
+          contactSel.innerHTML = '<option value="">– zuerst Kunde wählen –</option>';
+          ["offer-customer", "offer-title"].forEach(function (id) {
+            ui.setFieldError(document.getElementById(id), document.getElementById(id + "-error"), null);
+          });
+          document.getElementById("positions-error").hidden = true;
+          document.getElementById("offer-valid-until").value = CRM.isoDate(30);
+          document.getElementById("offer-payment-term").value = String(CRM.db().settings.defaultPaymentTermDays);
+          showStep(1);
+        }
+
+        function showStep(n) {
+          step = n;
+          [1, 2, 3].forEach(function (i) { document.getElementById("step-" + i).hidden = i !== n; });
+          Array.prototype.forEach.call(document.querySelectorAll("#wizard-steps li"), function (li) {
+            var s = Number(li.getAttribute("data-step"));
+            if (s === n) li.setAttribute("aria-current", "step");
+            else li.removeAttribute("aria-current");
+            li.classList.toggle("complete", s < n);
+          });
+          document.getElementById("wizard-step-label").textContent = "Schritt " + n + " von 3";
+          document.getElementById("wizard-back").hidden = n === 1;
+          document.getElementById("wizard-next").hidden = n === 3;
+          document.getElementById("wizard-save").hidden = n !== 3;
+          if (n === 3) renderSummary();
+        }
+
+        function validateStep(n) {
+          if (n === 1) {
+            var cMsg = customerSel.value ? null : "Bitte wählen Sie einen Kunden aus.";
+            var tMsg = titleInput.value.trim() ? null : "Bitte geben Sie einen Titel für das Angebot ein.";
+            ui.setFieldError(customerSel, document.getElementById("offer-customer-error"), cMsg);
+            ui.setFieldError(titleInput, document.getElementById("offer-title-error"), tMsg);
+            return !cMsg && !tMsg;
+          }
+          if (n === 2) {
+            var err = document.getElementById("positions-error");
+            var pos = readPositions();
+            var bad = pos.length === 0 || pos.some(function (p) { return !p.desc || !(p.qty > 0) || !(p.price >= 0); });
+            if (bad) {
+              err.textContent = "Bitte füllen Sie für jede Position Beschreibung, Menge und Einzelpreis aus.";
+              err.hidden = false;
+              return false;
+            }
+            err.hidden = true;
+            return true;
+          }
+          return true;
+        }
+
+        function totals() {
+          var net = readPositions().reduce(function (s, p) { return s + p.qty * p.price; }, 0);
+          var vatRate = CRM.db().settings.defaultVatRate;
+          return { net: net, vat: (net * vatRate) / 100, gross: net * (1 + vatRate / 100), vatRate: vatRate };
+        }
+
+        function renderSummary() {
+          var t = totals();
+          document.getElementById("offer-summary").innerHTML =
+            "<dt>Kunde</dt><dd>" + esc(CRM.customerName(customerSel.value)) + "</dd>" +
+            "<dt>Titel</dt><dd>" + esc(titleInput.value) + "</dd>" +
+            "<dt>Ansprechpartner</dt><dd>" + esc(contactSel.value || "–") + "</dd>" +
+            "<dt>Netto</dt><dd>" + CRM.formatEuro(t.net) + "</dd>" +
+            "<dt>MwSt. (" + t.vatRate + " %)</dt><dd>" + CRM.formatEuro(t.vat) + "</dd>" +
+            "<dt>Gesamt (brutto)</dt><dd><strong>" + CRM.formatEuro(t.gross) + "</strong></dd>";
+          document.getElementById("summary-positions").innerHTML = readPositions()
+            .map(function (p) {
+              return "<tr><td>" + esc(p.desc) + '</td><td class="num">' + p.qty + '</td><td class="num">' + CRM.formatEuro(p.price) +
+                '</td><td class="num">' + CRM.formatEuro(p.qty * p.price) + "</td></tr>";
+            })
+            .join("");
+        }
+
+        function openWizard() {
+          resetWizard();
+          listView.hidden = true;
+          wizard.hidden = false;
+          customerSel.focus();
+        }
+
+        function closeWizard() {
+          wizard.hidden = true;
+          listView.hidden = false;
+        }
+
+        function syncFromHash() {
+          if (location.hash === "#neu" && canCreate) openWizard();
+          else closeWizard();
+        }
+
+        createBtn.addEventListener("click", function () {
+          if (!canCreate) {
+            permError.textContent = "Keine Berechtigung: Angebote können nur von den Rollen Vertrieb oder Admin erstellt werden. Ihre Rolle: " + CRM.getRole() + ".";
+            permError.hidden = false;
+            ui.toast("Keine Berechtigung zum Erstellen von Angeboten.", "error");
+            return;
+          }
+          location.hash = "neu";
+        });
+
+        document.getElementById("wizard-next").addEventListener("click", function () {
+          if (validateStep(step)) showStep(step + 1);
+        });
+        document.getElementById("wizard-back").addEventListener("click", function () {
+          showStep(step - 1);
+        });
+        document.getElementById("wizard-cancel").addEventListener("click", function () {
+          history.pushState(null, "", location.pathname);
+          closeWizard();
+        });
+
+        document.getElementById("offer-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (step !== 3) {
+            if (validateStep(step)) showStep(step + 1);
+            return;
+          }
+          var d = CRM.db();
+          var nr = "ANG-2026-" + String(CRM.nextId("offer")).padStart(3, "0");
+          var offer = {
+            id: "o" + Date.now(),
+            number: nr,
+            title: titleInput.value.trim(),
+            customerId: customerSel.value,
+            amount: Math.round(totals().net * 100) / 100,
+            status: "Entwurf",
+            date: CRM.today(),
+            validUntil: document.getElementById("offer-valid-until").value || CRM.isoDate(30),
+            paymentTermDays: Number(document.getElementById("offer-payment-term").value),
+            positions: readPositions(),
+          };
+          d.offers.push(offer);
+          CRM.logActivity("Angebot " + nr + " als Entwurf gespeichert", offer.customerId);
+          CRM.save();
+          history.pushState(null, "", location.pathname);
+          closeWizard();
+          statusSel.value = "";
+          renderList();
+          ui.toast("Angebot " + nr + " wurde als Entwurf gespeichert.");
+        });
+
+        window.addEventListener("hashchange", syncFromHash);
+        window.addEventListener("popstate", syncFromHash);
+        renderList();
+        syncFromHash();
+      })();
+    </script>
+  </body>
+</html>

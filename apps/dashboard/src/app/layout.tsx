@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agentic Hack",
-  description: "Hackathon project — Next.js + Supabase",
+  title: "Lotse Dashboard",
+  description: "Zentrale Verwaltung für Lotse — Organisationen, Kontext, Schulungen, Insights",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

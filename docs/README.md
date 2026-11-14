@@ -26,8 +26,8 @@ Lotse is a voice-native assistant for business web apps (first targets: **CORPUS
 | Term | Meaning |
 | --- | --- |
 | Extension | Lotse Chrome extension (MV3) running in the employee's browser |
-| Runtime | Our server (this Next.js app): agent, decision API, token minting, ingest |
-| Dashboard | Admin UI for organizations (part of this Next.js app) |
+| Runtime / server | `apps/server` (Next.js, port 3001): agent, decision API, token minting, ingest — all Gemini calls |
+| Dashboard | `apps/dashboard` (Next.js, port 3000): admin UI for organizations |
 | Snapshot | Numbered list of the interactive elements on the current page (number, role, label, route) |
 | Feature list / manifest | Per-app list of functions: name, route, click path, required role |
 | Stuck signal | Rule hit that suggests the user needs help (e.g. 3 searches without result) |

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard – Kundenwerk CRM</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="dashboard">
+    <header class="topbar" id="topbar"></header>
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <main class="main" id="main">
+      <div class="page-header">
+        <div>
+          <h1 id="greeting">Guten Tag</h1>
+          <p id="today-label"></p>
+        </div>
+        <a class="btn btn-primary" href="aufgaben.html#neu">Neue Aufgabe</a>
+      </div>
+
+      <section class="kpis" aria-label="Kennzahlen">
+        <div class="kpi">
+          <div class="kpi-label">Aktive Kunden</div>
+          <div class="kpi-value" id="kpi-customers">–</div>
+          <div class="kpi-sub" id="kpi-customers-sub"></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Offene Aufgaben</div>
+          <div class="kpi-value" id="kpi-tasks">–</div>
+          <div class="kpi-sub" id="kpi-tasks-sub"></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Offene Angebote</div>
+          <div class="kpi-value" id="kpi-offers">–</div>
+          <div class="kpi-sub" id="kpi-offers-sub"></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Umsatz (12 Monate)</div>
+          <div class="kpi-value" id="kpi-revenue">–</div>
+          <div class="kpi-sub">alle Kunden</div>
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card" aria-labelledby="today-tasks-title">
+          <div class="card-header">
+            <h2 id="today-tasks-title">Meine Aufgaben heute</h2>
+            <a href="aufgaben.html">Alle Aufgaben anzeigen</a>
+          </div>
+          <ul class="list" id="today-tasks"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="activities-title">
+          <div class="card-header">
+            <h2 id="activities-title">Letzte Aktivitäten</h2>
+          </div>
+          <ul class="list timeline" id="activities"></ul>
+        </section>
+      </div>
+
+      <section class="card" aria-labelledby="open-offers-title">
+        <div class="card-header">
+          <h2 id="open-offers-title">Offene Angebote</h2>
+          <a href="angebote.html">Zu den Angeboten</a>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Nr.</th><th>Titel</th><th>Kunde</th><th>Status</th><th class="num">Betrag</th></tr>
+          </thead>
+          <tbody id="open-offers"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var CRM = window.CRM;
+        var ui = CRM.ui;
+        var esc = ui.escapeHtml;
+
+        function render() {
+          var d = CRM.db();
+          var today = CRM.today();
+          var firstName = CRM.CURRENT_USER.name.split(" ")[0];
+          var hour = new Date().getHours();
+          var greet = hour < 11 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
+          document.getElementById("greeting").textContent = greet + ", " + firstName;
+          document.getElementById("today-label").textContent =
+            new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) +
+            " · Rolle: " + CRM.getRole();
+
+          var active = d.customers.filter(function (c) { return c.status === "Aktiv"; }).length;
+          var leads = d.customers.filter(function (c) { return c.status === "Interessent"; }).length;
+          document.getElementById("kpi-customers").textContent = active;
+          document.getElementById("kpi-customers-sub").textContent = leads + " Interessenten";
+
+          var open = d.tasks.filter(function (t) { return !t.done; });
+          var overdue = open.filter(function (t) { return t.due < today; });
+          document.getElementById("kpi-tasks").textContent = open.length;
+          document.getElementById("kpi-tasks-sub").textContent = overdue.length + " überfällig";
+
+          var openOffers = d.offers.filter(function (o) { return o.status === "Entwurf" || o.status === "Versendet"; });
+          var sum = openOffers.reduce(function (s, o) { return s + o.amount; }, 0);
+          document.getElementById("kpi-offers").textContent = openOffers.length;
+          document.getElementById("kpi-offers-sub").textContent = CRM.formatEuro(sum) + " Volumen";
+
+          var revenue = d.customers.reduce(function (s, c) { return s + c.revenue; }, 0);
+          document.getElementById("kpi-revenue").textContent = CRM.formatEuro(revenue).replace(",00", "");
+
+          var mine = open
+            .filter(function (t) { return t.assignee === CRM.CURRENT_USER.name && t.due <= today; })
+            .sort(function (a, b) { return a.due.localeCompare(b.due); });
+          var list = document.getElementById("today-tasks");
+          if (mine.length === 0) {
+            list.innerHTML = '<li class="meta">Keine fälligen Aufgaben – gut gemacht!</li>';
+          } else {
+            list.innerHTML = mine
+              .map(function (t) {
+                var late = t.due < today ? ' <span class="overdue">überfällig seit ' + CRM.formatDate(t.due) + "</span>" : "";
+                return (
+                  "<li>" +
+                  '<input type="checkbox" id="dash-task-' + t.id + '" data-id="' + t.id + '" aria-label="Erledigt: ' + esc(t.title) + '" />' +
+                  '<div><label for="dash-task-' + t.id + '">' + esc(t.title) + "</label>" +
+                  '<div class="meta"><a href="kunde.html?id=' + t.customerId + '">' + esc(CRM.customerName(t.customerId)) + "</a>" + late + "</div></div>" +
+                  '<span style="margin-left:auto">' + ui.priorityBadge(t.priority) + "</span>" +
+                  "</li>"
+                );
+              })
+              .join("");
+          }
+
+          document.getElementById("activities").innerHTML = d.activities
+            .slice(0, 6)
+            .map(function (a) {
+              var who = a.customerId
+                ? ' · <a href="kunde.html?id=' + a.customerId + '">' + esc(CRM.customerName(a.customerId)) + "</a>"
+                : "";
+              return "<li><span>" + esc(a.text) + '</span><span class="meta">' + CRM.formatDateTime(a.when) + " · " + esc(a.author) + who + "</span></li>";
+            })
+            .join("");
+
+          document.getElementById("open-offers").innerHTML = openOffers
+            .map(function (o) {
+              return (
+                "<tr><td>" + esc(o.number) + "</td><td>" + esc(o.title) + "</td>" +
+                '<td><a href="kunde.html?id=' + o.customerId + '">' + esc(CRM.customerName(o.customerId)) + "</a></td>" +
+                "<td>" + ui.statusBadge(o.status) + '</td><td class="num">' + CRM.formatEuro(o.amount) + "</td></tr>"
+              );
+            })
+            .join("");
+        }
+
+        document.getElementById("today-tasks").addEventListener("change", function (e) {
+          var id = e.target.getAttribute("data-id");
+          if (!id) return;
+          var task = CRM.db().tasks.filter(function (t) { return t.id === id; })[0];
+          task.done = true;
+          CRM.logActivity("Aufgabe „" + task.title + "“ erledigt", task.customerId);
+          CRM.save();
+          ui.toast("Aufgabe „" + task.title + "“ als erledigt markiert.");
+          render();
+        });
+
+        render();
+      })();
+    </script>
+  </body>
+</html>
