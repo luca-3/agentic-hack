@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Valo</title>
     <style>
-      /* Exact Valo Admin design system (apps/dashboard/src/app/globals.css & ui.tsx):
-         Nachtblau shell (#0F2A3D) framing a crisp white/sand panel, petrol pill buttons, violet privacy note. */
+      /* Valo Admin design system (localhost:3000): Nachtblau shell (#0F2A3D), sand-white panel, petrol pill controls. */
       :root {
         color-scheme: light;
         --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -70,42 +69,48 @@
 
       * { box-sizing: border-box; }
       [hidden] { display: none !important; }
-      body { margin: 0; min-height: 100vh; padding: 0 8px 10px; background: var(--shell); color: var(--text); }
+      html, body { height: 100%; margin: 0; }
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        padding: 0 8px 10px;
+        background: var(--shell);
+        color: var(--text);
+      }
       :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
       input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 
-      /* Top Shell Header (matches Shell.tsx) */
+      /* Top Shell Header */
       header {
-        position: sticky;
-        top: 0;
-        z-index: 10;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        padding: 11px 6px;
+        padding: 10px 6px;
         background: var(--shell);
         color: #F2F5F6;
+        flex-shrink: 0;
       }
-      .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
-      .brand svg { width: 32px; height: 32px; flex-shrink: 0; }
+      .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+      .brand svg { width: 30px; height: 30px; flex-shrink: 0; }
       .brand svg .beam, .brand svg .lamp { fill: var(--beacon); }
       .brand svg .tower { fill: #F2F5F6; }
       .brand svg .sea { fill: none; stroke: #F2F5F6; stroke-width: 1.4; stroke-linecap: round; }
-      h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.025em; color: #F2F5F6; }
+      h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.025em; color: #F2F5F6; }
 
       .chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
       .activity {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        height: 28px;
-        padding: 0 11px;
+        height: 26px;
+        padding: 0 10px;
         border-radius: 999px;
         background: var(--sh-pill);
         border: 1px solid var(--sh-line);
         color: var(--sh-muted);
-        font-size: 13px;
+        font-size: 12.5px;
         font-weight: 600;
         white-space: nowrap;
       }
@@ -113,232 +118,332 @@
       .activity.active { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
       .activity.voice { background: #2A2019; border-color: var(--beacon); color: #FFD7BD; }
 
-      /* Inner Sand-White Content Panel (matches Shell.tsx main rounded-[var(--radius-panel)] bg-panel) */
+      /* Main Rounded Panel */
       .panel {
-        display: grid;
-        gap: 12px;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
         background: var(--bg);
-        border-radius: 22px;
-        padding: 14px;
+        border-radius: 20px;
+        padding: 12px;
       }
 
-      /* Cards & Collapsible Sections (matches Card in ui.tsx) */
+      /* Cards & Collapsible Containers */
       section, details {
         background: var(--surface);
         border: 1px solid var(--line);
         border-radius: 16px;
-        padding: 16px;
+        padding: 14px;
         margin: 0;
       }
-      h2 { margin: 0 0 6px; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
+      h2 { margin: 0 0 6px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
+      h3 { margin: 0 0 6px; font-size: 13.5px; font-weight: 600; color: var(--text); }
       .section-kicker {
         display: block;
-        margin-bottom: 4px;
-        font-size: 12px;
+        margin-bottom: 3px;
+        font-size: 11.5px;
         font-weight: 600;
         letter-spacing: 0.06em;
         text-transform: uppercase;
         color: var(--muted);
       }
-      p { margin: 6px 0; font-size: 13.5px; }
-      .muted { color: var(--muted); font-size: 13px; line-height: 1.45; }
+      p { margin: 5px 0; font-size: 13.5px; }
+      .muted { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
 
-      /* Pill Buttons (matches Button in ui.tsx) */
-      .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      /* Pill Buttons */
+      .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
       .row { display: flex; align-items: center; gap: 8px; }
       button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
-        height: 38px;
-        padding: 0 16px;
+        height: 36px;
+        padding: 0 15px;
         border-radius: 999px;
         border: 1px solid var(--primary);
         background: var(--primary);
         color: var(--on-primary);
-        font: 600 14px/1 var(--font-sans);
+        font: 600 13.5px/1 var(--font-sans);
         cursor: pointer;
         white-space: nowrap;
       }
       button:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
-      button.secondary {
-        background: var(--surface);
-        border-color: var(--line-strong);
-        color: var(--text);
-      }
-      button.secondary:hover:not(:disabled) { background: var(--surface-2); border-color: var(--line-strong); }
-      button.danger {
-        background: var(--danger);
-        border-color: var(--danger);
-        color: var(--on-danger);
-      }
+      button.secondary { background: var(--surface); border-color: var(--line-strong); color: var(--text); }
+      button.secondary:hover:not(:disabled) { background: var(--surface-2); }
+      button.danger { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
       button.danger:hover:not(:disabled) { background: var(--danger-hover); border-color: var(--danger-hover); }
-      button.small { height: 34px; padding: 0 13px; font-size: 13px; }
-      button:disabled {
-        background: var(--input-disabled);
-        border-color: var(--line);
-        color: var(--muted);
-        cursor: not-allowed;
-      }
+      button.ghost { height: 26px; padding: 0 10px; font-size: 12px; background: transparent; border-color: transparent; color: var(--muted); }
+      button.ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+      button.small { height: 32px; padding: 0 12px; font-size: 12.5px; }
+      button:disabled { background: var(--input-disabled); border-color: var(--line); color: var(--muted); cursor: not-allowed; }
 
-      /* Form Fields (matches Field & TextareaField in ui.tsx) */
-      label { display: block; margin: 10px 0 5px; font-size: 13.5px; font-weight: 600; color: var(--text); }
-      input[type="text"], input[type="email"], input[type="password"], textarea {
-        width: 100%;
-        padding: 9px 12px;
-        border: 1px solid var(--line-strong);
-        border-radius: 12px;
-        background: var(--input);
-        color: var(--text);
-        font: 14px/1.45 var(--font-sans);
-      }
-      input:disabled, textarea:disabled {
-        background: var(--input-disabled);
-        border-color: var(--line);
-        color: var(--muted);
-      }
-      input[type="range"] { flex: 1; accent-color: var(--primary); height: 22px; }
-      input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
-      textarea { resize: vertical; }
-      #ask-button { flex: 1; }
-      #ask .row { margin-top: 10px; }
-      #listen { width: 38px; padding: 0; font-size: 15px; flex-shrink: 0; }
-
-      /* Stat Tiles (matches StatTile in ui.tsx: first tile ink, rest crisp surface, tabular-nums) */
-      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
-      .stats div {
+      /* Primary Guidance Chat Card */
+      .chat-card {
+        flex: 1;
+        min-height: 300px;
         display: flex;
         flex-direction: column;
+        padding: 12px;
+        gap: 10px;
+      }
+      .chat-header {
+        display: flex;
+        align-items: center;
         justify-content: space-between;
-        gap: 4px;
-        padding: 10px 8px;
+        gap: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      .chat-header h2 { margin: 0; font-size: 15px; }
+      .chat-log {
+        flex: 1;
+        min-height: 160px;
+        max-height: 56vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 2px 2px 4px;
+      }
+      .chat-empty {
+        margin: auto 0;
+        padding: 18px 14px;
         border-radius: 12px;
-        border: 1px solid var(--line);
+        border: 1px dashed var(--line-strong);
         background: var(--surface-2);
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 500;
-        text-align: left;
+        text-align: center;
       }
-      .stats div.ink-tile {
-        background: var(--ink-bg);
-        border-color: var(--ink-bg);
-        color: var(--ink-muted);
-      }
-      .stats strong {
-        display: block;
-        color: var(--text);
-        font: 600 22px/1.05 var(--font-sans);
-        font-variant-numeric: tabular-nums;
-        letter-spacing: -0.02em;
-      }
-      .stats div.ink-tile strong { color: var(--ink-fg); }
+      .chat-empty strong { display: block; font-size: 14px; color: var(--text); margin-bottom: 4px; }
 
-      /* Status & Notices (matches Notice in ui.tsx) */
-      .status-bar {
-        margin: 0;
-        padding: 10px 13px;
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        background: var(--surface);
+      /* Chat Messages */
+      .msg { display: flex; flex-direction: column; max-width: 90%; gap: 3px; }
+      .msg.user { align-self: flex-end; align-items: flex-end; }
+      .msg.assistant { align-self: flex-start; align-items: flex-start; }
+
+      .msg-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        color: var(--muted);
+        padding: 0 4px;
+      }
+      .msg-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        border: 1px solid var(--primary-line);
+        color: var(--primary-text);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .msg.user .msg-tag {
+        background: var(--surface-2);
+        border-color: var(--line);
         color: var(--text);
+      }
+
+      .msg-bubble {
+        padding: 9px 12px;
+        border-radius: 14px;
         font-size: 13.5px;
-        font-weight: 500;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
         white-space: pre-wrap;
       }
+      .msg.user .msg-bubble {
+        background: var(--ink-bg);
+        color: var(--ink-fg);
+        border-bottom-right-radius: 4px;
+      }
+      .msg.assistant .msg-bubble {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        color: var(--text);
+        border-bottom-left-radius: 4px;
+      }
+      .msg.assistant.error .msg-bubble {
+        background: var(--danger-soft);
+        border-color: var(--danger-line);
+        color: var(--danger-text);
+      }
+      .msg.assistant.pending .msg-bubble { color: var(--muted); font-style: italic; }
+
+      .msg-steps {
+        margin: 7px 0 0;
+        padding-left: 18px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .msg-steps li { margin: 3px 0; }
+
+      /* Chat Composer */
+      .composer {
+        display: grid;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+      }
+      .composer-row { display: flex; align-items: flex-end; gap: 6px; }
+      #question {
+        flex: 1;
+        min-height: 38px;
+        max-height: 110px;
+        padding: 8px 12px;
+        border: 1px solid var(--line-strong);
+        border-radius: 14px;
+        background: var(--input);
+        color: var(--text);
+        font: 13.5px/1.45 var(--font-sans);
+        resize: none;
+      }
+      #listen { width: 36px; height: 36px; padding: 0; font-size: 14px; flex-shrink: 0; }
+      #ask-button { height: 36px; padding: 0 14px; flex-shrink: 0; }
+      .composer-hint { margin: 0; font-size: 11.5px; color: var(--muted); }
+
+      /* Active Callouts */
+      .callout { border-color: var(--primary-line); background: var(--primary-soft); padding: 12px 14px; flex-shrink: 0; }
+      .callout h2 { color: var(--primary-text); font-size: 14px; margin-bottom: 4px; }
+      .callout p { margin: 0 0 6px; }
+      .paused { border-color: var(--warn-line); background: var(--warn-soft); padding: 12px 14px; flex-shrink: 0; }
+      .paused h2 { color: var(--warn-text); font-size: 14px; }
+
       #notice {
         margin: 0;
-        padding: 10px 13px;
+        padding: 9px 12px;
         border-radius: 12px;
         border: 1px solid var(--danger-line);
         background: var(--danger-soft);
         color: var(--danger-text);
-        font-size: 13.5px;
+        font-size: 13px;
         font-weight: 600;
+        flex-shrink: 0;
       }
-      #image-status { margin: 0; padding: 0 4px; color: var(--warn-text); }
       #notice:empty, #image-status:empty, #decision:empty, #prefs-message:empty, #last-question:empty { display: none; }
 
-      .callout { border-color: var(--primary-line); background: var(--primary-soft); }
-      .callout h2 { color: var(--primary-text); }
-      .callout p { margin: 0 0 8px; }
-      .paused { border-color: var(--warn-line); background: var(--warn-soft); }
-      .paused h2 { color: var(--warn-text); }
-      .admin-card { border-color: var(--primary-line); background: var(--surface); box-shadow: inset 4px 0 0 var(--primary); }
-
-      .badge-admin {
-        display: inline-flex;
-        align-items: center;
-        height: 24px;
-        padding: 0 10px;
-        border-radius: 999px;
-        background: var(--ok-soft);
-        border: 1px solid var(--ok-line);
-        color: var(--ok-text);
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      /* Signature Violet Privacy Note (matches Shell.tsx & Footnote in ui.tsx) */
-      .privacy-box {
-        display: flex;
-        align-items: flex-start;
-        gap: 9px;
-        margin: 10px 0 0;
-        padding: 10px 12px;
+      /* Compact Collapsed Drawers (Explore app + Miscellaneous) */
+      details.compact-drawer {
+        padding: 10px 13px;
         border-radius: 14px;
-        border: 1px solid var(--priv-line);
-        background: var(--priv-soft);
-        color: var(--priv-text);
-        font-size: 12.5px;
-        line-height: 1.45;
+        flex-shrink: 0;
       }
-      .privacy-box svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--priv-accent); margin-top: 1px; }
-      .privacy-box strong { color: var(--priv-strong); font-weight: 600; }
-      .privacy-box code {
-        padding: 1px 5px;
-        border-radius: 5px;
-        background: #ECE8F7;
-        color: var(--priv-strong);
-        font: 12px var(--font-mono);
+      details.admin-drawer {
+        border-color: var(--primary-line);
+        box-shadow: inset 3px 0 0 var(--primary);
       }
-
-      /* Details / Chevron (matches globals.css) */
       summary {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        font-size: 14.5px;
+        font-size: 13.5px;
         font-weight: 600;
         color: var(--text);
         cursor: pointer;
         list-style: none;
+        user-select: none;
       }
       summary::-webkit-details-marker { display: none; }
-      summary svg[data-chev] { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+      .summary-left { display: flex; align-items: center; gap: 7px; min-width: 0; }
+      summary svg[data-chev] { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
       details[open] > summary svg[data-chev] { transform: rotate(90deg); }
-      details > summary + * { margin-top: 10px; }
+      .drawer-body { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 
-      .toggle { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 500; margin: 8px 0; cursor: pointer; }
-      #events { padding-left: 18px; margin: 8px 0 0; font: 12px/1.5 var(--font-mono); overflow-wrap: anywhere; }
-      #events li { margin: 4px 0; color: var(--muted); }
+      /* Sub-blocks inside Miscellaneous */
+      .misc-stack { display: grid; gap: 14px; }
+      .misc-block { padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+      .misc-block:last-child { padding-bottom: 0; border-bottom: 0; }
+
+      label { display: block; margin: 8px 0 4px; font-size: 13px; font-weight: 600; color: var(--text); }
+      input[type="text"], input[type="email"], input[type="password"], textarea.field-area {
+        width: 100%;
+        padding: 8px 11px;
+        border: 1px solid var(--line-strong);
+        border-radius: 11px;
+        background: var(--input);
+        color: var(--text);
+        font: 13.5px/1.45 var(--font-sans);
+      }
+      input:disabled, textarea:disabled { background: var(--input-disabled); border-color: var(--line); color: var(--muted); }
+      input[type="range"] { flex: 1; accent-color: var(--primary); height: 20px; }
+      input[type="checkbox"] { width: 17px; height: 17px; margin: 0; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+
+      .badge-admin {
+        display: inline-flex;
+        align-items: center;
+        height: 20px;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: var(--ok-soft);
+        border: 1px solid var(--ok-line);
+        color: var(--ok-text);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0; }
+      .stats div {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 3px;
+        padding: 8px 7px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--muted);
+        font-size: 11.5px;
+        font-weight: 500;
+      }
+      .stats div.ink-tile { background: var(--ink-bg); border-color: var(--ink-bg); color: var(--ink-muted); }
+      .stats strong {
+        display: block;
+        color: var(--text);
+        font: 600 18px/1.05 var(--font-sans);
+        font-variant-numeric: tabular-nums;
+      }
+      .stats div.ink-tile strong { color: var(--ink-fg); }
+
+      .privacy-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 8px 0 0;
+        padding: 9px 11px;
+        border-radius: 12px;
+        border: 1px solid var(--priv-line);
+        background: var(--priv-soft);
+        color: var(--priv-text);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .privacy-box svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--priv-accent); margin-top: 1px; }
+      .privacy-box strong { color: var(--priv-strong); font-weight: 600; }
+      .privacy-box code { padding: 1px 4px; border-radius: 4px; background: #ECE8F7; color: var(--priv-strong); font: 11.5px var(--font-mono); }
+
+      .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; margin: 6px 0; cursor: pointer; }
+      #events { padding-left: 18px; margin: 6px 0 0; font: 11.5px/1.45 var(--font-mono); overflow-wrap: anywhere; }
+      #events li { margin: 3px 0; color: var(--muted); }
       kbd {
         display: inline-block;
-        padding: 1px 6px;
-        border-radius: 6px;
+        padding: 1px 5px;
+        border-radius: 5px;
         border: 1px solid var(--line);
         background: var(--surface-2);
         color: var(--text);
-        font: 600 11.5px/1.4 var(--font-mono);
+        font: 600 11px/1.35 var(--font-mono);
       }
 
-      /* Exploration status row (spinner + text only, no progress bar) */
-      .progress-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+      .progress-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
       .spinner {
-        width: 14px;
-        height: 14px;
+        width: 13px;
+        height: 13px;
         border: 2px solid var(--line);
         border-top-color: var(--primary);
         border-radius: 50%;
@@ -369,135 +474,157 @@
       <section id="paused-box" class="paused" aria-labelledby="paused-title" role="status" hidden>
         <h2 id="paused-title">Valo is paused on this page</h2>
         <p id="paused-reason" class="muted"></p>
-        <p class="muted">Valo observes nothing here, takes no screenshots and sends nothing. It resumes by itself on allowed pages.</p>
+        <p class="muted">Valo observes nothing here and resumes automatically on allowed pages.</p>
       </section>
 
       <section id="offer-box" class="callout" aria-labelledby="offer-title" hidden>
         <h2 id="offer-title">Valo can help</h2>
         <p id="offer-text"></p>
-        <div class="actions"><button id="offer-yes" type="button">Show me</button><button id="offer-no" class="secondary" type="button">Not now</button></div>
+        <div class="actions"><button id="offer-yes" class="small" type="button">Show me</button><button id="offer-no" class="secondary small" type="button">Not now</button></div>
       </section>
 
       <section id="plan-box" class="callout" aria-labelledby="plan-title" hidden>
-        <h2 id="plan-title">Guide</h2>
+        <h2 id="plan-title">Active guide</h2>
         <p id="plan-step"></p>
         <div class="actions"><button id="plan-back" class="secondary small" type="button">Back</button><button id="plan-next" class="small" type="button">Next</button><button id="plan-end" class="secondary small" type="button">End</button></div>
       </section>
 
-      <section aria-labelledby="question-title">
-        <span class="section-kicker">Guidance</span>
-        <h2 id="question-title">Ask directly</h2>
-        <form id="ask">
-          <label for="question">What do you want to do?</label>
-          <textarea id="question" rows="2" maxlength="500" placeholder="How do I change the IBAN?"></textarea>
-          <div class="row">
-            <button id="ask-button" type="submit">Show next step</button>
-            <button id="listen" class="secondary" type="button" title="Ask by voice" aria-label="Ask by voice">🎙</button>
+      <!-- Primary Guidance Chat Interface -->
+      <section class="chat-card" aria-labelledby="question-title">
+        <div class="chat-header">
+          <h2 id="question-title">Guidance</h2>
+          <button id="chat-clear" class="ghost" type="button" hidden>Clear</button>
+        </div>
+
+        <div id="chat-log" class="chat-log" role="log" aria-live="polite">
+          <div id="chat-empty" class="chat-empty">
+            <strong>How can Valo guide you?</strong>
+            <span class="muted">Type a question below or ask by voice (<kbd data-shortcut="listen">Alt+Shift+L</kbd> / “Hey Jarvis”). Valo highlights the exact spot on the page.</span>
           </div>
+        </div>
+
+        <form id="ask" class="composer">
+          <div class="composer-row">
+            <textarea id="question" rows="1" maxlength="500" aria-label="Ask Valo a question" placeholder="Ask a question …"></textarea>
+            <button id="listen" class="secondary" type="button" title="Ask by voice" aria-label="Ask by voice">🎙</button>
+            <button id="ask-button" type="submit">Send</button>
+          </div>
+          <p class="composer-hint"><kbd>Enter</kbd> sends · <kbd>Shift+Enter</kbd> new line · <kbd data-shortcut="ask">Alt+L</kbd> opens Valo</p>
+          <p id="last-question" hidden></p>
         </form>
-        <p id="last-question" class="muted"></p>
-        <p class="muted"><kbd>Enter</kbd> sends · <kbd data-shortcut="ask">Alt+L</kbd> opens Valo. Valo only highlights – you click and type.</p>
       </section>
 
-      <p id="status" class="status-bar" role="status">Valo is ready.</p>
       <p id="notice" role="alert"></p>
-      <p id="image-status" class="muted"></p>
 
-      <section id="explore-box" class="admin-card" aria-labelledby="explore-title" hidden>
-        <span class="section-kicker">Organization setup</span>
-        <h2 id="explore-title">Explore app</h2>
-        <p class="muted">Walks pages, tabs, menus and dialogs of this app domain once without submitting forms, and adds missing features automatically.</p>
-        <div class="actions">
-          <button id="explore-start" type="button">Explore app</button>
-          <button id="explore-stop" class="danger" type="button" disabled>Stop</button>
+      <!-- Admin-only collapsed area: Explore app (collapsed by default) -->
+      <details id="explore-box" class="compact-drawer admin-drawer" hidden>
+        <summary>
+          <span class="summary-left">Explore app <span class="badge-admin">Admin</span></span>
+          <svg data-chev viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </summary>
+        <div class="drawer-body">
+          <p class="muted" style="margin-top: 0">Walks pages, tabs, menus and dialogs of this app domain once without submitting forms, and adds missing features automatically.</p>
+          <div class="actions">
+            <button id="explore-start" class="small" type="button">Explore app</button>
+            <button id="explore-stop" class="danger small" type="button" disabled>Stop</button>
+          </div>
+          <div id="explore-status-row" class="progress-row" hidden>
+            <span id="explore-spinner" class="spinner" hidden aria-hidden="true"></span>
+            <p id="explore-progress" class="muted" style="margin: 0" role="status"></p>
+          </div>
         </div>
-        <div id="explore-status-row" class="progress-row" hidden>
-          <span id="explore-spinner" class="spinner" hidden aria-hidden="true"></span>
-          <p id="explore-progress" class="muted" style="margin: 0" role="status"></p>
-        </div>
-      </section>
-
-      <section aria-labelledby="observe-title">
-        <span class="section-kicker">Observation</span>
-        <h2 id="observe-title">Help while you work</h2>
-        <p class="muted">Valo starts automatically on your organization’s apps; “Pause” holds it until you resume.</p>
-        <p id="auto-line" class="muted"></p>
-        <div class="actions"><button id="start" type="button">Start observing</button><button id="stop" class="secondary" type="button" disabled>Pause</button></div>
-        <div class="stats" aria-label="Local history">
-          <div class="ink-tile"><strong id="event-count">0</strong>Actions</div>
-          <div><strong id="snapshot-count">0</strong>UI states</div>
-          <div><strong id="frame-count">0</strong>Frames</div>
-          <div><strong id="state-count">0</strong>Inferred</div>
-        </div>
-        <div class="privacy-box">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 2.5l6 2.5v4.5c0 4-2.6 6.6-6 8-3.4-1.4-6-4-6-8V5z" stroke-linejoin="round"/><path d="M7.5 10l1.8 1.8 3.2-3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span><strong>Pseudonymized, not anonymous</strong> — page content and patterns (IBAN, email, phone, name, address) become <code>[Person-1]</code> locally; screenshot content areas are painted over.</span>
-        </div>
-      </section>
-
-      <section aria-labelledby="account-title">
-        <span class="section-kicker">Organization</span>
-        <h2 id="account-title">Account</h2>
-        <form id="login">
-          <label for="email">Email</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="admin@demo.test" />
-          <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" maxlength="200" placeholder="demo1234" />
-          <div class="actions"><button id="login-button" type="submit">Sign in</button></div>
-          <p class="muted">Without signing in, Valo runs in dev mode using the demo role. Demo admin: <code>admin@demo.test</code> / <code>demo1234</code></p>
-        </form>
-        <div id="signed-in" class="row" style="flex-wrap: wrap" hidden>
-          <p id="account-line" style="flex: 1; margin: 0; font-weight: 600"></p>
-          <span id="admin-badge" class="badge-admin" hidden>Admin</span>
-          <button id="logout" class="secondary small" type="button">Sign out</button>
-        </div>
-        <p id="org-line" class="muted"></p>
-      </section>
-
-      <section aria-labelledby="behaviour-title">
-        <span class="section-kicker">Preferences</span>
-        <h2 id="behaviour-title">Valo behavior</h2>
-        <label class="toggle"><input id="auto-activate" type="checkbox" checked />Automatically active on my organization’s apps</label>
-        <label class="toggle"><input id="show-orb" type="checkbox" checked />Show the status orb on the page</label>
-        <p id="orb-hidden-line" class="muted row" hidden><span id="orb-hidden-text"></span><button id="orb-unhide" class="secondary small" type="button">Show again</button></p>
-        <label class="toggle"><input id="proactive" type="checkbox" />Offer help proactively</label>
-        <label class="toggle"><input id="voice" type="checkbox" />Voice: wake word &amp; hotkey (<span data-shortcut="listen">Alt+Shift+L</span>)</label>
-        <label class="toggle"><input id="speak" type="checkbox" />Read answers aloud (voice questions only)</label>
-        <p id="snooze-line" class="muted"></p>
-        <div class="actions"><button id="snooze" class="secondary small" type="button">Quiet for 10 min</button><button id="resume" class="secondary small" type="button" hidden>Offer again</button></div>
-        <label for="threshold">Offer threshold: <strong id="threshold-value">–</strong></label>
-        <div class="row"><input id="threshold" type="range" min="0.6" max="0.95" step="0.01" value="0.8" aria-describedby="threshold-help" /><button id="threshold-save" class="secondary small" type="button">Apply</button></div>
-        <p id="threshold-help" class="muted">Higher = Valo offers help less often. 👍/👎 on offers adjust your personal threshold automatically.</p>
-        <p id="prefs-message" class="muted"></p>
-      </section>
-
-      <section aria-labelledby="workflow">
-        <span class="section-kicker">Live context</span>
-        <h2 id="workflow">No workflow yet</h2>
-        <p id="intent" class="muted">The goal is inferred from the observed history.</p>
-        <p id="decision" class="muted"></p>
-        <details style="padding: 10px 12px; margin-top: 10px; background: var(--surface-2); border-radius: 12px">
-          <summary>Recent actions<svg data-chev viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-          <div><ul id="events"></ul><p id="analytics" class="muted"></p></div>
-        </details>
-      </section>
-
-      <details>
-        <summary>Demo context<svg data-chev viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-        <form id="settings">
-          <label class="toggle"><input id="screenshots" type="checkbox" checked />Record screenshot history</label>
-          <p class="muted">Selected screenshots are attached only for actual guidance, with content areas painted over.</p>
-          <label for="role">Role in the demo scenario</label><input id="role" type="text" maxlength="100" placeholder="e.g. Accounting" />
-          <p id="role-note" class="muted"></p>
-          <label for="knowledge">Knowledge about the app</label><textarea id="knowledge" rows="4" maxlength="12000" placeholder="Describe the features and steps of the demo flow."></textarea>
-          <div class="actions"><button type="submit">Apply context</button></div>
-        </form>
       </details>
 
-      <details>
-        <summary>Troubleshooting<svg data-chev viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-        <div>
-          <p class="muted">Copies the pseudonymized session context (settings, policy, recent calls, hints, voice log, events). No tokens, keys or screenshots.</p>
-          <div class="row" style="margin-top: 8px"><button id="debug-copy" class="secondary small" type="button">Copy debug context</button><span id="debug-note" class="muted" role="status"></span></div>
-          <textarea id="debug-text" rows="6" readonly hidden aria-label="Debug context" style="margin-top: 8px; font: 12px/1.4 var(--font-mono)"></textarea>
+      <!-- Everything else collapsed under Miscellaneous (collapsed by default) -->
+      <details id="misc-box" class="compact-drawer">
+        <summary>
+          <span class="summary-left">Miscellaneous</span>
+          <svg data-chev viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </summary>
+        <div class="drawer-body misc-stack">
+          <div class="misc-block">
+            <span class="section-kicker">Organization</span>
+            <h3>Account</h3>
+            <form id="login">
+              <label for="email">Email</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="admin@demo.test" />
+              <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" maxlength="200" placeholder="demo1234" />
+              <div class="actions"><button id="login-button" class="small" type="submit">Sign in</button></div>
+              <p class="muted">Demo admin: <code>admin@demo.test</code> / <code>demo1234</code></p>
+            </form>
+            <div id="signed-in" class="row" style="flex-wrap: wrap" hidden>
+              <p id="account-line" style="flex: 1; margin: 0; font-weight: 600"></p>
+              <span id="admin-badge" class="badge-admin" hidden>Admin</span>
+              <button id="logout" class="secondary small" type="button">Sign out</button>
+            </div>
+            <p id="org-line" class="muted"></p>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Observation</span>
+            <h3>Local activity &amp; status</h3>
+            <p id="status" class="muted" role="status">Valo is ready.</p>
+            <p id="image-status" class="muted" style="color: var(--warn-text)"></p>
+            <p id="auto-line" class="muted"></p>
+            <div class="actions"><button id="start" class="small" type="button">Start observing</button><button id="stop" class="secondary small" type="button" disabled>Pause</button></div>
+            <div class="stats" aria-label="Local history">
+              <div class="ink-tile"><strong id="event-count">0</strong>Actions</div>
+              <div><strong id="snapshot-count">0</strong>UI states</div>
+              <div><strong id="frame-count">0</strong>Frames</div>
+              <div><strong id="state-count">0</strong>Inferred</div>
+            </div>
+            <div class="privacy-box">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 2.5l6 2.5v4.5c0 4-2.6 6.6-6 8-3.4-1.4-6-4-6-8V5z" stroke-linejoin="round"/><path d="M7.5 10l1.8 1.8 3.2-3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span><strong>Pseudonymized, not anonymous</strong> — page content &amp; patterns become <code>[Person-1]</code> locally; screenshot content areas are painted over.</span>
+            </div>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Preferences</span>
+            <h3>Valo behavior</h3>
+            <label class="toggle"><input id="auto-activate" type="checkbox" checked />Automatically active on my organization’s apps</label>
+            <label class="toggle"><input id="show-orb" type="checkbox" checked />Show the status orb on the page</label>
+            <p id="orb-hidden-line" class="muted row" hidden><span id="orb-hidden-text"></span><button id="orb-unhide" class="secondary small" type="button">Show again</button></p>
+            <label class="toggle"><input id="proactive" type="checkbox" />Offer help proactively</label>
+            <label class="toggle"><input id="voice" type="checkbox" />Voice: wake word &amp; hotkey (<span data-shortcut="listen">Alt+Shift+L</span>)</label>
+            <label class="toggle"><input id="speak" type="checkbox" />Read answers aloud (voice questions only)</label>
+            <p id="snooze-line" class="muted"></p>
+            <div class="actions"><button id="snooze" class="secondary small" type="button">Quiet for 10 min</button><button id="resume" class="secondary small" type="button" hidden>Offer again</button></div>
+            <label for="threshold">Offer threshold: <strong id="threshold-value">–</strong></label>
+            <div class="row"><input id="threshold" type="range" min="0.6" max="0.95" step="0.01" value="0.8" aria-describedby="threshold-help" /><button id="threshold-save" class="secondary small" type="button">Apply</button></div>
+            <p id="threshold-help" class="muted">Higher = fewer offers. 👍/👎 adjust automatically.</p>
+            <p id="prefs-message" class="muted"></p>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Live context</span>
+            <h3 id="workflow">No workflow yet</h3>
+            <p id="intent" class="muted">The goal is inferred from the observed history.</p>
+            <p id="decision" class="muted"></p>
+            <details style="padding: 8px 10px; margin-top: 8px; background: var(--surface-2); border-radius: 10px">
+              <summary style="font-size: 12.5px">Recent actions<svg data-chev viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+              <div><ul id="events"></ul><p id="analytics" class="muted"></p></div>
+            </details>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Development</span>
+            <h3>Demo context</h3>
+            <form id="settings">
+              <label class="toggle"><input id="screenshots" type="checkbox" checked />Record screenshot history</label>
+              <label for="role">Role in the demo scenario</label><input id="role" type="text" maxlength="100" placeholder="e.g. Accounting" />
+              <p id="role-note" class="muted"></p>
+              <label for="knowledge">Knowledge about the app</label><textarea id="knowledge" class="field-area" rows="3" maxlength="12000" placeholder="Describe the features and steps of the demo flow."></textarea>
+              <div class="actions"><button class="small" type="submit">Apply context</button></div>
+            </form>
+          </div>
+
+          <div class="misc-block">
+            <span class="section-kicker">Support</span>
+            <h3>Troubleshooting</h3>
+            <p class="muted" style="margin-top: 0">Copies the pseudonymized session context (no tokens, keys or screenshots).</p>
+            <div class="row" style="margin-top: 6px"><button id="debug-copy" class="secondary small" type="button">Copy debug context</button><span id="debug-note" class="muted" role="status"></span></div>
+            <textarea id="debug-text" class="field-area" rows="5" readonly hidden aria-label="Debug context" style="margin-top: 8px; font: 11.5px/1.4 var(--font-mono)"></textarea>
+          </div>
         </div>
       </details>
     </main>

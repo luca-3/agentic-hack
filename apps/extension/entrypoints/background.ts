@@ -26,11 +26,22 @@ type Source = "text" | "voice" | "proactive";
 type RenderEvent = Extract<GuidanceEvent, { type: "point" | "plan" | "say" }>;
 type PlanRecord = PlanView & { tabId: number; updatedAt: number };
 type PendingOffer = { id: string; text: string; question: string; tabId: number; shownAt: number; intent?: InferredIntent };
-type HelpContext = { tabId: number; snapshotId: string; source: Source; offerId?: string; cleared: boolean; warning?: string };
+type HelpContext = { tabId: number; snapshotId: string; source: Source; offerId?: string; chatId?: string; cleared: boolean; warning?: string };
 type Prefetch = { offerId: string; ctx: HelpContext; events: RenderEvent[]; live: boolean; done: boolean; failed: string | null; chain: Promise<void>; answer: AskResponse | null };
+export type ChatEntry = {
+  id: string;
+  role: "user" | "assistant";
+  source: Source;
+  text: string;
+  steps?: string[];
+  spoken?: boolean;
+  error?: boolean;
+  pending?: boolean;
+  ts: number;
+};
 type SavedSession = {
   recording: boolean; recordingTab: number | null; buffer: unknown; decision: unknown; inference: unknown; sessionId: string;
-  plan: unknown; snoozeUntil: number; lastDecisionAt: number; threshold: number | null; analytics: unknown;
+  plan: unknown; snoozeUntil: number; lastDecisionAt: number; threshold: number | null; analytics: unknown; chat?: unknown;
 };
 export type ExploreStatus = {
   running: boolean;
@@ -55,6 +66,7 @@ export type LotseStatus = {
   voiceState: VoiceState; lastQuestion: { text: string; source: Source } | null; analyticsQueued: number;
   account: { email: string; isAdmin: boolean } | null; page: PageStatus | null;
   explore: ExploreStatus;
+  chat: ChatEntry[];
 };
 /** Active tab as the side panel shows it: app/org/role from GET /api/lotse/policy and whether Valo is paused there. */
 export type PageStatus = {
@@ -69,7 +81,7 @@ const HANDLED = new Set<string>([
   "lotse:start", "lotse:stop", "lotse:status", "lotse:settings", "lotse:update-settings", "lotse:observe", "lotse:ask", "lotse:wake-question",
   "lotse:plan-resume", "lotse:plan-update", "lotse:plan-end", "lotse:plan-command", "lotse:offer-accept", "lotse:offer-feedback",
   "lotse:prefs", "lotse:snooze", "lotse:listen", "lotse:get-policy", "lotse:paused", "lotse:login", "lotse:logout",
-  "lotse:explore-start", "lotse:explore-stop", "lotse:debug-dump",
+  "lotse:explore-start", "lotse:explore-stop", "lotse:chat-clear", "lotse:debug-dump",
 ]);
 const ANALYTICS_TYPES = new Set<LotseEvent["type"]>(["click", "route", "search", "error", "idle", "submit", "empty_results", "rage_click", "repeated_click"]);
 const URGENT_EVENTS = new Set<LotseEvent["type"]>(["repeated_click", "rage_click", "error", "empty_results", "idle"]);
@@ -110,6 +122,7 @@ let threshold: number | null = null;
 let prefsMessage = "";
 let voiceState: VoiceState = "off";
 let lastQuestion: { text: string; source: Source } | null = null;
+let chat: ChatEntry[] = [];
 let analytics: LotseEvent[] = [];
 let lastFlushAt = Date.now();
 let flushing = false;
@@ -249,6 +262,10 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
       break;
     case "lotse:explore-stop":
       await stopExplore();
+      break;
+    case "lotse:chat-clear":
+      chat = [];
+      schedulePersistence();
       break;
     case "lotse:debug-dump":
       return { ok: true, status: status(), debug: await debugDump() };
@@ -680,7 +697,9 @@ async function maybeIntervene() {
       if (job.live) {
         await job.chain;
         if (prefetch === job) prefetch = null;
-        if (current()) message = job.ctx.warning ?? (job.answer.sentence || "Valo is showing you the way.");
+        const finalText = job.ctx.warning ?? (job.answer.sentence || "Valo is showing you the way.");
+        finalizeChatReply(job.ctx.chatId, finalText);
+        if (current()) message = finalText;
       }
     } catch (error) {
       job.failed = errorText(error);
@@ -688,6 +707,7 @@ async function maybeIntervene() {
       if (job.live && prefetch === job) {
         prefetch = null;
         message = job.failed;
+        updateChat(job.ctx.chatId, { text: job.failed, pending: false, error: true });
         await sendTab(tabId, { type: "lotse:say", text: "Valo could not load the way just now. Feel free to ask me directly." });
       }
     }
@@ -720,13 +740,18 @@ async function acceptOffer(offerId: string) {
   await sendTab(offer.tabId, { type: "lotse:hide-offer" });
   const job = prefetch?.offerId === offerId ? prefetch : null;
   if (job && !job.failed) {
+    appendChat({ role: "user", source: "proactive", text: offer.question });
+    const chatId = appendChat({ role: "assistant", source: "proactive", text: "Finding the next step …", pending: true });
+    job.ctx.chatId = chatId;
     job.live = true;
     message = "Valo is showing you the way …";
     for (const event of job.events.splice(0)) job.chain = job.chain.then(() => deliver(job.ctx, event)).catch(() => undefined);
     await job.chain;
     if (job.done && job.answer) {
       if (prefetch === job) prefetch = null;
-      message = job.ctx.warning ?? (job.answer.sentence || "Valo is showing you the way.");
+      const finalText = job.ctx.warning ?? (job.answer.sentence || "Valo is showing you the way.");
+      finalizeChatReply(chatId, finalText);
+      message = finalText;
     }
     return;
   }
@@ -769,16 +794,50 @@ async function loadPrefs(value?: number) {
 }
 
 // ---------------------------------------------------------------------------
+// Chat history (typed questions, spoken audio questions & answers, proactive help)
+// ---------------------------------------------------------------------------
+
+const CHAT_PENDING_TEXT = "Finding the next step …";
+
+function appendChat(entry: Omit<ChatEntry, "id" | "ts">): string {
+  const id = crypto.randomUUID();
+  chat.push({ ...entry, id, ts: Date.now() });
+  if (chat.length > 40) chat.splice(0, chat.length - 40);
+  schedulePersistence();
+  return id;
+}
+
+function updateChat(id: string | undefined, patch: Partial<ChatEntry>) {
+  if (!id) return;
+  const item = chat.find((entry) => entry.id === id);
+  if (!item) return;
+  Object.assign(item, patch);
+  schedulePersistence();
+}
+
+function finalizeChatReply(id: string | undefined, fallbackText: string) {
+  if (!id) return;
+  const item = chat.find((entry) => entry.id === id);
+  if (!item) return;
+  item.pending = false;
+  if (!item.text || item.text === CHAT_PENDING_TEXT) item.text = fallbackText;
+  schedulePersistence();
+}
+
+// ---------------------------------------------------------------------------
 // Explicit questions and guidance delivery
 // ---------------------------------------------------------------------------
 
 async function explicitQuestion(question: string, source: Source = "text", options: { offerId?: string; intent?: InferredIntent } = {}): Promise<AskResponse> {
   if (typeof question !== "string" || !question.trim() || question.length > 500) throw new Error("Please ask a question with at most 500 characters.");
-  questionLog.push({ at: Date.now(), source, text: question.trim() });
+  const cleanQuestion = question.trim();
+  questionLog.push({ at: Date.now(), source, text: cleanQuestion });
   try { stopSpeaking(); } catch { /* voice module not ready */ }
-  if (source !== "proactive") { lastQuestion = { text: question.trim(), source }; dropOffer(true); }
+  if (source !== "proactive") { lastQuestion = { text: cleanQuestion, source }; dropOffer(true); }
   if (busy && busyMode === "proactive") { generation++; requestController?.abort(); busy = false; inferencePending = true; }
   if (busy) throw new Error("Valo is working on a hint right now. Try again in a moment.");
+  appendChat({ role: "user", source, text: cleanQuestion });
+  const chatId = appendChat({ role: "assistant", source, text: CHAT_PENDING_TEXT, pending: true });
   busy = true; busyMode = "question"; const owner = ++busyOwner;
   const epoch = generation;
   try {
@@ -796,12 +855,19 @@ async function explicitQuestion(question: string, source: Source = "text", optio
     if (epoch !== generation) throw new Error("The request was cancelled.");
     message = "Valo is finding the next step …";
     const knownIntent = options.intent ?? (tab.id === recordingTab ? inference?.intent : undefined);
-    const answer = await requestHelp(tab.id, latest, questionBuffer.getContext(), question.trim(), knownIntent, source, { offerId: options.offerId });
+    const answer = await requestHelp(tab.id, latest, questionBuffer.getContext(), cleanQuestion, knownIntent, source, { offerId: options.offerId, chatId });
     if (epoch !== generation) throw new Error("The request was cancelled.");
     lastDecisionAt = Date.now(); // no proactive offer right on top of fresh guidance
-    message = answer.sentence || "Valo has marked the way.";
+    const finalText = answer.sentence || "Highlighted on the page.";
+    finalizeChatReply(chatId, finalText);
+    message = finalText;
     return answer;
-  } catch (error) { if (epoch === generation) message = errorText(error); throw error; }
+  } catch (error) {
+    const errMsg = errorText(error);
+    updateChat(chatId, { text: errMsg, pending: false, error: true });
+    if (epoch === generation) message = errMsg;
+    throw error;
+  }
   finally { if (owner === busyOwner) { busy = false; busyMode = null; if (inferencePending) queueInference(); } schedulePersistence(); }
 }
 
@@ -812,12 +878,12 @@ function appContext() {
 
 async function requestHelp(
   tabId: number, snapshot: ObservationSnapshot, observation: ObservationContext | null, question: string,
-  intent: InferredIntent | undefined, source: Source, extra: { offerId?: string; prefetch?: Prefetch } = {},
+  intent: InferredIntent | undefined, source: Source, extra: { offerId?: string; prefetch?: Prefetch; chatId?: string } = {},
 ): Promise<AskResponse> {
   const epoch = generation;
   if (observation && !settings.screenshots) observation = { ...observation, screenshots: [] };
   const body = AskRequestSchema.parse({ question, source, snapshot, observation: observation ?? undefined, recentEvents: observation?.workflow.events.slice(-50), intent, ...appContext() });
-  const ctx: HelpContext = extra.prefetch?.ctx ?? { tabId, snapshotId: snapshot.id, source, offerId: extra.offerId, cleared: false };
+  const ctx: HelpContext = extra.prefetch?.ctx ?? { tabId, snapshotId: snapshot.id, source, offerId: extra.offerId, chatId: extra.chatId, cleared: false };
   let streamed = false;
   const route = async (event: RenderEvent) => {
     if (epoch !== generation) throw new Error("The request was cancelled.");
@@ -852,14 +918,23 @@ async function deliver(ctx: HelpContext, event: RenderEvent) {
   if (event.type === "point") {
     const result = await sendTab(ctx.tabId, { type: "lotse:point", elementNumber: event.elementNumber, label: event.label, hint: event.hint, snapshotId: ctx.snapshotId, offerId: ctx.offerId });
     if (!result?.ok) ctx.warning = "The suggested element is not visible right now.";
+    const existing = ctx.chatId ? chat.find((c) => c.id === ctx.chatId) : undefined;
+    if (existing && (existing.pending || existing.text === CHAT_PENDING_TEXT)) {
+      updateChat(ctx.chatId, { text: event.hint ?? `Highlighted “${event.label}” on the page.`, pending: false });
+    }
   } else if (event.type === "plan") {
     plan = { id: crypto.randomUUID(), steps: event.steps, index: 0, snapshotId: ctx.snapshotId, offerId: ctx.offerId, tabId: ctx.tabId, updatedAt: Date.now() };
     schedulePersistence();
     await sendTab(ctx.tabId, { type: "lotse:plan-show", plan: planView(plan) });
+    const existing = ctx.chatId ? chat.find((c) => c.id === ctx.chatId) : undefined;
+    const nextText = existing && existing.text && existing.text !== CHAT_PENDING_TEXT ? existing.text : "Follow these steps:";
+    updateChat(ctx.chatId, { text: nextText, steps: event.steps.map((s) => s.hint || s.label), pending: false });
   } else {
     await sendTab(ctx.tabId, { type: "lotse:say", text: event.text, offerId: ctx.offerId });
+    const willSpeak = ctx.source === "voice" && settings.speak;
+    updateChat(ctx.chatId, { text: event.text, spoken: willSpeak || undefined, pending: false });
     // TTS runs on the server: speak the pseudonymized text ("Kunde 1"), never the real name (D-26).
-    if (ctx.source === "voice" && settings.speak) void pseudo.spokenText(event.text).then((text) => speak(text)).catch(() => undefined);
+    if (willSpeak) void pseudo.spokenText(event.text).then((text) => speak(text)).catch(() => undefined);
   }
 }
 
@@ -1418,7 +1493,7 @@ function status(): LotseStatus {
     plan: plan && step ? { index: plan.index, total: plan.steps.length, label: step.label, hint: step.hint } : null,
     threshold, prefsMessage, snoozedUntil: snoozeUntil > Date.now() ? snoozeUntil : null,
     voiceState, lastQuestion, analyticsQueued: analytics.length,
-    account, page, explore: exploreStatus,
+    account, page, explore: exploreStatus, chat,
   };
 }
 
@@ -1426,7 +1501,7 @@ function schedulePersistence() {
   if (persistenceTimer !== undefined) clearTimeout(persistenceTimer);
   persistenceTimer = setTimeout(() => {
     persistenceTimer = undefined;
-    const saved: SavedSession = { recording, recordingTab, buffer: buffer.serialize(), decision, inference, sessionId, plan, snoozeUntil, lastDecisionAt, threshold, analytics };
+    const saved: SavedSession = { recording, recordingTab, buffer: buffer.serialize(), decision, inference, sessionId, plan, snoozeUntil, lastDecisionAt, threshold, analytics, chat };
     void browser.storage.session.set({ [STORE]: saved }).catch(() => { message = "The local history could not be saved."; });
   }, 700);
 }
@@ -1469,6 +1544,18 @@ async function restore() {
     lastDecisionAt = typeof saved.lastDecisionAt === "number" ? saved.lastDecisionAt : 0;
     threshold = typeof saved.threshold === "number" && saved.threshold >= 0 && saved.threshold <= 1 ? saved.threshold : null;
     analytics = Array.isArray(saved.analytics) ? saved.analytics.filter((event) => LotseEventSchema.safeParse(event).success).slice(-500) as LotseEvent[] : [];
+    chat = Array.isArray(saved.chat)
+      ? saved.chat
+          .filter((item): item is ChatEntry => Boolean(
+            item && typeof item === "object" &&
+            typeof (item as ChatEntry).id === "string" &&
+            ((item as ChatEntry).role === "user" || (item as ChatEntry).role === "assistant") &&
+            typeof (item as ChatEntry).text === "string" &&
+            typeof (item as ChatEntry).ts === "number",
+          ))
+          .map((item) => ({ ...item, pending: false }))
+          .slice(-40)
+      : [];
     if (recording && recordingTab !== null) {
       const tab = await browser.tabs.get(recordingTab).catch(() => null);
       if (!tab || !localUrl(tab.url)) { recording = false; recordingTab = null; }
