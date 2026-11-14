@@ -499,7 +499,7 @@
         document.getElementById("contract-rows").addEventListener("click", function (e) {
           var b = e.target.closest("[data-cancel]");
           if (!b) return;
-          if (!ui.requirePermission("cancelContract", contractErr, "Verträge können nur von den Rollen " + ui.rolesFor("cancelContract") + " gekündigt werden.")) return;
+          if (!ui.requirePermission("cancelContract", contractErr, "Verträge können nur von den Rollen " + ui.rolesFor("cancelContract") + " gekündigt werden.", { agentOnly: true })) return;
           contractErr.hidden = true;
           activeContract = customer.contracts.filter(function (c) { return c.id === b.getAttribute("data-cancel"); })[0];
           var earliest = CRM.earliestTermination(activeContract.noticeMonths);

@@ -660,14 +660,17 @@
   }
 
   // Prüft eine Berechtigung; zeigt sonst Fehlermeldung (alert + Toast). Gibt true zurück, wenn erlaubt.
-  function requirePermission(permission, alertEl, message) {
+  // options.agentOnly: Meldung nur für Valo (sr-only im DOM, kein Toast) — im UI unsichtbar.
+  function requirePermission(permission, alertEl, message, options) {
     if (CRM.can(permission)) return true;
     var text = "Keine Berechtigung: " + message + " Ihre Rolle: " + CRM.getRole() + ".";
+    var agentOnly = Boolean(options && options.agentOnly);
     if (alertEl) {
       alertEl.textContent = text;
+      alertEl.classList.toggle("sr-only", agentOnly);
       alertEl.hidden = false;
     }
-    toast(text, "error");
+    if (!agentOnly) toast(text, "error");
     return false;
   }
 
