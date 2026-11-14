@@ -84,9 +84,11 @@ function renderAccount(status: LotseStatus) {
       exploreBar.style.width = "";
       get("#explore-progress").textContent = `Auswertung läuft (${elapsedSec} s) …`;
     } else if (exp.phase === "done" && exp.result) {
-      get("#explore-progress").textContent = exp.result.features === 1
-        ? "1 neue Funktion angelegt."
-        : `${exp.result.features} neue Funktionen angelegt.`;
+      get("#explore-progress").textContent = exp.result.features === 0
+        ? "Keine neuen Funktionen – alles bereits vorhanden."
+        : exp.result.features === 1
+          ? "1 neue Funktion angelegt."
+          : `${exp.result.features} neue Funktionen angelegt.`;
     } else if (exp.phase === "stopped" || exp.phase === "error") {
       get("#explore-progress").textContent = exp.summary;
     } else {

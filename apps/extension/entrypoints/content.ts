@@ -57,7 +57,9 @@ const overlay = new LotseOverlay({
 });
 
 export default defineContentScript({
-  matches: ["http://localhost/*", "http://127.0.0.1/*"],
+  // dev.fuller.de = CORPUS dev environment (example data only). Vehicles pages hold the real fleet → never read.
+  matches: ["http://localhost/*", "http://127.0.0.1/*", "https://dev.fuller.de/*"],
+  excludeMatches: ["https://dev.fuller.de/fahrzeuge*"],
   main(ctx) {
     const onMessage = (message: LotseMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
       // Fail closed: nothing that reads or marks the page runs on a paused page.

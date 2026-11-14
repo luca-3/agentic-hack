@@ -26,9 +26,9 @@ insert into public.org_members (org_id, user_id, role, is_admin, email) values
   ('00000000-0000-0000-0000-0000000000f1', 'a0000000-0000-0000-0000-000000000002', 'Büro', false, 'buero@demo.test'),
   ('00000000-0000-0000-0000-0000000000f1', 'a0000000-0000-0000-0000-000000000003', 'Monteur', false, 'monteur@demo.test');
 
--- Apps. Ports: this app runs on :3000, so the local CORPUS test instance runs on :3100.
+-- Apps. CORPUS: dev.fuller.de (dev environment, example data) or a local test instance on :3100 (this app uses :3000).
 insert into public.apps (id, org_id, name, domains) values
-  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000f1', 'CORPUS', '{localhost:3100}'),
+  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000f1', 'CORPUS', '{dev.fuller.de,localhost:3100}'),
   ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000f1', 'Erasmus-Förderhelfer', '{localhost:3200}');
 
 -- CORPUS features (derived from the CORPUS agent handbook; click paths to be verified on the local instance)

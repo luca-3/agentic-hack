@@ -1043,7 +1043,11 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
     if (exploreAborted) return;
 
     const result = ExploreResponseSchema.parse(rawResult);
-    const summaryText = result.features === 1 ? "1 neue Funktion angelegt." : `${result.features} neue Funktionen angelegt.`;
+    const summaryText = result.features === 0
+      ? "Keine neuen Funktionen – alles bereits vorhanden."
+      : result.features === 1
+        ? "1 neue Funktion angelegt."
+        : `${result.features} neue Funktionen angelegt.`;
     exploreRunning = false;
     exploreTabId = null;
     exploreStatus = {
