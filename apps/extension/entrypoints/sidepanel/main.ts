@@ -27,8 +27,6 @@ const loginButton = get<HTMLButtonElement>("#login-button");
 const exploreBox = get<HTMLElement>("#explore-box");
 const exploreStart = get<HTMLButtonElement>("#explore-start");
 const exploreStop = get<HTMLButtonElement>("#explore-stop");
-const exploreBarWrap = get<HTMLDivElement>("#explore-bar-wrap");
-const exploreBar = get<HTMLDivElement>("#explore-bar");
 const exploreSpinner = get<HTMLSpanElement>("#explore-spinner");
 const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 ready", listening: "🎙 listening …", thinking: "… thinking", speaking: "🔊 speaking" };
 let settingsLoaded = false;
@@ -69,19 +67,14 @@ function renderAccount(status: LotseStatus) {
     exploreStart.disabled = exp.running;
     exploreStop.disabled = !exp.running;
     const activePhase = exp.phase === "crawling" || exp.phase === "analyzing";
-    exploreBarWrap.hidden = !activePhase;
     exploreSpinner.hidden = !activePhase;
-    exploreBar.classList.toggle("indeterminate", exp.phase === "analyzing");
     const elapsedSec = exp.phaseStartedAt ? Math.max(0, Math.floor((Date.now() - exp.phaseStartedAt) / 1_000)) : 0;
 
     if (exp.phase === "crawling") {
       const shownCount = Math.min(Math.max(exp.pageCount, 1), exp.maxPages);
-      const pct = Math.min(100, Math.max(4, Math.round((shownCount / exp.maxPages) * 100)));
-      exploreBar.style.width = `${pct}%`;
       const routeInfo = exp.currentRoute ? ` · ${exp.currentRoute}` : "";
       get("#explore-progress").textContent = `Page ${shownCount} of up to ${exp.maxPages}${routeInfo} (${elapsedSec} s)`;
     } else if (exp.phase === "analyzing") {
-      exploreBar.style.width = "";
       get("#explore-progress").textContent = `Analyzing (${elapsedSec} s) …`;
     } else if (exp.phase === "done" && exp.result) {
       get("#explore-progress").textContent = exp.result.features === 0
@@ -205,11 +198,18 @@ exploreStart.addEventListener("click", () => { void act({ type: "lotse:explore-s
 exploreStop.addEventListener("click", () => { void act({ type: "lotse:explore-stop" }); });
 startButton.addEventListener("click", () => { void act({ type: "lotse:start" }); });
 stopButton.addEventListener("click", () => { void act({ type: "lotse:stop" }); });
+question.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+    event.preventDefault();
+    if (!askButton.disabled && question.value.trim()) askForm.requestSubmit();
+  }
+});
 askForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = question.value.trim();
   if (text) {
     askButton.disabled = true;
+    question.value = "";
     void act({ type: "lotse:ask", question: text }).finally(() => { askButton.disabled = false; });
   }
 });
