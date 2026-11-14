@@ -23,7 +23,9 @@ const VOICE_TEXT: Partial<Record<VoiceState, string>> = { listening: "🎙 Valo 
 const STYLE = `
 :host { all: initial; }
 [hidden] { display: none !important; }
-.frame { position: fixed; display: none; border: 3px solid #2563eb; border-radius: 10px; box-shadow: 0 0 0 4px rgb(37 99 235 / .25); transition: opacity .15s; pointer-events: none; }
+.frame { position: fixed; display: none; border: 3px solid #FF8A3D; border-radius: 10px; pointer-events: none;
+  /* Spotlight: the marked spot stays bright, everything around it is dimmed by 20 % (clicks still pass through). */
+  box-shadow: 0 0 0 4px rgb(255 138 61 / .3), 0 0 0 200vmax rgb(6 18 25 / .2); transition: opacity .15s, box-shadow .25s; }
 .bubble { position: fixed; display: none; box-sizing: border-box; width: max-content; min-width: 180px; max-width: 320px; padding: 10px 12px; border-radius: 12px; background: #1e3a8a; color: #fff; font: 500 14px/1.4 system-ui, sans-serif; box-shadow: 0 8px 24px rgb(0 0 0 / .22); pointer-events: none; }
 .bubble.offer { background: #0f172a; }
 .bubble.below::before, .bubble.above::after { content: ""; position: absolute; left: var(--arrow, 18px); border: 7px solid transparent; }
