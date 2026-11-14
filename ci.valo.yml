@@ -11,8 +11,10 @@ schemaVersion: v0.2
 prepare:
   steps:
     # NEXT_PUBLIC_* are inlined at build time → the workspace variables must be set before this runs.
+    # Order: npm ci → extension ZIP fixed to the hosted server (LOTSE_SERVER_URL, else it would point to localhost)
+    # → copied to the dashboard's public/ (download on /install) → build dashboard + server.
     - name: Build
-      command: fnm exec --using=24.22.1 -- bash -c "npm ci && npm run build -w @lotse/dashboard -w @lotse/server"
+      command: fnm exec --using=24.22.1 -- bash -c 'set -euo pipefail; if [ -z "${LOTSE_SERVER_URL:-}" ]; then echo "LOTSE_SERVER_URL is empty – the Valo extension would point to localhost. Set the workspace variable." >&2; exit 1; fi; npm ci; rm -rf apps/extension/.output; WXT_LOTSE_SERVER_URL="$LOTSE_SERVER_URL" npm run zip -w @lotse/extension; mkdir -p apps/dashboard/public; cp apps/extension/.output/*-chrome.zip apps/dashboard/public/valo-extension.zip; npm run build -w @lotse/dashboard -w @lotse/server'
 
 test:
   steps:

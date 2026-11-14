@@ -13,6 +13,7 @@ const NAV = [
   { href: "/knowledge", label: "Knowledge" },
   { href: "/trainings", label: "Trainings" },
   { href: "/team", label: "Team" },
+  { href: "/install", label: "Install" },
 ] as const;
 export type NavHref = (typeof NAV)[number]["href"];
 

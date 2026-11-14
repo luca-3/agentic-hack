@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Shell } from "@/components/Shell";
-import { Card, Footnote, StatTile } from "@/components/ui";
+import { ButtonLink, Card, Footnote, PRODUCT_NAME, StatTile } from "@/components/ui";
 import { bewerte, type InsightRow } from "@/lib/insights";
 import { getOrgContext } from "@/lib/org";
 
@@ -27,6 +27,13 @@ async function Inhalt() {
 
   return (
     <>
+      <Card className="flex flex-wrap items-center gap-4 border-primary-line bg-primary-soft">
+        <div className="min-w-64 flex-1">
+          <h2 className="m-0 text-lg font-semibold">Install the {PRODUCT_NAME} extension</h2>
+          <p className="mt-1 mb-0 text-muted">{PRODUCT_NAME} runs in Chrome next to your apps. Download it and load it in four short steps.</p>
+        </div>
+        <ButtonLink href="/install">Install {PRODUCT_NAME}</ButtonLink>
+      </Card>
       <div className="grid grid-cols-6 gap-4">
         <StatTile tone="ink" className="col-span-3" href="/insights?filter=improve" value={anzahl("improve")} text="Spots where the app should change" cta="Go to insights" />
         <StatTile className="col-span-3" href="/insights?filter=train" value={anzahl("train")} text="Spots that need training" cta="Go to insights" />

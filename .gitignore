@@ -20,6 +20,8 @@ out/
 # wxt (extension)
 .output/
 .wxt/
+# extension ZIP copied into the dashboard during deployment (ci.valo.yml)
+apps/dashboard/public/valo-extension.zip
 
 # production
 /build
