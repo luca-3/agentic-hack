@@ -50,8 +50,14 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/apps">["sear
             ) : (
               <p className="m-0 text-muted">Domains: <span className="font-mono text-text">{app.domains.join(", ") || "–"}</span></p>
             )}
+            {features.length > 0 && (
+              <details open className="rounded-[10px] border border-line p-4">
+                <summary className="cursor-pointer font-semibold">Navigationsbaum <span className="text-sm font-normal text-muted">– alle Klickpfade zusammengeführt</span></summary>
+                <ul className="mt-3 space-y-1 text-sm">{pathTree(features).map((n) => <TreeNode key={n.label} node={n} />)}</ul>
+              </details>
+            )}
             <Table>
-              <thead><tr><Th className="w-[44%] bg-surface-2">Funktion</Th><Th className="bg-surface-2">Klickpfad</Th><Th className="w-40 bg-surface-2">Rollen</Th></tr></thead>
+              <thead><tr><Th className="w-[40%] bg-surface-2">Funktion</Th><Th className="bg-surface-2">Klickpfad</Th><Th className="w-40 bg-surface-2">Rollen</Th></tr></thead>
               <tbody>
                 {features.length === 0 && <tr><Td colSpan={3} className="text-center text-muted">Noch keine Funktionen.</Td></tr>}
                 {features.map((f) => (
@@ -61,8 +67,17 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/apps">["sear
                       {f.description && <div className="text-sm text-muted">{f.description}</div>}
                       <code className="mt-1 inline-block rounded-[4px] bg-surface-2 px-1.5 py-px font-mono text-xs">{f.route}</code>
                     </Td>
-                    <Td>{f.click_path.join(" → ")}</Td>
-                    <Td>{f.required_roles?.join(", ") ?? "alle"}</Td>
+                    <Td>
+                      <ol className="m-0 flex list-none flex-wrap items-center gap-1 p-0 text-sm">
+                        {f.click_path.map((step, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            {i > 0 && <span aria-hidden className="text-muted">›</span>}
+                            <span className={`rounded-md px-2 py-0.5 ${i === f.click_path.length - 1 ? "bg-[#FF8A3D]/15 font-medium" : "bg-surface-2"}`}>{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </Td>
+                    <Td><Roles roles={f.required_roles} /></Td>
                   </tr>
                 ))}
               </tbody>
@@ -103,3 +118,60 @@ const alsJson = (f: Feature) => ({
   clickPath: f.click_path,
   requiredRole: f.required_roles,
 });
+
+/* ── Navigation tree: all click paths of an app merged into one prefix tree ───────────────────────── */
+
+type TreeNodeData = { label: string; children: TreeNodeData[]; features: Feature[] };
+
+/** Merges click paths into a prefix tree; chains without branches or features are joined ("A › B"). */
+function pathTree(features: Feature[]): TreeNodeData[] {
+  const root: TreeNodeData = { label: "", children: [], features: [] };
+  for (const f of features) {
+    let node = root;
+    for (const step of f.click_path) {
+      let next = node.children.find((c) => c.label === step);
+      if (!next) node.children.push((next = { label: step, children: [], features: [] }));
+      node = next;
+    }
+    node.features.push(f);
+  }
+  const compress = (n: TreeNodeData): TreeNodeData => {
+    let cur = n;
+    while (cur.children.length === 1 && cur.features.length === 0) {
+      const only = cur.children[0];
+      cur = { label: `${cur.label} › ${only.label}`, children: only.children, features: only.features };
+    }
+    return { ...cur, children: cur.children.map(compress) };
+  };
+  return root.children.map(compress);
+}
+
+function TreeNode({ node }: { node: TreeNodeData }) {
+  return (
+    <li className="relative">
+      <div className="flex flex-wrap items-center gap-2 py-0.5">
+        <span className={node.children.length ? "font-medium" : ""}>{node.label}</span>
+        {node.features.map((f) => (
+          <span key={f.id} className="inline-flex items-center gap-1.5 rounded-full bg-[#FF8A3D]/15 px-2 py-0.5 text-xs font-medium">
+            <span aria-hidden className="text-[#FF8A3D]">●</span>{f.name}
+            {f.required_roles?.length ? <span className="text-muted">· {f.required_roles.join(", ")}</span> : null}
+          </span>
+        ))}
+      </div>
+      {node.children.length > 0 && (
+        <ul className="ml-2 space-y-1 border-l border-line pl-4">
+          {node.children.map((c) => <TreeNode key={c.label} node={c} />)}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+function Roles({ roles }: { roles: string[] | null }) {
+  if (!roles?.length) return <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted">alle</span>;
+  return (
+    <span className="flex flex-wrap gap-1">
+      {roles.map((r) => <span key={r} className="rounded-full bg-[#127A86]/15 px-2 py-0.5 text-xs font-medium">{r}</span>)}
+    </span>
+  );
+}
