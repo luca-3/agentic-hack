@@ -1,4 +1,4 @@
-import type { VoiceState } from "@lotse/shared";
+import { LOTSE_DEFAULTS, type VoiceState } from "@lotse/shared";
 import type { ChatEntry, LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
 import { applyShortcutLabels, isMac, shortcutLabels } from "../../utils/shortcuts";
@@ -38,6 +38,8 @@ const exploreBox = get<HTMLDetailsElement>("#explore-box");
 const exploreStart = get<HTMLButtonElement>("#explore-start");
 const exploreStop = get<HTMLButtonElement>("#explore-stop");
 const exploreSpinner = get<HTMLSpanElement>("#explore-spinner");
+const exploreView = get<HTMLAnchorElement>("#explore-view");
+exploreView.href = `${LOTSE_DEFAULTS.dashboardUrl}/apps`;
 const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 ready", listening: "🎙 listening …", thinking: "… thinking", speaking: "🔊 speaking" };
 let settingsLoaded = false;
 let thresholdDirty = false;
@@ -88,6 +90,7 @@ function renderAccount(status: LotseStatus) {
     exploreStop.disabled = !exp.running;
     const activePhase = exp.phase === "crawling" || exp.phase === "analyzing";
     exploreSpinner.hidden = !activePhase;
+    exploreView.hidden = !(exp.phase === "done" && exp.result !== null);
     const elapsedSec = exp.phaseStartedAt ? Math.max(0, Math.floor((Date.now() - exp.phaseStartedAt) / 1_000)) : 0;
 
     if (exp.phase === "crawling") {

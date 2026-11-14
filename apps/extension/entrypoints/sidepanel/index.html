@@ -470,7 +470,9 @@
         font: 600 11px/1.35 var(--font-mono);
       }
 
-      .progress-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+      .progress-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+      .inline-link { color: var(--primary-text); font-size: 12.5px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+      .inline-link:hover { color: var(--text); }
       .spinner {
         width: 13px;
         height: 13px;
@@ -561,6 +563,7 @@
           <div id="explore-status-row" class="progress-row" hidden>
             <span id="explore-spinner" class="spinner" hidden aria-hidden="true"></span>
             <p id="explore-progress" class="muted" style="margin: 0" role="status"></p>
+            <a id="explore-view" class="inline-link" href="http://localhost:3000/apps" target="_blank" rel="noreferrer" hidden>View</a>
           </div>
         </div>
       </details>
