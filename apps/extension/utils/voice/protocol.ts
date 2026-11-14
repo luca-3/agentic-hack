@@ -51,6 +51,8 @@ export interface OffscreenReply {
   mic?: MicStatus;
   /** Offscreen mode at reply time (lets a restarted service worker resync). */
   mode?: OffscreenMode;
+  /** True when stopping mic capture while spoken audio is still being finalized into a transcript. */
+  transcribing?: boolean;
   /** "stopped" = speech was interrupted on purpose (not an error). */
   error?: string;
   /** Reply to "debug-log", oldest first. */

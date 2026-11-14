@@ -146,7 +146,14 @@ function render(status: LotseStatus) {
   voice.checked = status.settings.voice;
   speakToggle.checked = status.settings.speak;
   speakToggle.disabled = !status.settings.voice;
-  get<HTMLButtonElement>("#listen").disabled = !status.settings.voice;
+  const listenBtn = get<HTMLButtonElement>("#listen");
+  const isListening = status.settings.voice && status.voiceState === "listening";
+  listenBtn.disabled = !status.settings.voice;
+  listenBtn.textContent = isListening ? "⏹" : "🎙";
+  listenBtn.classList.toggle("danger", isListening);
+  listenBtn.classList.toggle("secondary", !isListening);
+  listenBtn.title = isListening ? "Stop listening" : "Speak question";
+  listenBtn.setAttribute("aria-label", listenBtn.title);
   const snoozed = status.snoozedUntil !== null;
   get("#snooze-line").textContent = !status.settings.proactive ? "Valo won't offer help on its own." : snoozed ? `Paused until ${clock(status.snoozedUntil!)}.` : "";
   get("#snooze").hidden = snoozed || !status.settings.proactive;

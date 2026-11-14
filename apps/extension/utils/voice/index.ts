@@ -89,7 +89,9 @@ export async function startListening(trigger: ListenTrigger = "button"): Promise
   }
   try {
     if (mode === "listening") {
-      await sendToOffscreen({ type: "stop-listening" });
+      const reply = await sendToOffscreen({ type: "stop-listening" });
+      if (reply.transcribing) setThinking(true);
+      emitState();
       return;
     }
     stopSpeaking();
@@ -97,6 +99,8 @@ export async function startListening(trigger: ListenTrigger = "button"): Promise
     if (!reply.ok) {
       if (reply.mic === "needed" || reply.mic === "denied") await requestMicPermission();
       else report(reply.error ?? "Valo can't listen right now.");
+    } else if (reply.transcribing) {
+      setThinking(true);
     }
   } catch (error) {
     report(errorText(error));
@@ -194,6 +198,7 @@ function onWorkerEvent(event: WorkerEvent, tabId?: number): void {
       deliver(event.text);
       break;
     case "error":
+      setThinking(false);
       report(event.message);
       break;
     case "mic-granted":
