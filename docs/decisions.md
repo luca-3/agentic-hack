@@ -183,6 +183,12 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** user chose Plan A — app code stays unchanged (supabase-js against `/rest/v1` + `/auth/v1`), no Supabase Cloud account needed.
 - **Consequence:** public repo → sign-up off (`GOTRUE_DISABLE_SIGNUP=true`, dashboard `/signup` fails there), demo passwords replaced after import (`reset-demo-passwords.sh`), `JWT_SECRET` ≥ 64 chars, server refuses `LOTSE_DEV_AUTH`, Postgres internal only; no Realtime/Storage/SMTP; the server's own pages (`/`, `/chat`) are not reachable under the domain; the extension needs the workspace host in `host_permissions` and a build-time server URL (extension owner).
 
+### D-38 · Own wake word "Hey Valo" / "Hey Daddy"; "Hey Jarvis" stays as fallback (2026-11-14)
+- **Decision:** the extension listens for "Hey Valo" and "Hey Daddy" with our own openWakeWord-compatible keyword head (`apps/extension/public/wakeword/hey_valo_daddy_v1.onnx`, 16×96 embeddings → score), next to the pre-trained "Hey Jarvis". The detector runs all heads of the keyword set and takes the highest score; default threshold 0.7. Still fully local (no audio leaves the device before the trigger, R-VOI-1).
+- **Why:** user asked for "Hey Valo" and "Hey Daddy" as wake words (2026-11-14); no pre-trained model exists for either.
+- **How it was trained:** synthetic speech only — 30 Gemini TTS voices + 33 local macOS voices (de/en), augmented (speed, reverb, band-limit, noise, babble), features computed exactly like `wakeword.ts` (streaming mel → embedding), small MLP head, exported to ONNX. Hard negatives: pitch sentences with "Valo" but without "hey", "Daddy" alone, "Hey Danny/Daniel". Held-out voices: ~97 % of positive clips detected; a pitch sentence like "Today we show you Valo …" stays far below the threshold.
+- **Consequence:** weak spot = near-homophones ("Hey Danny"); tune via `lotse:voice-config` threshold (0.8 if it fires by itself). Our head is our own work (no CC BY-NC-SA dependency), unlike `hey_jarvis`. Training scripts are not in the repo yet.
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?
