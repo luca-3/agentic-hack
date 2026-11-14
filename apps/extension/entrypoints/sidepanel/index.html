@@ -25,7 +25,7 @@
       button.small { padding: 5px 9px; font-size: 12px; }
       button:disabled { opacity: .45; cursor: default; }
       label { display: block; margin: 10px 0 5px; font-weight: 500; }
-      input[type="text"], textarea { width: 100%; padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; color: #172554; font: inherit; }
+      input[type="text"], input[type="email"], input[type="password"], textarea { width: 100%; padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; color: #172554; font: inherit; }
       input[type="range"] { flex: 1; }
       textarea { resize: vertical; }
       #ask-button { flex: 1; }
@@ -43,6 +43,9 @@
       .row { display: flex; align-items: center; gap: 8px; }
       .callout { border-color: #bfdbfe; background: #eff6ff; }
       .callout p { margin: 0 0 8px; }
+      .paused { border-color: #fcd34d; background: #fffbeb; }
+      .paused h2 { color: #92400e; }
+      #org-line:empty, #paused-reason:empty, #role-note:empty { display: none; }
       :focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
     </style>
   </head>
@@ -51,6 +54,22 @@
       <h1>Lotse</h1>
       <div class="chips"><span id="voice-state" class="activity voice" hidden></span><span id="activity" class="activity">Lotse pausiert</span></div>
     </header>
+    <section id="paused-box" class="paused" aria-labelledby="paused-title" role="status" hidden>
+      <h2 id="paused-title">Lotse pausiert auf dieser Seite</h2>
+      <p id="paused-reason" class="muted"></p>
+      <p class="muted">Lotse beobachtet hier nichts, macht keine Bilder und sendet nichts. Auf freigegebenen Seiten geht es von selbst weiter.</p>
+    </section>
+    <section aria-labelledby="account-title">
+      <h2 id="account-title">Konto</h2>
+      <form id="login">
+        <label for="email">E-Mail</label><input id="email" type="email" autocomplete="username" maxlength="200" placeholder="vertrieb@demo.test" />
+        <label for="password">Passwort</label><input id="password" type="password" autocomplete="current-password" maxlength="200" />
+        <div class="row" style="margin-top: 8px"><button id="login-button" type="submit">Anmelden</button></div>
+        <p class="muted">Ohne Anmeldung arbeitet Lotse im Dev-Modus mit der Demo-Rolle aus „Demo-Kontext“.</p>
+      </form>
+      <div id="signed-in" class="row" hidden><p id="account-line" style="flex: 1"></p><button id="logout" class="secondary small" type="button">Abmelden</button></div>
+      <p id="org-line" class="muted"></p>
+    </section>
     <section id="offer-box" class="callout" aria-labelledby="offer-title" hidden>
       <h2 id="offer-title">Lotse bietet Hilfe an</h2>
       <p id="offer-text"></p>
@@ -109,6 +128,7 @@
         <label class="toggle"><input id="screenshots" type="checkbox" checked />Bildverlauf aufnehmen</label>
         <p class="muted">Ausgewählte Bilder werden bei einer Frage oder möglichem Hilfebedarf mitgesendet.</p>
         <label for="role">Rolle im Demo-Szenario</label><input id="role" type="text" maxlength="100" placeholder="z. B. Sachbearbeitung" />
+        <p id="role-note" class="muted"></p>
         <label for="knowledge">Wissen über die App</label><textarea id="knowledge" rows="4" maxlength="12000" placeholder="Beschreibe die Funktionen und die Schritte für den Demo-Ablauf."></textarea>
         <button type="submit">Kontext übernehmen</button>
       </form>

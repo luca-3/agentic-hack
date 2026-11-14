@@ -29,6 +29,15 @@ CORS: `chrome-extension://*` and `http://localhost:*` are allowed (incl. the two
 | `PUT /api/lotse/prefs` | `ProactivePrefs` → `ProactivePrefs` (manual override, clamped 0.6–0.95) | 20/min |
 | `POST /api/lotse/events` | `EventBatch` (≤ 100 events) → `202 { accepted }` | 6 batches/min |
 | `POST /api/lotse/live-token` | – → `LiveTokenResponse` (`wsUrl` + token, see VOICE.md) | **8 voice sessions/min** per session (one token = one spoken question), 60/min global |
+| `GET /api/lotse/policy?app=<host>` | – → `PolicyResponse` (allowed, `blockedRoutes`, app/org name, caller's role) — see "App policy" below | 60/min |
+| `GET /api/lotse/auth-config` | – → `AuthConfigResponse` (public Supabase URL + publishable key for the extension login; never the secret key) | – |
+
+## App policy + extension login (D-27, D-05, D-12)
+
+- **Policy** (`src/lib/lotse/policy.ts`): `GET /api/lotse/policy?app=localhost:3100` → `{ app, allowed, known, blockedRoutes, appName, orgName, signedIn, member, role, reason?, ttlSec }`. `known` = the host is in some org's `apps.domains`. Unknown hosts: allowed with an empty blocklist in dev, refused in production (`LOTSE_ALLOW_UNKNOWN_APPS=1|0` overrides); in production a known app also requires org membership. `LOTSE_DISABLED=1` → `allowed: false`.
+- **Blocked routes:** CORPUS hosts (`LOTSE_CORPUS_HOSTS`, default `localhost:3100,127.0.0.1:3100`, or a dashboard app named "CORPUS…") always get `LOTSE_FLEET_ROUTES` (default `*fahrzeug*,*vehicle*,*fleet*,*fuhrpark*`) — the vehicle pages hold real fleet data. Extra per app: `LOTSE_BLOCKED_ROUTES="localhost:3100=/admin/*|/export*;localhost:4000=/konto*"`. Blank env values fall back to the defaults. Matching: `routeBlocked(location, patterns)` in `@lotse/shared` (zod-free as `@lotse/shared/route`) — `*` = anything, case-insensitive, against path + query + hash.
+- **Extension enforcement (fail closed):** the content script checks the FULL local location (query included, never sent) before reading anything; on a blocked route (or while the policy is unknown) it builds no snapshot, sends no event, shows no highlight, and the service worker takes no screenshot, aborts in-flight inference and refuses questions — also while recording. The overlay chip and the side panel say "Lotse pausiert auf dieser Seite". The policy is cached per host for `ttlSec` (60 s); a failed refetch keeps the last known blocklist.
+- **Login:** the side panel signs in with Supabase email/password (Auth REST, URL + publishable key from `/auth-config`); the session lives in `chrome.storage.session`, is refreshed a minute before expiry and on a 401 (one retry). Every runtime call sends `Authorization: Bearer <access token>`; signed in, the server takes the role from `org_members` and the manual demo role is not sent. Without login (dev) everything works anonymously as before. Local test user: `npm run seed:dev-org -w @lotse/server -- --with-user` → `vertrieb@demo.test` (role Vertrieb).
 
 Input caps (server trims, you don't have to): question ≤ 500 chars (longer → 400), ≤ 300 snapshot elements, labels ≤ 80 chars. Send **labels only, never input values**.
 

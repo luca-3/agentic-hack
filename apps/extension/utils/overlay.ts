@@ -66,6 +66,8 @@ export class LotseOverlay {
   private revealed = false;
   private holdCursor = false;
   private recording = false;
+  private paused = false;
+  private pausedVisible = false;
   private voiceText = "";
 
   constructor(private readonly options: OverlayOptions) {}
@@ -122,7 +124,17 @@ export class LotseOverlay {
     this.recording = recording;
     if (!this.host && !recording) return;
     this.ensure();
-    this.recordingChip.hidden = !recording;
+    this.syncChip();
+    this.syncHost();
+  }
+
+  /** Blocked route / app not allowed (D-27): the status chip says so; `visible` = show it even when not recording. */
+  setPaused(paused: boolean, visible: boolean) {
+    this.paused = paused;
+    this.pausedVisible = paused && visible;
+    if (!this.host && !this.recording && !this.pausedVisible) return;
+    this.ensure();
+    this.syncChip();
     this.syncHost();
   }
 
@@ -183,12 +195,16 @@ export class LotseOverlay {
     this.voiceChip = div("chip voice");
     this.voiceChip.hidden = true;
     this.recordingChip = div("chip");
-    this.recordingChip.textContent = "● Lotse zeichnet lokal auf";
-    this.recordingChip.hidden = !this.recording;
     chips.append(this.voiceChip, this.recordingChip);
     shadow.append(style, this.frame, this.bubble, this.cursor, chips);
     this.host = host;
+    this.syncChip();
     document.documentElement.append(host);
+  }
+
+  private syncChip() {
+    this.recordingChip.textContent = this.paused ? "⏸ Lotse pausiert auf dieser Seite" : "● Lotse zeichnet lokal auf";
+    this.recordingChip.hidden = !(this.recording || this.pausedVisible);
   }
 
   private fill(view: OverlayView) {
@@ -233,7 +249,7 @@ export class LotseOverlay {
   }
 
   private syncHost() {
-    if (this.host) this.host.style.display = this.recording || this.view || this.voiceText || this.holdCursor ? "block" : "none";
+    if (this.host) this.host.style.display = this.recording || this.pausedVisible || this.view || this.voiceText || this.holdCursor ? "block" : "none";
   }
 
   private layout() {

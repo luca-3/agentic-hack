@@ -15,8 +15,12 @@ export const DEMO_CONTEXT_KEY = "lotse:demo-context";
 export type PlanView = { id: string; steps: GuidanceStep[]; index: number; snapshotId?: string; offerId?: string };
 export type PlanCommand = "next" | "back" | "end";
 
+/** What the content script needs of the app policy (GET /api/lotse/policy). null = unknown → paused (fail closed). */
+export type PagePolicy = { allowed: boolean; blockedRoutes: string[] };
+
 /** background → content script */
 export type ContentCommand =
+  | { type: "lotse:policy"; policy: PagePolicy | null }
   | { type: "lotse:point"; elementNumber: number; label: string; hint?: string; snapshotId: string; offerId?: string }
   | { type: "lotse:say"; text: string; offerId?: string }
   | { type: "lotse:plan-show"; plan: PlanView; resume?: boolean }
@@ -34,6 +38,10 @@ export type WorkerCommand =
   | { type: "lotse:update-settings"; settings: Partial<ExtensionSettings> }
   | { type: "lotse:prefs"; threshold?: number } // without threshold: GET, with: PUT (manual override)
   | { type: "lotse:snooze"; minutes: number } // 0 resumes proactive offers
-  | { type: "lotse:listen" }; // side-panel mic button → voice module startListening("button")
+  | { type: "lotse:listen" } // side-panel mic button → voice module startListening("button")
+  | { type: "lotse:get-policy" } // content script asks for the policy of its own host
+  | { type: "lotse:paused"; paused: boolean } // content script entered/left a blocked route (no page data)
+  | { type: "lotse:login"; email: string; password: string } // side panel → Supabase email/password login
+  | { type: "lotse:logout" };
 
 export type LotseMessage = ExtensionMessage | ContentCommand | WorkerCommand;

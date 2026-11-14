@@ -24,7 +24,7 @@ const ROLE_CACHE_MS = 60_000;
 const roleCache = new Map<string, { until: number; role: string | null }>();
 
 /** org_members.role of the user in that org; null = not a member; undefined = lookup failed. */
-async function memberRole(orgId: string, userId: string): Promise<string | null | undefined> {
+export async function memberRole(orgId: string, userId: string): Promise<string | null | undefined> {
   const key = `${orgId}:${userId}`;
   const hit = roleCache.get(key);
   if (hit && Date.now() < hit.until) return hit.role;

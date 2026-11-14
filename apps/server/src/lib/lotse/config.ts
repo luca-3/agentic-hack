@@ -28,6 +28,8 @@ export const LIMITS = {
     voice: num("LOTSE_LIMIT_LIVE_TOKENS_PER_MIN", 8),
     /** /feedback + /prefs */
     prefs: num("LOTSE_LIMIT_PREFS_PER_MIN", 20),
+    /** GET /policy — the extension caches it per host (60 s), so this is generous. */
+    policy: num("LOTSE_LIMIT_POLICY_PER_MIN", 60),
   },
   /** Global caps per minute across all callers (protect the Gemini key). */
   globalPerMinute: {
@@ -38,6 +40,7 @@ export const LIMITS = {
     events: GLOBAL,
     voice: num("LOTSE_LIMIT_LIVE_TOKENS_GLOBAL_PER_MIN", 60),
     prefs: GLOBAL,
+    policy: GLOBAL,
   },
   /** LLM tokens (input + output; state + intent + decide + ask) per caller per UTC day. ~8 k per observation cycle. */
   dailyTokens: num("LOTSE_DAILY_TOKEN_BUDGET", 2_000_000),

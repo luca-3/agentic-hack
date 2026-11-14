@@ -124,6 +124,11 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** "nicht mehr Herr Müller sondern Herr A1" (user, 2026-11-14) — server and Gemini only ever see placeholders.
 - **Consequence:** pseudonymized, not anonymous (a freely typed name not on the page is only caught by patterns). Server prompts treat `[…-n]` tokens as opaque ids and never ask for the real value.
 
+### D-27 · Server-side app policy with blocked routes; extension login (2026-11-14) — implements D-05, hardens D-12
+- **Decision:** the runtime decides per app host whether Lotse may run and where it must stay silent: `GET /api/lotse/policy?app=<host>` → `allowed`, `blockedRoutes`, app/org name and (signed in) the caller's org role. CORPUS hosts always get the fleet patterns `*fahrzeug*`, `*vehicle*`, `*fleet*`, `*fuhrpark*` (env `LOTSE_CORPUS_HOSTS`, `LOTSE_FLEET_ROUTES`, per app `LOTSE_BLOCKED_ROUTES`); unknown hosts are allowed in dev only. The extension enforces it **fail closed**: unknown policy or a matching location (path + query + hash, checked locally) → no DOM reading, no events, no snapshots, no screenshots, no inference, no questions — even while recording — and "Lotse pausiert auf dieser Seite" in overlay and side panel. Extension login: Supabase email/password in the side panel, session in `chrome.storage.session`, `Authorization: Bearer` on every runtime call (refresh + one retry on 401); without login the dev mode with the manual demo role keeps working.
+- **Why:** "Die Fahrzeugseiten bleiben außen vor, weil dort der echte Fuhrpark steht." — the hard demo rule must not depend on the presenter remembering to pause; identity and role should come from the org, not a text field.
+- **Consequence:** blocked patterns live in server env today; a dashboard-managed per-app blocklist (column on `apps`, owned by the dashboard) is the natural next step. The exploration crawler (D-25) and any future capture path must apply the same policy (never navigate into or record blocked routes). The manual demo role is no authorization boundary; in production the server ignores it for members and refuses unknown apps.
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?

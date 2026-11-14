@@ -1,13 +1,15 @@
 import {
   AskRequestSchema, AskResponseSchema, DecideRequestSchema, DecideResponseSchema, EventBatchSchema, GuidanceEventSchema,
   IntentRequestSchema, LOTSE_DEFAULTS, LOTSE_HEADERS, LOTSE_SETTINGS_KEY, LotseEventSchema, LotseSettingsSchema,
-  ObservationSnapshotSchema, OfferFeedbackRequestSchema, PROACTIVE_THRESHOLD, ProactivePrefsSchema, ScreenshotFrameSchema,
+  ObservationSnapshotSchema, OfferFeedbackRequestSchema, PROACTIVE_THRESHOLD, PolicyResponseSchema, ProactivePrefsSchema, ScreenshotFrameSchema,
   UIStateInferenceSchema, UIStateRequestSchema, WorkflowIntentSchema,
   type AskResponse, type DecideResponse, type GuidanceEvent, type InferredIntent, type LotseEvent, type ObservationContext,
-  type ObservationSnapshot, type VoiceState, type WorkflowIntent,
+  type ObservationSnapshot, type PolicyResponse, type VoiceState, type WorkflowIntent,
 } from "@lotse/shared";
 import { ObservationBuffer, findStuckSignal } from "../utils/observation";
-import { DEFAULT_SETTINGS, DEMO_CONTEXT_KEY, type ExtensionSettings, type LotseMessage, type PlanView } from "../utils/messages";
+import { DEFAULT_SETTINGS, DEMO_CONTEXT_KEY, type ExtensionSettings, type LotseMessage, type PagePolicy, type PlanView } from "../utils/messages";
+import * as auth from "../utils/auth";
+import { PAUSED_TEXT, clearPolicies, hostOf, pageVerdict, policyFor } from "../utils/policy";
 import * as voice from "../utils/voice";
 import { setupVoice, speak, stopSpeaking } from "../utils/voice";
 
@@ -34,15 +36,21 @@ export type LotseStatus = {
   plan: { index: number; total: number; label: string; hint?: string } | null;
   threshold: number | null; prefsMessage: string; snoozedUntil: number | null;
   voiceState: VoiceState; lastQuestion: { text: string; source: Source } | null; analyticsQueued: number;
+  account: { email: string } | null; page: PageStatus | null;
+};
+/** Active tab as the side panel shows it: app/org/role from GET /api/lotse/policy and whether Lotse is paused there. */
+export type PageStatus = {
+  host: string; paused: boolean; reason: string; known: boolean;
+  appName: string | null; orgName: string | null; role: string | null; signedIn: boolean; member: boolean;
 };
 export type LotseResult =
-  | { ok: true; status: LotseStatus; answer?: AskResponse; plan?: PlanView | null }
+  | { ok: true; status: LotseStatus; answer?: AskResponse; plan?: PlanView | null; policy?: PagePolicy | null }
   | { ok: false; error: string };
 
 const HANDLED = new Set<string>([
   "lotse:start", "lotse:stop", "lotse:status", "lotse:settings", "lotse:update-settings", "lotse:observe", "lotse:ask", "lotse:wake-question",
   "lotse:plan-resume", "lotse:plan-update", "lotse:plan-end", "lotse:plan-command", "lotse:offer-accept", "lotse:offer-feedback",
-  "lotse:prefs", "lotse:snooze", "lotse:listen",
+  "lotse:prefs", "lotse:snooze", "lotse:listen", "lotse:get-policy", "lotse:paused", "lotse:login", "lotse:logout",
 ]);
 const ANALYTICS_TYPES = new Set<LotseEvent["type"]>(["click", "route", "search", "error", "idle", "submit", "empty_results", "rage_click"]);
 const OFFER_COOLDOWN_MS = 120_000; // D-20: at most one proactive offer per two minutes
@@ -83,6 +91,8 @@ let analytics: LotseEvent[] = [];
 let lastFlushAt = Date.now();
 let flushing = false;
 let lastAppHost = "";
+let account: { email: string } | null = null;
+let page: PageStatus | null = null;
 const feedbackGiven = new Set<string>();
 const STORE = "lotse-observation-session";
 const localUrl = (url?: string): boolean => {
@@ -106,7 +116,7 @@ export default defineBackground(() => {
   browser.runtime.onMessage.addListener((incoming: LotseMessage, sender, respond) => {
     // Leave messages of other modules (the voice offscreen document uses `target`) to their own listeners.
     if (!incoming || typeof incoming !== "object" || "target" in incoming || !HANDLED.has(incoming.type)) return false;
-    ready.then(() => handle(incoming, sender.tab?.id)).then(
+    ready.then(() => handle(incoming, sender.tab?.id, sender.tab?.url)).then(
       (result) => respond(result),
       (error: unknown) => respond({ ok: false, error: errorText(error) } satisfies LotseResult),
     );
@@ -127,10 +137,14 @@ export default defineBackground(() => {
   browser.tabs.onUpdated.addListener((tabId, changes) => {
     if (tabId !== recordingTab || !recording) return;
     if (changes.url && !localUrl(changes.url)) { void ready.then(stop); return; }
+    // Entering a blocked route (incl. SPA pushState/hash changes): drop whatever is in flight for this tab at once.
+    if (changes.url) void ready.then(async () => { if (tabId === recordingTab && await blockedUrl(changes.url)) pauseForPolicy(); });
     if (changes.status === "complete") {
       void ready.then(async () => {
         if (recording && tabId === recordingTab) {
+          // The content script needs to know it is recording even on a blocked page (it resumes by itself on an allowed route).
           await browser.tabs.sendMessage(tabId, { type: "lotse:start" } satisfies LotseMessage);
+          if (await blockedUrl((await browser.tabs.get(tabId)).url)) { pauseForPolicy(); return; }
           buffer.record({ snapshot: await snapshotOf(tabId) });
           schedulePersistence();
         }
@@ -148,15 +162,36 @@ export default defineBackground(() => {
   setInterval(() => { void ready.then(periodicCapture).catch(() => undefined); }, 5_000);
 });
 
-async function handle(incoming: LotseMessage, senderTab?: number): Promise<LotseResult> {
+async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: string): Promise<LotseResult> {
   switch (incoming.type) {
     case "lotse:start": await start(); break;
     case "lotse:stop": await stop(); break;
-    case "lotse:status": break;
+    case "lotse:status": await refreshPage(); break;
     case "lotse:settings":
     case "lotse:update-settings": await updateSettings(incoming.settings); break;
+    case "lotse:get-policy": {
+      const policy = senderUrl ? await pagePolicy(senderUrl) : null;
+      return { ok: true, status: status(), policy: policy ? compactPolicy(policy) : null };
+    }
+    case "lotse:paused":
+      // Only a boolean arrives — the content script sends no page data from a blocked route.
+      if (incoming.paused === true && senderTab !== undefined && senderTab === recordingTab) pauseForPolicy();
+      break;
+    case "lotse:login":
+      if (typeof incoming.email !== "string" || typeof incoming.password !== "string") throw new Error("Bitte E-Mail und Passwort eingeben.");
+      await auth.signIn(incoming.email, incoming.password);
+      await afterAuthChange();
+      message = `Angemeldet als ${account?.email ?? incoming.email.trim()}.`;
+      break;
+    case "lotse:logout":
+      await auth.signOut();
+      await afterAuthChange();
+      message = "Abgemeldet. Lotse arbeitet ohne Konto mit der Demo-Rolle.";
+      break;
     case "lotse:observe": {
       if (!recording || senderTab !== recordingTab) break;
+      // Second line of defense after the content script: nothing from a blocked route enters the buffer.
+      if (await blockedUrl(senderUrl)) { pauseForPolicy(); break; }
       const oldWorkflow = buffer.workflow?.id;
       const event = incoming.event ? LotseEventSchema.parse(incoming.event) : undefined;
       const snapshot = incoming.snapshot ? ObservationSnapshotSchema.parse(incoming.snapshot) : undefined;
@@ -265,18 +300,83 @@ async function loadSettings() {
 // Recording and the staged proactive pipeline (D-23): /state → /intent → /decide → offer → /ask
 // ---------------------------------------------------------------------------
 
+/** Active app tab — and the policy gate for everything that reads it (snapshots, screenshots, questions, inference). */
 async function activeAppTab() {
   const [tab] = await browser.tabs.query({ active: true, lastFocusedWindow: true });
   if (tab?.id === undefined || !localUrl(tab.url)) throw new Error("Öffne eine freigegebene localhost-App im aktiven Tab.");
+  if (await blockedUrl(tab.url)) throw new Error(PAUSED_TEXT);
   return tab as typeof tab & { id: number };
 }
 
 async function snapshotOf(tabId: number): Promise<ObservationSnapshot> {
-  try {
-    const snapshot = ObservationSnapshotSchema.parse(await browser.tabs.sendMessage(tabId, { type: "lotse:snapshot" } satisfies LotseMessage));
-    if (!localUrl(snapshot.url)) throw new Error("App nicht freigegeben.");
-    return snapshot;
-  } catch { throw new Error("Lotse ist auf dieser Seite noch nicht aktiv. Lade die App-Seite neu."); }
+  let result: unknown;
+  try { result = await browser.tabs.sendMessage(tabId, { type: "lotse:snapshot" } satisfies LotseMessage); }
+  catch { throw new Error("Lotse ist auf dieser Seite noch nicht aktiv. Lade die App-Seite neu."); }
+  if (result && typeof result === "object" && "paused" in result) throw new Error(PAUSED_TEXT);
+  const snapshot = ObservationSnapshotSchema.safeParse(result);
+  if (!snapshot.success || !localUrl(snapshot.data.url)) throw new Error("Lotse ist auf dieser Seite noch nicht aktiv. Lade die App-Seite neu.");
+  return snapshot.data;
+}
+
+// ---------------------------------------------------------------------------
+// App policy (D-27) and login (D-05)
+// ---------------------------------------------------------------------------
+
+async function loadPolicy(host: string): Promise<PolicyResponse> {
+  return PolicyResponseSchema.parse(await callRuntime("policy", { method: "GET", query: `?app=${encodeURIComponent(host)}`, appHost: host, abortable: false, timeoutMs: 6_000 }));
+}
+
+async function pagePolicy(url: string | undefined): Promise<PolicyResponse | null> {
+  const host = localUrl(url) ? hostOf(url) : null;
+  return host ? policyFor(host, loadPolicy) : null;
+}
+
+/** Fail closed: unknown policy, app not allowed or blocked route → true. Checks the full URL (incl. query) locally. */
+async function blockedUrl(url: string | undefined): Promise<boolean> {
+  if (!localUrl(url)) return true;
+  return pageVerdict(url, await pagePolicy(url)).paused;
+}
+
+function compactPolicy(policy: PolicyResponse): PagePolicy {
+  return { allowed: policy.allowed, blockedRoutes: policy.blockedRoutes };
+}
+
+/** Blocked route in the recording tab: drop in-flight inference/offers at once; recording resumes on an allowed route. */
+function pauseForPolicy() {
+  generation++; requestController?.abort();
+  busyOwner++; busy = false; busyMode = null; inferencePending = false;
+  clearTimeout(inferenceTimer);
+  dropOffer(true);
+  message = PAUSED_TEXT + " Hier wird nichts beobachtet, aufgenommen oder gesendet.";
+  schedulePersistence();
+}
+
+async function refreshPage() {
+  const [tab] = await browser.tabs.query({ active: true, lastFocusedWindow: true }).catch(() => []);
+  const host = tab && localUrl(tab.url) ? hostOf(tab.url) : null;
+  if (!host) { page = null; return; }
+  const policy = await pagePolicy(tab!.url);
+  const verdict = pageVerdict(tab!.url, policy);
+  page = {
+    host, paused: verdict.paused, reason: verdict.reason, known: policy?.known ?? false,
+    appName: policy?.appName ?? null, orgName: policy?.orgName ?? null, role: policy?.role ?? null,
+    signedIn: policy?.signedIn ?? false, member: policy?.member ?? false,
+  };
+}
+
+/** Login/logout: new identity → new role and policies; push the fresh policies to open app tabs. */
+async function afterAuthChange() {
+  account = await auth.currentUser().then((user) => (user ? { email: user.email } : null)).catch(() => null);
+  clearPolicies();
+  threshold = null; // per-user prefs
+  const tabs = await browser.tabs.query({ url: ["http://localhost/*", "http://127.0.0.1/*"] }).catch(() => []);
+  for (const tab of tabs) {
+    if (tab.id === undefined) continue;
+    const policy = await pagePolicy(tab.url);
+    await sendTab(tab.id, { type: "lotse:policy", policy: policy ? compactPolicy(policy) : null });
+  }
+  await refreshPage();
+  void loadPrefs();
 }
 
 async function sendTab(tabId: number, command: LotseMessage): Promise<{ ok?: boolean; error?: string } | null> {
@@ -352,8 +452,9 @@ async function captureFrame(tabId: number, expected: ObservationSnapshot, target
     targetBuffer.addScreenshot(frame.data);
     screenshotMessage = "";
     if (targetBuffer === buffer) schedulePersistence();
-  } catch { screenshotMessage = "Bildaufnahme nicht verfügbar. Klicke das Lotse-Symbol im aktiven App-Tab."; }
-  finally { capturing = false; }
+  } catch (error) {
+    screenshotMessage = errorText(error) === PAUSED_TEXT ? "" : "Bildaufnahme nicht verfügbar. Klicke das Lotse-Symbol im aktiven App-Tab.";
+  } finally { capturing = false; }
 }
 
 function queueInference() {
@@ -588,8 +689,9 @@ async function explicitQuestion(question: string, source: Source = "text", optio
   finally { if (owner === busyOwner) { busy = false; busyMode = null; if (inferencePending) queueInference(); } schedulePersistence(); }
 }
 
+/** Signed in → the server takes the role from the org membership; the manual demo role only applies without login. */
 function appContext() {
-  return { role: settings.role || undefined, appKnowledge: settings.appKnowledge || undefined };
+  return { role: account ? undefined : settings.role || undefined, appKnowledge: settings.appKnowledge || undefined };
 }
 
 async function requestHelp(
@@ -686,26 +788,42 @@ async function flushAnalytics() {
 // Runtime HTTP
 // ---------------------------------------------------------------------------
 
-type Endpoint = "state" | "intent" | "decide" | "ask" | "feedback" | "prefs" | "events";
-type CallOptions = { method?: "GET" | "POST" | "PUT"; body?: unknown; onGuidance?: (event: GuidanceEvent) => Promise<void>; abortable?: boolean };
+type Endpoint = "state" | "intent" | "decide" | "ask" | "feedback" | "prefs" | "events" | "policy";
+type CallOptions = {
+  method?: "GET" | "POST" | "PUT"; body?: unknown; onGuidance?: (event: GuidanceEvent) => Promise<void>; abortable?: boolean;
+  query?: string; appHost?: string; timeoutMs?: number;
+};
 
-/** Inference calls are abortable (pause/preemption); feedback, prefs and analytics run independently. */
-async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidance, abortable = true }: CallOptions = {}): Promise<unknown> {
+/**
+ * Inference calls are abortable (pause/preemption); feedback, prefs, policy and analytics run independently.
+ * Every call carries the Supabase access token when signed in (D-05); a 401 refreshes the session and retries once.
+ */
+async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidance, abortable = true, query = "", appHost: explicitHost, timeoutMs = 20_000 }: CallOptions = {}): Promise<unknown> {
   const controller = new AbortController();
   if (abortable) requestController = controller;
-  const timeout = setTimeout(() => controller.abort(), 20_000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const payload = (body ?? {}) as { snapshot?: ObservationSnapshot; context?: ObservationContext; appId?: string };
     const snapshotUrl = payload.snapshot?.url ?? payload.context?.snapshot.url;
-    const appHost = payload.appId ?? (snapshotUrl ? new URL(snapshotUrl).host : lastAppHost);
+    // Last gate before data leaves the browser: never send a snapshot of a blocked route.
+    if (snapshotUrl && await blockedUrl(snapshotUrl)) throw new Error(PAUSED_TEXT);
+    const appHost = explicitHost ?? payload.appId ?? (snapshotUrl ? new URL(snapshotUrl).host : lastAppHost);
     const headers: Record<string, string> = { [LOTSE_HEADERS.session]: sessionId };
     if (appHost) headers[LOTSE_HEADERS.app] = appHost;
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (endpoint === "ask") headers.Accept = "application/x-ndjson";
-    const response = await fetch(`${LOTSE_DEFAULTS.serverUrl}/api/lotse/${endpoint}`, {
-      method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal,
-    });
+    const url = `${LOTSE_DEFAULTS.serverUrl}/api/lotse/${endpoint}${query}`;
+    const init = { method, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal };
+    const token = await auth.accessToken().catch(() => null);
+    let response = await fetch(url, { ...init, headers: token ? { ...headers, Authorization: `Bearer ${token}` } : headers });
+    if (response.status === 401 && token) {
+      // Expired/revoked token: refresh once; a failed refresh signs out locally and the retry runs anonymously (dev).
+      const fresh = (await auth.refreshSession().catch(() => null))?.accessToken;
+      if (!fresh) void afterAuthChange().catch(() => undefined);
+      response = await fetch(url, { ...init, headers: fresh ? { ...headers, Authorization: `Bearer ${fresh}` } : headers });
+    }
     if (!response.ok) {
+      if (response.status === 401) throw new Error("Bitte melde dich in Lotse an (Sitzung abgelaufen oder ungültig).");
       if (response.status === 404 && endpoint !== "feedback") throw new Error("Lotse wartet auf den /api/lotse/" + endpoint + "-Endpunkt.");
       if (response.status === 429) throw new Error("Lotse hat gerade zu viele Anfragen. Versuche es gleich noch einmal.");
       throw new Error(`Die Hilfe ist derzeit nicht verfügbar (Server ${response.status}).`);
@@ -785,6 +903,7 @@ function status(): LotseStatus {
     plan: plan && step ? { index: plan.index, total: plan.steps.length, label: step.label, hint: step.hint } : null,
     threshold, prefsMessage, snoozedUntil: snoozeUntil > Date.now() ? snoozeUntil : null,
     voiceState, lastQuestion, analyticsQueued: analytics.length,
+    account, page,
   };
 }
 
@@ -813,6 +932,7 @@ function parsePlan(value: unknown): PlanRecord | null {
 
 async function restore() {
   await loadSettings().catch(() => undefined);
+  account = await auth.currentUser().then((user) => (user ? { email: user.email } : null)).catch(() => null);
   try {
     const saved = (await browser.storage.session.get(STORE))[STORE] as Partial<SavedSession> | undefined;
     if (!saved || typeof saved !== "object") return;

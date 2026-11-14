@@ -1,5 +1,5 @@
 import type { VoiceState } from "@lotse/shared";
-import type { LotseResult, LotseStatus } from "../background";
+import type { LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
 
 const get = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -17,6 +17,10 @@ const voice = get<HTMLInputElement>("#voice");
 const speakToggle = get<HTMLInputElement>("#speak");
 const thresholdInput = get<HTMLInputElement>("#threshold");
 const notice = get<HTMLParagraphElement>("#notice");
+const loginForm = get<HTMLFormElement>("#login");
+const email = get<HTMLInputElement>("#email");
+const password = get<HTMLInputElement>("#password");
+const loginButton = get<HTMLButtonElement>("#login-button");
 const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 bereit", listening: "🎙 hört zu …", thinking: "… denkt nach", speaking: "🔊 spricht" };
 let settingsLoaded = false;
 let thresholdDirty = false;
@@ -26,10 +30,34 @@ async function send(message: LotseMessage): Promise<LotseResult> {
   return browser.runtime.sendMessage(message);
 }
 
+/** App · org · role of the active tab, as the server resolved it (GET /api/lotse/policy). */
+function orgLine(page: PageStatus | null, signedIn: boolean) {
+  if (!page) return "Kein App-Tab aktiv.";
+  const app = page.appName ? `${page.appName} (${page.host})` : page.host;
+  if (!page.known) return `${app} · keiner Organisation zugeordnet${signedIn ? "" : " (Dev-Modus)"}`;
+  const org = page.orgName ?? "Organisation";
+  if (page.member && page.role) return `${app} · ${org} · Rolle: ${page.role}`;
+  if (signedIn) return `${app} · ${org} · dein Konto ist kein Mitglied dieser Organisation`;
+  return `${app} · ${org} · ohne Anmeldung (Demo-Rolle)`;
+}
+
+function renderAccount(status: LotseStatus) {
+  const signedIn = status.account !== null;
+  loginForm.hidden = signedIn;
+  get("#signed-in").hidden = !signedIn;
+  get("#account-line").textContent = signedIn ? `Angemeldet als ${status.account!.email}` : "";
+  get("#org-line").textContent = orgLine(status.page, signedIn);
+  get("#paused-box").hidden = !status.page?.paused;
+  get("#paused-reason").textContent = status.page?.paused ? status.page.reason : "";
+  role.disabled = signedIn;
+  get("#role-note").textContent = signedIn ? "Angemeldet: Die Rolle kommt aus deiner Organisation." : "";
+}
+
 const percent = (value: number) => value.toFixed(2).replace(".", ",");
 const clock = (timestamp: number) => new Date(timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
 function render(status: LotseStatus) {
+  renderAccount(status);
   get("#activity").textContent = status.recording ? "Lotse aktiv" : "Lotse pausiert";
   get("#activity").classList.toggle("active", status.recording);
   const voiceChip = get("#voice-state");
@@ -99,6 +127,14 @@ async function act(message: LotseMessage) {
   } catch { notice.textContent = "Lotse ist noch nicht erreichbar. Lade die Erweiterung neu."; }
 }
 
+loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const secret = password.value;
+  password.value = ""; // never kept in the panel; the worker only stores the Supabase session
+  loginButton.disabled = true;
+  void act({ type: "lotse:login", email: email.value, password: secret }).finally(() => { loginButton.disabled = false; });
+});
+get("#logout").addEventListener("click", () => { void act({ type: "lotse:logout" }); });
 startButton.addEventListener("click", () => { void act({ type: "lotse:start" }); });
 stopButton.addEventListener("click", () => { void act({ type: "lotse:stop" }); });
 askForm.addEventListener("submit", (event) => {

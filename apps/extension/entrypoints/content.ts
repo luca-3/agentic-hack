@@ -1,6 +1,7 @@
 import type { InteractiveElement, LotseEvent, ObservationSnapshot } from "@lotse/shared";
+import { routeBlocked } from "@lotse/shared/route"; // zod-free: keeps the schemas out of every page
 import { findElementByLabel, hasPlaceholder, labelScore, prettyRoute, routeMatches } from "../utils/match";
-import type { LotseMessage, PlanCommand, PlanView } from "../utils/messages";
+import type { LotseMessage, PagePolicy, PlanCommand, PlanView } from "../utils/messages";
 import { LotseOverlay, type OverlayAction, type OverlayButton, type OverlayView } from "../utils/overlay";
 
 const INTERACTIVE = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
@@ -24,6 +25,12 @@ let lastSearchAt = 0;
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
 let stateTimer: ReturnType<typeof setTimeout> | undefined;
 const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
+
+// App policy (D-27): on a blocked route — or while the policy is unknown — Lotse reads nothing from the page,
+// builds no snapshot, sends no observation and shows no highlight, even while recording.
+let policy: PagePolicy | null = null;
+let policyAt = 0;
+let pausedNow = true;
 
 // Guidance state (read-only: Lotse only marks, the user acts — D-17).
 type Mode = "point" | "plan" | "say" | "offer" | "feedback" | "done" | null;
@@ -50,14 +57,18 @@ export default defineContentScript({
   matches: ["http://localhost/*", "http://127.0.0.1/*"],
   main(ctx) {
     const onMessage = (message: LotseMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
+      // Fail closed: nothing that reads or marks the page runs on a paused page.
+      const blocked = paused();
+      const refuse = { ok: false, paused: true, error: "Lotse pausiert auf dieser Seite." };
       switch (message.type) {
-        case "lotse:snapshot": sendResponse(buildSnapshot()); break;
-        case "lotse:highlight": sendResponse(legacyHighlight(message.elementNumber, message.sentence, message.snapshotId)); break;
-        case "lotse:point": sendResponse(showPoint(message.elementNumber, message.label, message.hint, message.snapshotId, message.offerId)); break;
-        case "lotse:say": showSay(message.text, message.offerId); sendResponse({ ok: true }); break;
+        case "lotse:policy": applyPolicy(message.policy); sendResponse({ ok: true }); break;
+        case "lotse:snapshot": sendResponse(blocked ? refuse : buildSnapshot()); break;
+        case "lotse:highlight": sendResponse(blocked ? refuse : legacyHighlight(message.elementNumber, message.sentence, message.snapshotId)); break;
+        case "lotse:point": sendResponse(blocked ? refuse : showPoint(message.elementNumber, message.label, message.hint, message.snapshotId, message.offerId)); break;
+        case "lotse:say": if (!blocked) showSay(message.text, message.offerId); sendResponse(blocked ? refuse : { ok: true }); break;
         case "lotse:plan-show": startPlan(message.plan, message.resume === true); sendResponse({ ok: true }); break;
         case "lotse:plan-control": planCommand(message.action); sendResponse({ ok: true }); break;
-        case "lotse:show-offer": sendResponse(showOffer(message.offerId, message.offer)); break;
+        case "lotse:show-offer": sendResponse(blocked ? refuse : showOffer(message.offerId, message.offer)); break;
         case "lotse:hide-offer": if (mode === "offer") resetGuidance(); sendResponse({ ok: true }); break;
         case "lotse:clear": resetGuidance(); sendResponse({ ok: true }); break;
         case "lotse:voice-state": overlay.setVoiceState(message.state); sendResponse({ ok: true }); break;
@@ -70,6 +81,8 @@ export default defineContentScript({
           previousErrors.clear();
           previousEmpty = false;
           overlay.setRecording(true);
+          overlay.setPaused(blocked, true);
+          if (blocked) { sendResponse({ ok: true, paused: true }); break; }
           const snapshot = buildSnapshot();
           sendObservation(makeEvent("route"), snapshot);
           emitSignals();
@@ -80,6 +93,7 @@ export default defineContentScript({
           recording = false;
           clearPendingTimers();
           overlay.setRecording(false);
+          overlay.setPaused(pausedNow, plan !== null);
           if (mode === "offer") resetGuidance();
           sendResponse({ ok: true });
           break;
@@ -94,7 +108,7 @@ export default defineContentScript({
       listeners.push([target, type, listener, capture]);
     };
     listen(document, "click", (event) => {
-      if (event.isTrusted && !isLotseEvent(event)) onGuidedClick(event);
+      if (event.isTrusted && !isLotseEvent(event) && !paused()) onGuidedClick(event);
       if (!observeUserEvent(event)) return;
       const element = interactiveTarget(event);
       if (element) sendObservation(makeEvent("click", element), buildSnapshot());
@@ -114,7 +128,7 @@ export default defineContentScript({
       }
     });
     listen(document, "change", (event) => {
-      if (event.isTrusted && !isLotseEvent(event)) onGuidedChange(event);
+      if (event.isTrusted && !isLotseEvent(event) && !paused()) onGuidedChange(event);
       if (!observeUserEvent(event)) return;
       const element = interactiveTarget(event);
       if (element && isSearch(element)) recordSearch(element);
@@ -140,17 +154,21 @@ export default defineContentScript({
       after(650, () => captureState(true));
     });
     listen(document, "invalid", (event) => {
-      if (!recording || isLotseEvent(event)) return;
+      if (!recording || paused() || isLotseEvent(event)) return;
       const element = interactiveTarget(event);
       sendObservation(makeEvent("error", element, "Form validation error: " + (element ? accessibleName(element) : "Form")), buildSnapshot());
     });
     listen(window, "scroll", () => overlay.render());
     listen(window, "resize", () => overlay.render());
     listen(document, "visibilitychange", () => {
-      if (recording && document.visibilityState === "visible") { markActivity(); scheduleState(); }
+      if (recording && !paused() && document.visibilityState === "visible") { markActivity(); scheduleState(); }
     });
+    // Hash/history navigation can enter a blocked route between two timer ticks: re-check right away.
+    listen(window, "hashchange", () => checkPause());
+    listen(window, "popstate", () => checkPause());
 
     const observer = new MutationObserver((changes) => {
+      if (paused()) return;
       const external = changes.some((change) => !isLotseNode(change.target));
       if (recording && external) scheduleState();
       const target = overlay.currentTarget;
@@ -163,6 +181,8 @@ export default defineContentScript({
     });
     guidanceRoute = route();
     const routeAndIdleTimer = setInterval(() => {
+      if (Date.now() - policyAt > (policy ? 60_000 : 5_000)) requestPolicy();
+      if (checkPause()) return;
       const now = route();
       if (now !== guidanceRoute) {
         guidanceRoute = now;
@@ -184,6 +204,7 @@ export default defineContentScript({
       }
     }, 500);
 
+    requestPolicy();
     // A multi-step plan continues across full page loads: the service worker keeps it in chrome.storage.session.
     void browser.runtime.sendMessage({ type: "lotse:plan-resume" } satisfies LotseMessage)
       .then((result: { plan?: PlanView | null } | undefined) => { if (result?.plan && !plan) startPlan(result.plan, true); })
@@ -202,6 +223,60 @@ export default defineContentScript({
     });
   },
 });
+
+// ---------------------------------------------------------------------------
+// App policy (D-27): blocked routes are matched against the FULL local location (path + query + hash) —
+// checked here only; the query string never leaves the browser.
+// ---------------------------------------------------------------------------
+
+function paused() {
+  return !policy || !policy.allowed || routeBlocked(location.pathname + location.search + location.hash, policy.blockedRoutes);
+}
+
+function requestPolicy() {
+  policyAt = Date.now();
+  void browser.runtime.sendMessage({ type: "lotse:get-policy" } satisfies LotseMessage)
+    .then((result: { policy?: PagePolicy | null } | undefined) => applyPolicy(result?.policy ?? null))
+    .catch(() => applyPolicy(policy)); // worker unreachable: keep the last known policy (null stays paused)
+}
+
+function applyPolicy(next: PagePolicy | null | undefined) {
+  policyAt = Date.now();
+  policy = next && typeof next.allowed === "boolean" && Array.isArray(next.blockedRoutes)
+    ? { allowed: next.allowed, blockedRoutes: next.blockedRoutes.filter((pattern): pattern is string => typeof pattern === "string") }
+    : null;
+  checkPause();
+}
+
+/** Re-evaluates the pause state; on a change it tells the worker (a bare boolean) and stops or resumes. Returns paused. */
+function checkPause(): boolean {
+  const next = paused();
+  if (next === pausedNow) return next;
+  pausedNow = next;
+  overlay.setPaused(next, recording || plan !== null);
+  send({ type: "lotse:paused", paused: next });
+  if (next) {
+    clearPendingTimers();
+    clearTimeout(planTimer);
+    if (plan) { planShown = null; overlay.clear(); } // the plan stays; it resumes on an allowed page
+    else resetGuidance();
+    // Forget everything read from the previous page state.
+    numbered = [];
+    currentSnapshot = null;
+    currentFingerprint = "";
+    return true;
+  }
+  if (recording) {
+    previousRoute = route();
+    previousErrors.clear();
+    previousEmpty = false;
+    markActivity();
+    sendObservation(makeEvent("route"), buildSnapshot());
+    scheduleState();
+  }
+  if (plan) schedulePlanRefresh(300, true);
+  return false;
+}
 
 // Query strings can contain search terms or user values. Preserve only hash-router paths.
 function route() {
@@ -222,7 +297,7 @@ function isLotseEvent(event: Event) {
 }
 
 function observeUserEvent(event: Event) {
-  if (!recording || !event.isTrusted || isLotseEvent(event)) return false;
+  if (!recording || !event.isTrusted || paused() || isLotseEvent(event)) return false;
   markActivity();
   return true;
 }
@@ -250,7 +325,7 @@ function makeEvent(type: LotseEvent["type"], element?: HTMLElement, label?: stri
 }
 
 function sendObservation(event?: LotseEvent, snapshot?: ObservationSnapshot) {
-  if (!recording) return;
+  if (!recording || paused()) return;
   if (event && snapshot) event.snapshotId = snapshot.id;
   send({ type: "lotse:observe", event, snapshot });
 }
@@ -262,7 +337,7 @@ function send(message: LotseMessage) {
 function after(delay: number, action: () => void) {
   const timer = setTimeout(() => {
     pendingTimers.delete(timer);
-    if (recording) action();
+    if (recording && !paused()) action();
   }, delay);
   pendingTimers.add(timer);
 }
@@ -281,14 +356,14 @@ function scheduleState() {
 
 function recordSearch(element: HTMLElement) {
   clearTimeout(searchTimer);
-  if (!recording || Date.now() - lastSearchAt < 400) return;
+  if (!recording || paused() || Date.now() - lastSearchAt < 400) return;
   lastSearchAt = Date.now();
   sendObservation(makeEvent("search", element), buildSnapshot());
   after(500, () => captureState(false, true));
 }
 
 function captureState(repeatErrors = false, repeatEmpty = false) {
-  if (!recording || document.visibilityState !== "visible") return;
+  if (!recording || paused() || document.visibilityState !== "visible") return;
   const before = currentSnapshot?.id;
   const snapshot = buildSnapshot();
   if (snapshot.id !== before) sendObservation(makeEvent("dom_change"), snapshot);
@@ -571,6 +646,7 @@ function resolveStep(index: number, snapshot: ObservationSnapshot): HTMLElement 
 
 function showPlanStep(lookahead: boolean) {
   if (!plan) return;
+  if (paused()) { planShown = null; overlay.clear(); return; } // resumes via checkPause() on an allowed page
   const snapshot = buildSnapshot();
   const here = route();
   let index = plan.index;

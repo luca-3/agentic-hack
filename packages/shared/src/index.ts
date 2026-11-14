@@ -463,3 +463,36 @@ export const LearnResponseSchema = z.object({
   drafts: z.number().int(), // Gemini drafts generated (≤ 10 per run)
 });
 export type LearnResponse = z.infer<typeof LearnResponseSchema>;
+
+/* ── App policy + extension login (D-05 login, D-12 privacy, D-27) ─────────────────────────────── */
+
+/**
+ * GET /api/lotse/policy?app=<host> — may Lotse run in this app, and where must it stay silent?
+ * On a location matching `blockedRoutes` the extension observes, snapshots, screenshots and sends NOTHING
+ * (CORPUS vehicle/fleet pages hold real fleet data). No policy (server down, error) = paused (fail closed).
+ * Send the usual headers; with `Authorization: Bearer` the response carries the caller's org role.
+ */
+export const PolicyResponseSchema = z.object({
+  app: z.string().max(200), // normalized host the policy is for, e.g. "localhost:3100"
+  allowed: z.boolean(), // false = Lotse stays completely off in this app
+  known: z.boolean(), // host is registered as an app of an org (dashboard apps.domains)
+  blockedRoutes: z.array(z.string().max(200)).max(50), // patterns for routeBlocked()
+  appName: z.string().nullable(),
+  orgName: z.string().nullable(),
+  signedIn: z.boolean(), // request carried a valid Supabase token
+  member: z.boolean(), // signed-in user is a member of the app's org
+  role: z.string().nullable(), // org_members.role (null = anonymous / not a member)
+  reason: z.string().max(200).optional(), // why allowed=false, for the side panel
+  ttlSec: z.number().int().min(10).max(3_600), // client cache lifetime
+});
+export type PolicyResponse = z.infer<typeof PolicyResponseSchema>;
+
+/** GET /api/lotse/auth-config — public values for the extension's Supabase email/password login (never the secret key). */
+export const AuthConfigResponseSchema = z.object({
+  supabaseUrl: z.string().url(),
+  publishableKey: z.string().min(1),
+});
+export type AuthConfigResponse = z.infer<typeof AuthConfigResponseSchema>;
+
+/** Pattern match for `blockedRoutes` (zod-free module, also importable as `@lotse/shared/route`). */
+export { routeBlocked } from "./route";
