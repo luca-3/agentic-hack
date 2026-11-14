@@ -1,6 +1,6 @@
 import { mitgliedEinladen, mitgliedEntfernen, mitgliedSpeichern } from "@/app/actions";
 import { Shell } from "@/components/Shell";
-import { Button, Checkbox, DangerButton, Field, FormActions, Notice, PRODUCT_NAME, Table, Td, Th } from "@/components/ui";
+import { Button, ButtonLink, Checkbox, DangerButton, EmptyState, Field, FormActions, Notice, PRODUCT_NAME, Table, Td, Th } from "@/components/ui";
 import { getOrgContext } from "@/lib/org";
 
 const OK: Record<string, string> = {
@@ -35,8 +35,16 @@ export default function TeamPage({ searchParams }: PageProps<"/team">) {
 }
 
 async function Inhalt({ searchParams }: { searchParams: PageProps<"/team">["searchParams"] }) {
-  const [{ supabase, isAdmin, userId }, { ok, error, data }] = await Promise.all([getOrgContext(), searchParams]);
-  const { data: members } = await supabase.from("org_members").select("user_id, email, role, is_admin").order("email");
+  const [{ supabase, isAdmin, userId }, { ok, error, data, q: rawQ }] = await Promise.all([getOrgContext(), searchParams]);
+  // PostgREST .or() syntax chars and ilike wildcards are stripped, so the term is matched literally.
+  const q = typeof rawQ === "string" ? rawQ.replace(/[%_*,()\\"]/g, " ").trim().slice(0, 100) : "";
+  let query = supabase.from("org_members").select("user_id, email, role, is_admin").order("email");
+  if (q) query = query.or(`email.ilike.%${q}%,role.ilike.%${q}%`);
+  const [{ data: members }, { count: total }] = await Promise.all([
+    query,
+    supabase.from("org_members").select("user_id", { count: "exact", head: true }),
+  ]);
+  const shown = members?.length ?? 0;
   const okText = typeof ok === "string" ? (ok === "removed" && data === "1" ? OK["removed-data"] : OK[ok]) : undefined;
   const fehlerText = typeof error === "string" ? FEHLER[error] : undefined;
 
@@ -44,7 +52,15 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/team">["sear
     <>
       {okText && <Notice tone="success" title={okText} />}
       {fehlerText && <Notice tone="error" title={fehlerText} />}
+      <form method="get" action="/team" role="search" className="flex items-end gap-2.5">
+        <Field label="Search people" name="q" type="search" defaultValue={q} placeholder="Email or role" className="flex-1" />
+        <Button type="submit" variant="secondary">Search</Button>
+        {q && <ButtonLink href="/team" variant="secondary">Reset filter</ButtonLink>}
+      </form>
       <div className="grid gap-2.5">
+        {q && shown === 0 ? (
+          <EmptyState title="Nobody found" text={`No email or role matches "${q}".`} />
+        ) : (
         <Table>
           <thead>
             <tr>
@@ -90,7 +106,8 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/team">["sear
             })}
           </tbody>
         </Table>
-        <span className="px-4 text-sm text-muted">{members?.length ?? 0} people</span>
+        )}
+        <span className="px-4 text-sm text-muted" aria-live="polite">{q ? `${shown} of ${total ?? shown} people` : `${shown} people`}</span>
       </div>
 
       {isAdmin && (
