@@ -32,19 +32,37 @@ insert into public.apps (id, org_id, name, domains) values
   ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000f1', 'Erasmus-Förderhelfer', '{localhost:3200}');
 
 -- CORPUS features (derived from the CORPUS agent handbook; click paths to be verified on the local instance)
-insert into public.app_features (app_id, name, route, click_path, description, required_role) values
-  ('00000000-0000-0000-0000-0000000000a1', 'Schlüssel finden', '/keys', 'Seitenleiste → Schlüssel → Suchfeld oben', 'Schneller: CORPUS-Chat (Kreis unten rechts) fragen: „Wo ist der Schlüssel für …?“', null),
-  ('00000000-0000-0000-0000-0000000000a1', 'Schlüssel ausgeben', '/keys', 'Schlüssel → Kachel des Schlüssels → Ausgeben → Name eintragen', 'Braucht den Namen der Person bzw. Firma.', null),
-  ('00000000-0000-0000-0000-0000000000a1', 'CORPUS-Chat fragen', '/', 'Kreis unten rechts → Frage eintippen', 'Beantwortet Fragen zu allen Modulen in Sekunden.', null),
-  ('00000000-0000-0000-0000-0000000000a1', 'Aufgabe anlegen', '/tasks', 'Seitenleiste → Aufgaben → Neue Aufgabe', 'Pflicht: Titel, Beschreibung, Status, Priorität, Fällig bis.', null),
-  ('00000000-0000-0000-0000-0000000000a1', 'Wochenzettel abgeben', '/wochenzettel', 'Seitenleiste → Wochenzettel → Woche öffnen → Tage füllen → Speichern → Abgeben', 'Abgabeschluss Freitag 19:00; abgegeben heißt gesperrt.', 'Monteur'),
-  ('00000000-0000-0000-0000-0000000000a1', 'Notiz anlegen', '/notes', 'Seitenleiste → Notizen → Neue Notiz', 'Sichtbarkeit: Büro oder Alle.', null);
+insert into public.app_features (app_id, name, route, click_path, description, required_roles) values
+  ('00000000-0000-0000-0000-0000000000a1', 'Schlüssel finden', '/keys', string_to_array('Seitenleiste → Schlüssel → Suchfeld oben', ' → '), 'Schneller: CORPUS-Chat (Kreis unten rechts) fragen: „Wo ist der Schlüssel für …?“', null),
+  ('00000000-0000-0000-0000-0000000000a1', 'Schlüssel ausgeben', '/keys', string_to_array('Schlüssel → Kachel des Schlüssels → Ausgeben → Name eintragen', ' → '), 'Braucht den Namen der Person bzw. Firma.', null),
+  ('00000000-0000-0000-0000-0000000000a1', 'CORPUS-Chat fragen', '/', string_to_array('Kreis unten rechts → Frage eintippen', ' → '), 'Beantwortet Fragen zu allen Modulen in Sekunden.', null),
+  ('00000000-0000-0000-0000-0000000000a1', 'Aufgabe anlegen', '/tasks', string_to_array('Seitenleiste → Aufgaben → Neue Aufgabe', ' → '), 'Pflicht: Titel, Beschreibung, Status, Priorität, Fällig bis.', null),
+  ('00000000-0000-0000-0000-0000000000a1', 'Wochenzettel abgeben', '/wochenzettel', string_to_array('Seitenleiste → Wochenzettel → Woche öffnen → Tage füllen → Speichern → Abgeben', ' → '), 'Abgabeschluss Freitag 19:00; abgegeben heißt gesperrt.', '{Monteur}'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Notiz anlegen', '/notes', string_to_array('Seitenleiste → Notizen → Neue Notiz', ' → '), 'Sichtbarkeit: Büro oder Alle.', null);
 
 -- Erasmus helper features (placeholders — replace with the real screens)
-insert into public.app_features (app_id, name, route, click_path, description, required_role) values
-  ('00000000-0000-0000-0000-0000000000a2', 'Antrag anlegen', '/antraege', 'Anträge → Neuer Antrag', null, null),
-  ('00000000-0000-0000-0000-0000000000a2', 'Teilnehmende importieren', '/teilnehmende', 'Teilnehmende → Importieren → CSV wählen', null, null),
-  ('00000000-0000-0000-0000-0000000000a2', 'Budget prüfen', '/budget', 'Budget → Übersicht', null, null);
+insert into public.app_features (app_id, name, route, click_path, description, required_roles) values
+  ('00000000-0000-0000-0000-0000000000a2', 'Antrag anlegen', '/antraege', string_to_array('Anträge → Neuer Antrag', ' → '), null, null),
+  ('00000000-0000-0000-0000-0000000000a2', 'Teilnehmende importieren', '/teilnehmende', string_to_array('Teilnehmende → Importieren → CSV wählen', ' → '), null, null),
+  ('00000000-0000-0000-0000-0000000000a2', 'Budget prüfen', '/budget', string_to_array('Budget → Übersicht', ' → '), null, null);
+
+-- Kundenwerk CRM (demo-crm/, :4000) — generated from demo-crm/lotse-features.json
+insert into public.apps (id, org_id, name, domains) values
+  ('00000000-0000-0000-0000-0000000000a3', '00000000-0000-0000-0000-0000000000f1', 'Kundenwerk CRM', '{localhost:4000}');
+insert into public.app_features (app_id, name, route, click_path, description, required_roles) values
+  ('00000000-0000-0000-0000-0000000000a3', 'Kunden suchen und filtern', '/kunden.html', '{"Kunden","Kunden durchsuchen","Status"}', 'Kundenliste öffnen und nach Firma, Ort oder Ansprechpartner suchen bzw. nach Status, Branche oder Betreuer filtern.', '{"Vertrieb","Buchhaltung","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Ansprechpartner eines Kunden ansehen', '/kunde.html', '{"Kunden","<Kundenname>","Ansprechpartner"}', 'Kundendetail öffnen und im Tab Ansprechpartner Namen, Position, E-Mail und Telefon sehen.', '{"Vertrieb","Buchhaltung","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Bankverbindung (IBAN) eines Kunden ändern', '/kunde.html', '{"Kunden","<Kundenname>","Zahlungsdaten","Bankverbindung bearbeiten","IBAN","Speichern"}', 'IBAN, BIC, Bank oder Kontoinhaber eines Kunden ändern. Liegt im Kundendetail im Tab Zahlungsdaten. Ungültige IBANs werden mit einer Fehlermeldung abgelehnt.', '{"Buchhaltung","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Notiz zu einem Kunden hinzufügen', '/kunde.html', '{"Kunden","<Kundenname>","Verlauf","Neue Notiz","Notiz speichern"}', 'Gesprächsnotiz im Verlauf eines Kunden speichern.', '{"Vertrieb","Buchhaltung","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Neue Aufgabe anlegen', '/aufgaben.html', '{"Aufgaben","Neue Aufgabe","Titel","Kunde","Fällig am","Priorität","Aufgabe speichern"}', 'Aufgabe (z. B. Rückruf) für einen Kunden mit Fälligkeitsdatum und Priorität anlegen. Öffnet einen Dialog.', '{"Vertrieb","Buchhaltung","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Aufgabe als erledigt markieren', '/aufgaben.html', '{"Aufgaben","Erledigt: <Aufgabentitel>"}', 'In der Aufgabenliste (oder auf dem Dashboard unter Meine Aufgaben heute) die Checkbox der Aufgabe anhaken.', '{"Vertrieb","Buchhaltung","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Angebot erstellen', '/angebote.html', '{"Angebote","Angebot erstellen","Kunde","Titel","Weiter","Beschreibung","Menge","Einzelpreis (€)","Weiter","Angebot speichern"}', 'Neues Angebot in 3 Schritten anlegen: Kunde und Titel, Positionen, Prüfen und speichern. Wird als Entwurf gespeichert.', '{"Vertrieb","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Angebote nach Status filtern', '/angebote.html', '{"Angebote","Status"}', 'Angebotsliste nach Entwurf, Versendet, Angenommen oder Abgelehnt filtern.', '{"Vertrieb","Buchhaltung","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Standard-Zahlungsziel ändern', '/einstellungen.html', '{"Einstellungen","Abrechnung","Erweitert","Standard-Zahlungsziel ändern","Neues Standard-Zahlungsziel (Tage)","Übernehmen"}', 'Standard-Zahlungsziel (Tage netto) für neue Kunden und Angebote ändern. Versteckt unter Einstellungen → Abrechnung → Erweitert (zugeklappt).', '{"Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Benutzer und Rollen ansehen', '/einstellungen.html', '{"Einstellungen","Benutzer & Rollen"}', 'Liste aller Benutzer mit ihren Rollen und die Rechte je Rolle.', '{"Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Globale Suche', '*', '{"Globale Suche","Suchen"}', 'Über die Suche in der Kopfzeile Kunden, Aufgaben und Angebote finden. Findet keine Funktionen oder Einstellungen.', '{"Vertrieb","Buchhaltung","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Rolle wechseln (Demo)', '*', '{"Rolle"}', 'Rolle des Demo-Benutzers in der Kopfzeile umschalten (Vertrieb, Buchhaltung, Admin). Navigation und Buttons passen sich an.', '{"Vertrieb","Buchhaltung","Admin"}'),
+  ('00000000-0000-0000-0000-0000000000a3', 'Demo-Daten zurücksetzen', '*', '{"Demo-Daten zurücksetzen"}', 'Alle Änderungen verwerfen und die ursprünglichen Demo-Daten wiederherstellen (Link unten in der Seitenleiste).', '{"Vertrieb","Buchhaltung","Admin"}');
 
 -- Training catalog
 insert into public.training_catalog (org_id, title, topics) values
