@@ -93,8 +93,8 @@ flowchart LR
 
 | Held-out voices (never seen in training), threshold 0.7 | Clips | Fired |
 | --- | --- | --- |
-| "Hey Valo" / "Hey Daddy" | 72 | **94 %** |
-| Office and pitch sentences, incl. "Today we show you Valo." | 114 | **0 %** |
+| "Hey Valo" / "Hey Daddy" | 72 | **96 %** |
+| Office and pitch sentences, incl. "Today we show you Valo." | 114 | **< 1 %** (1 clip) |
 | Near misses ("Hey Danny", "Hey Paolo" …) | 74 | 7 % |
 
 Model: [`hey_valo_daddy_v1.onnx`](apps/extension/public/wakeword/hey_valo_daddy_v1.onnx) · detector: [`wakeword.ts`](apps/extension/utils/voice/wakeword.ts) · training: [`ml/wakeword`](ml/wakeword) · decision: [D-38](docs/decisions.md).

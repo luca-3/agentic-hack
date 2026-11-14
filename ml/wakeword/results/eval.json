@@ -18,11 +18,11 @@
   ],
   "positives": {
     "clips": 72,
-    "detected": 68
+    "detected": 69
   },
   "negatives": {
     "clips": 188,
-    "false_triggers": 5,
+    "false_triggers": 6,
     "by_kind": {
       "adversarial": {
         "clips": 74,
@@ -34,7 +34,7 @@
       },
       "hard": {
         "clips": 35,
-        "false_triggers": 0
+        "false_triggers": 1
       }
     }
   }

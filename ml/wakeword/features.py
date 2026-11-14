@@ -2,7 +2,7 @@
 (apps/extension/utils/voice/wakeword.ts, streaming): 80 ms frames (1280 samples, int16 scale) + 480 samples context
 → melspectrogram.onnx → x/10+2 → last 76 mel frames → embedding_model.onnx → 96-d per frame → windows of 16.
 Labels per window: positive if the window ends 80–480 ms after the wake word ended; negative everywhere in negative
-clips and before the wake word in positive clips; everything else is left out (partial words, long tails).
+clips, before the wake word and ≥ 1.2 s after it in positive clips; everything else is left out (partial words).
 Usage: python features.py [--data DIR]  → DIR/features.npz"""
 import argparse, os, sys
 from multiprocessing import Pool
@@ -54,7 +54,7 @@ def noise(n, kind, rng):
     return (w / (np.std(w) + 1e-9)).astype(np.float32)
 
 def augment(utt, rng, babble):
-    """Speed ±15 %, 40 % room reverb, 40 % band-limit (headset/laptop mic), level 0.05–0.9, 1.4–2.4 s lead-in,
+    """Speed ±15 %, 40 % room reverb, 40 % band-limit (headset/laptop mic), level 0.05–0.9, 1.4–2.4 s lead-in, 0.6–2.4 s tail,
     background: near silence / white / pink / brown noise (5–30 dB SNR) or babble from other clips (12–25 dB)."""
     utt = resample_poly(utt, 100, int(round(100 * rng.uniform(0.85, 1.15)))).astype(np.float32)
     if rng.random() < 0.4:
@@ -64,7 +64,7 @@ def augment(utt, rng, babble):
     if rng.random() < 0.4:
         utt = sosfilt(butter(2, [rng.uniform(80, 300), rng.uniform(3400, 7500)], "bandpass", fs=SR, output="sos"), utt).astype(np.float32)
     utt = utt / (np.abs(utt).max() + 1e-9) * np.exp(rng.uniform(np.log(0.05), np.log(0.9)))
-    pre, post = int(SR * rng.uniform(1.4, 2.4)), int(SR * rng.uniform(0.6, 1.0))
+    pre, post = int(SR * rng.uniform(1.4, 2.4)), int(SR * rng.uniform(0.6, 2.4))
     n = pre + len(utt) + post; n += (-n) % FRAME
     out = np.zeros(n, np.float32); out[pre:pre + len(utt)] += utt
     rms = np.sqrt(np.mean(utt ** 2)) + 1e-9
@@ -89,7 +89,8 @@ def job(args):
         W = windows(stream_embeddings(audio))
         ends = (np.arange(len(W)) + 16) * FRAME  # sample index right after the newest frame of each window
         if label == 1:
-            pos = (ends >= e + 0.08 * SR) & (ends <= e + 0.48 * SR); neg = ends <= s
+            # Late windows (word about to leave the 2 s receptive field) are negative too → no second trigger.
+            pos = (ends >= e + 0.08 * SR) & (ends <= e + 0.48 * SR); neg = (ends <= s) | (ends >= e + 1.2 * SR)
             X += [W[pos], W[neg]]; y += [np.ones(pos.sum()), np.zeros(neg.sum())]
         else:
             X.append(W); y.append(np.zeros(len(W)))

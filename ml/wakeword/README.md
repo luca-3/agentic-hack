@@ -29,7 +29,8 @@ synthetic speech ──► augmentation ──► openWakeWord features ──�
 2. **Features** (`features.py`): each clip is augmented 3–10× and run through the *same* streaming pipeline as
    [`wakeword.ts`](../../apps/extension/utils/voice/wakeword.ts) — 80 ms frames, 480 samples context,
    `melspectrogram.onnx`, `embedding_model.onnx` from openWakeWord. Windows that end 80–480 ms after the wake word
-   are positive; everything before it and every window of a negative clip is negative.
+   are positive; everything before it, everything ≥ 1.2 s after it (no second trigger) and every window of a
+   negative clip is negative.
 3. **Training** (`train.py`): small MLP, negatives weighted 2× (a false trigger is worse than repeating "Hey Valo"),
    14 epochs, ~45 s on a laptop CPU. Exported to ONNX with the same input/output shape as openWakeWord's own heads.
 4. **Evaluation** (`evaluate.py`): first trained **without** 14 held-out voices, then tested clip by clip on them;
@@ -39,9 +40,9 @@ synthetic speech ──► augmentation ──► openWakeWord features ──�
 
 | Set | Clips | Fired | Rate |
 | --- | --- | --- | --- |
-| Wake word ("Hey Valo" / "Hey Daddy") | 72 | 68 | **94.4 %** |
+| Wake word ("Hey Valo" / "Hey Daddy") | 72 | 69 | **95.8 %** |
 | Office and pitch sentences | 79 | 0 | **0 %** |
-| Hard negatives ("Today we show you Valo.", "Valo hilft dir weiter." …) | 35 | 0 | **0 %** |
+| Hard negatives ("Today we show you Valo.", "Valo hilft dir weiter." …) | 35 | 1 | 2.9 % |
 | Near misses ("Hey Danny", "Hey Daniel", "Hey Paolo" …) | 74 | 5 | 6.8 % |
 
 Full list of misses and false triggers: [`results/eval.md`](results/eval.md) · numbers: [`results/eval.json`](results/eval.json).

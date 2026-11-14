@@ -4,22 +4,22 @@ Voices never seen by the eval model: 14 (Sadachbia, Sadaltager, Shelley (English
 
 | Set | Clips | Fired | Rate |
 | --- | --- | --- | --- |
-| Positives (“Hey Valo” / “Hey Daddy”) | 72 | 68 | 94.4% |
+| Positives (“Hey Valo” / “Hey Daddy”) | 72 | 69 | 95.8% |
 | Negatives: adversarial | 74 | 5 | 6.8% |
-| Negatives: hard | 35 | 0 | 0.0% |
+| Negatives: hard | 35 | 1 | 2.9% |
 | Negatives: sentence | 79 | 0 | 0.0% |
 
 Negatives that fired (text as synthesized):
 
 - 1.00 · Sadaltager · “Say slowly and clearly: Hey Danny”
-- 0.97 · Whisper · “Hey Daniel”
-- 0.95 · Sulafat · “Say casually: Hey Paolo”
-- 0.93 · Shelley (German (Germany)) · “Hey Daniel”
-- 0.89 · Sadachbia · “Say slowly and clearly: Hey Daniel”
+- 0.99 · Sulafat · “Who's your daddy?”
+- 0.98 · Whisper · “Hey Daniel”
+- 0.89 · Shelley (German (Germany)) · “Hey Daniel”
+- 0.89 · Sadachbia · “Say quickly: Daddy”
+- 0.82 · Zarvox · “Valo”
 
 Positives that were missed:
 
 - 0.00 · Shelley (English (US)) · “Hey Daddy!”
-- 0.04 · Tara (English (India)) · “Hey Vahlo”
-- 0.11 · Tessa (English (South Africa)) · “Hey Valo?”
-- 0.46 · Tessa (English (South Africa)) · “Hey Vahlo”
+- 0.00 · Tara (English (India)) · “Hey Vahlo”
+- 0.30 · Tessa (English (South Africa)) · “Hey Valo?”
