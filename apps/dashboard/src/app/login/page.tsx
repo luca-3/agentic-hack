@@ -4,6 +4,9 @@ import { anmelden } from "@/app/actions";
 import { Logo } from "@/components/Shell";
 import { Button, Field, Notice } from "@/components/ui";
 
+// Demo credentials and the self-service signup link only outside production (public hosting, GoTrue signup disabled).
+const DEV = process.env.NODE_ENV !== "production";
+
 const FEHLER: Record<string, string> = {
   credentials: "Email or password is incorrect.",
   "no-organization": "This account doesn't belong to any organization.",
@@ -36,10 +39,10 @@ function Formular({ fehler }: { fehler?: string }) {
         <p className="mt-1 mb-0 text-muted">For organization admins.</p>
       </div>
       {fehler && <Notice tone="error" title={fehler} />}
-      <Field label="Email" name="email" type="email" autoComplete="username" required defaultValue="admin@demo.test" aria-invalid={fehler ? true : undefined} />
-      <Field label="Password" name="password" type="password" autoComplete="current-password" required aria-invalid={fehler ? true : undefined} hint="Demo: admin@demo.test · demo1234 (test data only)" />
+      <Field label="Email" name="email" type="email" autoComplete="username" required defaultValue={DEV ? "admin@demo.test" : undefined} aria-invalid={fehler ? true : undefined} />
+      <Field label="Password" name="password" type="password" autoComplete="current-password" required aria-invalid={fehler ? true : undefined} hint={DEV ? "Demo: admin@demo.test · demo1234 (test data only)" : undefined} />
       <Button type="submit">Sign in</Button>
-      <Link href="/signup" className="justify-self-center px-1 py-2 font-semibold">Set up a new organization</Link>
+      {DEV && <Link href="/signup" className="justify-self-center px-1 py-2 font-semibold">Set up a new organization</Link>}
     </form>
   );
 }
