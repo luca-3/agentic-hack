@@ -87,6 +87,16 @@ function offerFor(feature: Feature | undefined, req: DecideRequest): { intent: s
         offer: `“${label}” isn't responding as expected — want me to help?`.slice(0, 140),
       };
     }
+    const pageTitle = req.snapshot?.title ? cleanText(req.snapshot.title, 50) : "";
+    const inferredGoal = feature?.name || (req.inference && req.inference.intent.confidence >= 0.45 ? cleanText(req.inference.intent.goal, 120) : "");
+    return {
+      intent: inferredGoal || "What can I do on this page and where do I find the main actions?",
+      offer: inferredGoal
+        ? `Looking for “${inferredGoal}”? Want me to show you the way?`.slice(0, 140)
+        : pageTitle
+          ? `Having trouble on “${pageTitle}”? Want me to show you where to click?`.slice(0, 140)
+          : "Need a hand here? I can point you to the right place.",
+    };
   }
   const permErr = req.events.filter((e) => e.type === "error" && e.detail?.includes("permission=true")).pop();
   if (permErr) {
@@ -134,9 +144,9 @@ type Verdict = { p: number; feature?: Feature; tokens?: number; modelOk: boolean
 /** Applies the subject's adaptive threshold (D-22) and stores an offer when Valo intervenes. */
 export async function decide(req: DecideRequest, features: Feature[], ctx: Ctx): Promise<{ response: DecideResponse; tokens?: number }> {
   const [verdict, threshold] = await Promise.all([decideRaw(req, features, ctx), getThreshold(ctx.caller.key)]);
-  // Strong deterministic evidence boosts floor confidence while still honoring the user's adaptive threshold.
+  // Strong deterministic evidence boosts floor confidence (0.96 clears even max 0.95 threshold for unmistakable panic/rage clicks).
   if (req.trigger === "repeated_click" || req.trigger === "rage_click") {
-    verdict.p = Math.max(verdict.p, 0.92);
+    verdict.p = Math.max(verdict.p, 0.96);
     verdict.modelOk = true;
   } else if (req.trigger === "repeated_search" || req.trigger === "repeated_error") {
     verdict.p = Math.max(verdict.p, 0.88);

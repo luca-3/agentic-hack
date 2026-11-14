@@ -51,6 +51,5 @@ next-env.d.ts
 supabase/.temp
 supabase/.branches
 
-# codesphere (infra/codesphere/download-bins.sh, copy-local-data.sh)
-/bin/
+# codesphere (infra/codesphere/copy-local-data.sh)
 infra/codesphere/dump.sql

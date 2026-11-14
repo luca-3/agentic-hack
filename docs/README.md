@@ -11,6 +11,7 @@ Status: 2026-11-14 (hackathon day). Repo setup and conventions: `AGENTS.md`, `SE
 | [research.md](research.md) | Technical findings with sources (extension limits, Gemini Live, PostHog, ADK, competitors …) |
 | [handoff-extension.md](handoff-extension.md) | Extension handoff: confirmed flows, implemented code, integration contracts, remaining work and user instructions |
 | [extension-observability.md](extension-observability.md) | Exact state/intent/decision/guidance HTTP contracts for the user-owned Gemini endpoints |
+| [hosting-codesphere.md](hosting-codesphere.md) | Hosting (D-39): Codesphere for dashboard + server, Supabase Cloud for DB/auth/vector — steps and limits |
 
 ## Valo in one paragraph
 

@@ -383,8 +383,8 @@ function isSearch(element: HTMLElement) {
     Boolean(element.closest('[role="search"]')) || SEARCH_LABEL.test(accessibleName(element));
 }
 
-const REPEATED_CLICKS = { count: 5, disabledCount: 2, deadCount: 3, rageCount: 4, windowMs: 20_000, rageWindowMs: 6_000, radiusPx: 64 } as const;
-let pointerHits: Array<{ elementKey: string | null; route: string; x: number; y: number; ts: number; snapshotId: string | undefined }> = [];
+const REPEATED_CLICKS = { count: 5, disabledCount: 2, deadCount: 3, rageCount: 4, scatteredPanicCount: 5, windowMs: 20_000, rageWindowMs: 6_000, panicWindowMs: 4_500, radiusPx: 80 } as const;
+let pointerHits: Array<{ elementKey: string | null; route: string; x: number; y: number; isTextEntry: boolean; ts: number; snapshotId: string | undefined }> = [];
 const repeatedClickFired = new Map<string, number>();
 
 function isControlDisabled(element: HTMLElement): boolean {
@@ -420,11 +420,13 @@ function analyzePointerPress(event: PointerEvent): { type: "click" | "repeated_c
   const elementKey = element ? `${currentRoute}|${roleOf(element)}:${accessibleName(element)}` : null;
   const x = event.clientX;
   const y = event.clientY;
-  const fireKey = elementKey ?? `${currentRoute}|area:${Math.round(x / 64)},${Math.round(y / 64)}`;
+  const fireKey = elementKey ?? `${currentRoute}|area:${Math.round(x / 80)},${Math.round(y / 80)}`;
+  const panicKey = `${currentRoute}|panic`;
   const now = Date.now();
   const snapId = currentSnapshot?.id;
+  const entryField = Boolean(element && isEntry(element));
   pointerHits = pointerHits.filter((hit) => now - hit.ts <= REPEATED_CLICKS.windowMs);
-  pointerHits.push({ elementKey, route: currentRoute, x, y, ts: now, snapshotId: snapId });
+  pointerHits.push({ elementKey, route: currentRoute, x, y, isTextEntry: entryField, ts: now, snapshotId: snapId });
 
   const sameSpot = (hit: (typeof pointerHits)[number]) =>
     hit.route === currentRoute &&
@@ -438,7 +440,7 @@ function analyzePointerPress(event: PointerEvent): { type: "click" | "repeated_c
     hoveredDisabledHint = { text: `Locked (${accessibleName(element)}): ${reason}`.slice(0, 160), until: now + 15_000 };
   }
 
-  const cooldownMs = 8_000;
+  const cooldownMs = 6_000;
   const recentlyFired = now - (repeatedClickFired.get(fireKey) ?? 0) < cooldownMs;
 
   if (disabled && count >= REPEATED_CLICKS.disabledCount && !recentlyFired) {
@@ -461,13 +463,27 @@ function analyzePointerPress(event: PointerEvent): { type: "click" | "repeated_c
     };
   }
 
+  // Same-spot rage clicks (≥ 4 in 6 s within 80 px or same control).
   const rageHits = hits.filter((hit) => now - hit.ts <= REPEATED_CLICKS.rageWindowMs);
   if (rageHits.length >= REPEATED_CLICKS.rageCount && !recentlyFired) {
     repeatedClickFired.set(fireKey, now);
     return {
       type: "rage_click",
       element,
-      detail: [`clicks=${rageHits.length}`, `disabled=${disabled}`, reason ? `reason=${reason}` : ""].filter(Boolean).join(";"),
+      detail: [`clicks=${rageHits.length}`, `disabled=${disabled}`, "panic=spot", reason ? `reason=${reason}` : ""].filter(Boolean).join(";"),
+    };
+  }
+
+  // Scattered panic clicking across the page (≥ 5 non-textbox clicks anywhere on the page within 4.5 s).
+  const pagePanicHits = pointerHits.filter(
+    (hit) => hit.route === currentRoute && !hit.isTextEntry && now - hit.ts <= REPEATED_CLICKS.panicWindowMs,
+  );
+  if (pagePanicHits.length >= REPEATED_CLICKS.scatteredPanicCount && now - (repeatedClickFired.get(panicKey) ?? 0) >= cooldownMs) {
+    repeatedClickFired.set(panicKey, now);
+    return {
+      type: "rage_click",
+      element,
+      detail: `clicks=${pagePanicHits.length};disabled=${disabled};panic=scattered`,
     };
   }
 

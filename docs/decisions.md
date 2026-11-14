@@ -178,7 +178,7 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** the server delete is keyed by user/subject only, not by org, so one org's admin would wipe data the person produced in other orgs.
 - **Consequence:** people in several orgs can only delete their own data (/my-data). Proper fix: org-scope the server delete (server owner).
 
-### D-38 · Hosting: one Codesphere workspace, managed Postgres, self-run PostgREST + GoTrue (2026-11-14)
+### D-38 · Hosting: one Codesphere workspace, managed Postgres, self-run PostgREST + GoTrue (2026-11-14) — superseded by D-39
 - **Decision:** workspace "valo", one domain, path routing (`ci.valo.yml`): `/` dashboard, `/api` server, `/rest/v1` PostgREST v16.5, `/auth/v1` GoTrue v2.197.0 (same versions as local Supabase); DB = Codesphere Managed PostgreSQL 18 with Supabase roles recreated by `infra/codesphere/bootstrap.sql`; legacy HS256 anon/service_role JWTs (`make-jwts.mjs`). Steps: `docs/hosting-codesphere.md`.
 - **Why:** user chose Plan A — app code stays unchanged (supabase-js against `/rest/v1` + `/auth/v1`), no Supabase Cloud account needed.
 - **Consequence:** public repo → sign-up off (`GOTRUE_DISABLE_SIGNUP=true`, dashboard `/signup` fails there), demo passwords replaced after import (`reset-demo-passwords.sh`), `JWT_SECRET` ≥ 64 chars, server refuses `LOTSE_DEV_AUTH`, Postgres internal only; no Realtime/Storage/SMTP; the server's own pages (`/`, `/chat`) are not reachable under the domain; the extension needs the workspace host in `host_permissions` and a build-time server URL (extension owner).
@@ -188,6 +188,11 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** user asked for "Hey Valo" and "Hey Daddy" as wake words (2026-11-14); no pre-trained model exists for either.
 - **How it was trained:** synthetic speech only — 30 Gemini TTS voices + 33 local macOS voices (de/en), augmented (speed, reverb, band-limit, noise, babble), features computed exactly like `wakeword.ts` (streaming mel → embedding), small MLP head, exported to ONNX. Hard negatives: pitch sentences with "Valo" but without "hey", "Daddy" alone, "Hey Danny/Daniel". Held-out voices: 96 % of wake word clips detected, 1 of 114 office/pitch sentences fired, 7 % of near misses ("Hey Danny") fired.
 - **Consequence:** weak spot = near-homophones ("Hey Danny"); tune via `lotse:voice-config` threshold (0.8 if it fires by itself). Our head is our own work (no CC BY-NC-SA dependency), unlike `hey_jarvis`. Training pipeline, manifest, metrics and samples: `ml/wakeword/`.
+
+### D-39 · Hosting: Supabase Cloud for DB/auth/vector, Codesphere only for dashboard + server (2026-11-14) — supersedes D-38 (hosting)
+- **Decision:** Supabase Cloud project `jskpfugcnhmcujlsyyhh` (eu-central-1) runs database, auth and vector search; Codesphere workspace `https://691180.1.cloud.codesphere.com` runs only dashboard (`/`) and server (`/api`) via `ci.valo.yml`. Migrations go in with `supabase link` + `db push` (coordinator), not from the pipeline. Codesphere DB, PostgREST, GoTrue, bootstrap and self-made JWTs are dropped.
+- **Why:** user decision — less to run ourselves; Supabase Cloud provides the new `sb_publishable_`/`sb_secret_` keys and the gateway.
+- **Consequence:** public repo → sign-up off and "Confirm email" off in the Supabase dashboard, demo passwords replaced right after the data import (`infra/codesphere/reset-demo-passwords.sh`), server always `NODE_ENV=production` and refuses `LOTSE_DEV_AUTH`. Test data via `copy-local-data.sh` without any CORPUS features/knowledge/trainings/learned data or runtime logs (user: no CORPUS feature info outside the local DB). Steps: `docs/hosting-codesphere.md`.
 
 ## Open questions
 

@@ -254,10 +254,10 @@ export function findStuckSignal(context: ObservationContext | null): StuckSignal
   const now = Date.now();
   const recent = context.workflow.events.filter((event) => event.ts >= now - 60_000);
 
-  // 1. Repeated / disabled / dead / rage clicks (highest priority, D-30 + disabled-button & dead-click awareness).
+  // 1. Repeated / disabled / dead / rage / panic clicks (highest priority).
   const repeated = recent.filter((event) => (event.type === "repeated_click" || event.type === "rage_click") && event.ts >= now - 30_000).pop();
   if (repeated) {
-    const label = repeated.elementLabel ? `"${repeated.elementLabel}"` : "the same spot";
+    const label = repeated.elementLabel ? `"${repeated.elementLabel}"` : "the page";
     const reasonMatch = /reason=([^;]+)/.exec(repeated.detail ?? "")?.[1];
     if (repeated.detail?.includes("disabled=true")) {
       return {
@@ -265,10 +265,19 @@ export function findStuckSignal(context: ObservationContext | null): StuckSignal
         reason: `Clicked disabled control ${label} multiple times${reasonMatch ? ` (${reasonMatch})` : ""}.`,
       };
     }
+    if (repeated.detail?.includes("panic=scattered")) {
+      return { type: "repeated_click", reason: "Panic-clicked rapidly across multiple areas on the page." };
+    }
     if (repeated.detail?.includes("deadClick=true")) {
       return { type: "repeated_click", reason: `Clicked ${label} repeatedly with no UI state change.` };
     }
-    return { type: "repeated_click", reason: `Repeatedly clicked ${label}.` };
+    return { type: "repeated_click", reason: `Rapidly rage-clicked on ${label}.` };
+  }
+
+  // Rapid cross-page navigation panic (≥ 3 page navigations within 5 seconds).
+  const rapidRoutes = recent.filter((e) => e.type === "route" && e.ts >= now - 5_000);
+  if (rapidRoutes.length >= 3) {
+    return { type: "route_ping_pong", reason: "Switched across multiple pages within a few seconds looking for a feature." };
   }
 
   // Single click on a disabled control followed immediately by an error or hesitation.
