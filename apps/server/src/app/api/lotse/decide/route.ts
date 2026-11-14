@@ -1,0 +1,30 @@
+import { z } from "zod";
+import { DecideRequestSchema } from "@lotse/shared";
+import { corsHeaders, preflight } from "@/lib/cors";
+import { decide } from "@/lib/lotse/decide";
+import { capSnapshot, chargeBudget, errorJson, guard, GuardError, readJson } from "@/lib/lotse/guard";
+import { contextHeader, resolveContext } from "@/lib/lotse/context";
+
+export const OPTIONS = preflight;
+
+/**
+ * POST /api/lotse/decide — "should Lotse offer help now?" → DecideResponse.
+ * Gemini Decisions API (gemini-decision-1, ~0.6 s) with lite-model fallback; per-user adaptive threshold (D-22).
+ */
+export async function POST(request: Request) {
+  const cors = corsHeaders(request.headers.get("origin"));
+  try {
+    const caller = await guard(request, "decide");
+    const parsed = DecideRequestSchema.safeParse(await readJson(request));
+    if (!parsed.success) throw new GuardError("bad_request", z.prettifyError(parsed.error), 400);
+    const snapshot = parsed.data.snapshot ? capSnapshot(parsed.data.snapshot) : undefined;
+    // app → org → features (Choice options) + role (org_members beats the client role)
+    const ctx = await resolveContext(request, caller, { appId: parsed.data.appId, role: parsed.data.role, url: snapshot?.url });
+    const req = { ...parsed.data, snapshot, role: ctx.role };
+    const { response, tokens } = await decide(req, ctx.app.features, { caller, appId: ctx.appId, orgId: ctx.app.orgId });
+    chargeBudget(caller, tokens);
+    return Response.json(response, { headers: { ...cors, ...contextHeader(ctx), "Cache-Control": "no-store" } });
+  } catch (e) {
+    return errorJson(e, cors);
+  }
+}

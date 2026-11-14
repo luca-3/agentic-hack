@@ -9,7 +9,7 @@
 
   var STORAGE_KEY = "kundenwerk-crm:data:v1";
   var ROLE_KEY = "kundenwerk-crm:role";
-  var ROLES = ["Vertrieb", "Buchhaltung", "Admin"];
+  var ROLES = ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"];
   var DEFAULT_ROLE = "Vertrieb";
 
   var CURRENT_USER = {
@@ -21,8 +21,13 @@
   // Wer darf was? (Rollenmodell der Demo)
   var PERMISSIONS = {
     editPayment: ["Buchhaltung", "Admin"],
-    createOffer: ["Vertrieb", "Admin"],
+    createOffer: ["Vertrieb", "Vertriebsleitung", "Admin"],
     viewSettings: ["Admin"],
+    approveOffer: ["Vertriebsleitung", "Admin"],
+    cancelContract: ["Vertriebsleitung", "Admin"],
+    manageApi: ["Admin"],
+    dataExchange: ["Buchhaltung", "Admin"],
+    assignTasks: ["Vertriebsleitung", "Admin"],
   };
 
   function isoDate(offsetDays) {
@@ -475,7 +480,7 @@
       { name: "Michael Roth", email: "michael.roth@example.com", role: "Admin" },
     ];
 
-    return {
+    return upgrade({
       version: 1,
       seededAt: new Date().toISOString(),
       customers: customers,
@@ -485,7 +490,132 @@
       settings: settings,
       users: users,
       counters: { task: 100, offer: 44 },
-    };
+    });
+  }
+
+  // ---------- Erweiterung (Schema 2): additiv und idempotent ----------
+  // Bestehende localStorage-Daten werden ergänzt, nicht ersetzt.
+  var CONTRACT_SEED = {
+    "mueller-logistik": [
+      ["Flottenmanagement-Lizenz", "V-2019-014", "2019-03-01", 3, 1450],
+      ["Wartungsvertrag Standard", "V-2022-031", "2022-01-01", 1, 390],
+    ],
+    "becker-maschinenbau": [
+      ["Wartungsvertrag Basis", "V-2017-008", "2017-07-01", 3, 2100],
+      ["Ersatzteil-Service", "V-2023-052", "2023-04-01", 6, 640],
+    ],
+    "richter-it": [["Supportvertrag 12 Monate", "V-2024-071", "2024-02-01", 3, 980]],
+    "weber-elektrotechnik": [["Software-Lizenz Basis", "V-2020-022", "2020-09-01", 3, 520]],
+  };
+
+  var DOCUMENT_SEED = [
+    ["Rahmenvertrag.pdf", "Vertrag", "312 KB", -120, "Michael Roth"],
+    ["Angebot_unterschrieben.pdf", "Angebot", "188 KB", -35, "Jana Lehmann"],
+    ["Protokoll_Jahresgespraech.docx", "Korrespondenz", "46 KB", -12, "Tobias Krüger"],
+  ];
+
+  function slug(value) {
+    return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function upgrade(d) {
+    if (d.schema >= 2) return d;
+
+    if (!d.users.some(function (u) { return u.role === "Vertriebsleitung"; })) {
+      d.users.splice(2, 0, { name: "Katrin Albers", email: "katrin.albers@example.com", role: "Vertriebsleitung" });
+    }
+
+    d.tasks.forEach(function (t) {
+      if (!t.subtasks) t.subtasks = [];
+      if (!t.recurrence) t.recurrence = "Keine";
+      if (t.id === "t5" && t.subtasks.length === 0) {
+        t.subtasks = [
+          { id: "s1", text: "Maschinenliste anfordern", done: true },
+          { id: "s2", text: "Stundensätze prüfen", done: false },
+          { id: "s3", text: "Kalkulation mit Vertriebsleitung abstimmen", done: false },
+        ];
+      }
+      if (t.id === "t1" && t.subtasks.length === 0) {
+        t.subtasks = [
+          { id: "s4", text: "Rechnung 2026-0412 heraussuchen", done: false },
+          { id: "s5", text: "Gutschrift prüfen", done: false },
+        ];
+      }
+      if (t.id === "t8") {
+        t.recurrence = "Monatlich";
+        t.recurrenceUntil = isoDate(180);
+      }
+    });
+
+    if (!d.offers.some(function (o) { return o.id === "o8"; })) {
+      d.offers.push({
+        id: "o8", number: "ANG-2026-044", title: "Ersatzteil-Rahmenvertrag", customerId: "becker-maschinenbau",
+        amount: 14250, status: "Zur Freigabe", date: isoDate(-2), validUntil: isoDate(28),
+        positions: [
+          { desc: "Ersatzteil-Pauschale Jahr 1", qty: 1, price: 12000, discount: 5 },
+          { desc: "Express-Lieferung (Kontingent)", qty: 10, price: 285, discount: 0 },
+        ],
+        log: [{ when: isoDate(-1), text: "Zur Freigabe eingereicht", author: "Tobias Krüger" }],
+      });
+    }
+    d.offers.forEach(function (o) {
+      if (!o.positions || o.positions.length === 0) {
+        o.positions = o.id === "o2"
+          ? [
+              { desc: "Wartung Premium (12 Monate)", qty: 1, price: 48000, discount: 0 },
+              { desc: "Vor-Ort-Einsätze (Kontingent)", qty: 20, price: 510, discount: 0 },
+            ]
+          : [{ desc: o.title, qty: 1, price: o.amount, discount: 0 }];
+      }
+      o.positions.forEach(function (p) { if (p.discount == null) p.discount = 0; });
+      if (!o.log) o.log = [];
+      if (!o.paymentTermDays) o.paymentTermDays = 30;
+    });
+
+    d.customers.forEach(function (c, i) {
+      if (!c.primaryContact && c.contacts[0]) c.primaryContact = c.contacts[0].email;
+      if (!c.contracts) {
+        var rows = CONTRACT_SEED[c.id] || (c.status === "Aktiv" ? [["Software-Lizenz Basis", "V-202" + (i % 5) + "-0" + (40 + i), c.customerSince, 3, 300 + i * 25]] : []);
+        c.contracts = rows.map(function (r) {
+          return { id: slug(r[1]), name: r[0], number: r[1], start: r[2], noticeMonths: r[3], monthlyFee: r[4], status: "Aktiv", cancelledTo: null, cancelReason: null };
+        });
+      }
+      if (!c.documents) {
+        c.documents = DOCUMENT_SEED.slice(0, c.status === "Aktiv" ? 3 : 1).map(function (r, j) {
+          return { id: "doc-" + c.id + "-" + j, name: r[0], category: r[1], size: r[2], date: isoDate(r[3]), author: r[4], portal: false };
+        });
+      }
+    });
+
+    if (!d.profile) {
+      d.profile = {
+        salutation: "Frau", firstName: "Jana", lastName: "Lehmann", position: "Key Account Managerin",
+        phone: "+49 30 555 0199", mobile: "", language: "Deutsch", timezone: "Europe/Berlin",
+        dateFormat: "TT.MM.JJJJ", startPage: "Dashboard", location: "Berlin", about: "",
+      };
+    }
+    if (!d.security) d.security = { twoFactor: false, twoFactorMethod: null, passwordChangedAt: isoDate(-210) };
+    if (!d.notificationPrefs) {
+      d.notificationPrefs = {
+        taskDue: true, taskAssigned: true, taskOverdue: false,
+        offerAccepted: true, offerRejected: true, offerApproval: false,
+        bankChange: true, contractEnding: false,
+        dailyDigest: false, digestTime: "07:30", channel: "E-Mail",
+        ownChanges: false, quietHours: false, quietFrom: "20:00", quietTo: "07:00",
+      };
+    }
+    if (!d.absence) d.absence = { active: false, message: "", deputy: null, from: null, to: null, forwardTasks: false };
+    if (!d.signature) {
+      d.signature = { text: "Viele Grüße\nJana Lehmann\nKey Account Managerin · Kundenwerk Demo GmbH\nTel. +49 30 555 0199", useInReplies: true };
+    }
+    if (!d.apiTokens) {
+      d.apiTokens = [{ id: "tok1", name: "DATEV-Sync", scopes: "Lesen", created: isoDate(-60), expires: isoDate(305), lastUsed: isoDate(-1), revoked: false }];
+    }
+    if (!d.savedViews) d.savedViews = [{ id: "v1", name: "Hohe Priorität (offen)", state: "open", priority: "Hoch", assignee: "", mine: false }];
+    if (!d.counters.contract) d.counters.contract = 100;
+
+    d.schema = 2;
+    return d;
   }
 
   // ---------- Speicher ----------
@@ -519,6 +649,9 @@
     }
     if (!cache || cache.version !== 1) {
       cache = seed();
+      save();
+    } else if (!(cache.schema >= 2)) {
+      upgrade(cache);
       save();
     }
     return cache;
@@ -634,6 +767,52 @@
       .replace(/ß/g, "ss");
   }
 
+  // Frühestmögliches Vertragsende: heute + Kündigungsfrist (Monate), zum Monatsende.
+  function earliestTermination(noticeMonths) {
+    var d = new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(1);
+    d.setMonth(d.getMonth() + noticeMonths + 1);
+    d.setDate(0);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function addInterval(iso, recurrence) {
+    var d = new Date(iso + "T12:00:00");
+    if (recurrence === "Täglich") d.setDate(d.getDate() + 1);
+    else if (recurrence === "Wöchentlich") d.setDate(d.getDate() + 7);
+    else if (recurrence === "Monatlich") d.setMonth(d.getMonth() + 1);
+    else if (recurrence === "Quartalsweise") d.setMonth(d.getMonth() + 3);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Positionssumme nach Rabatt
+  function positionTotal(p) {
+    return (Number(p.qty) || 0) * (Number(p.price) || 0) * (1 - (Number(p.discount) || 0) / 100);
+  }
+
+  // Aufgabe erledigen; bei Wiederholung wird die nächste Aufgabe angelegt (Rückgabe) oder null.
+  function completeTask(task) {
+    task.done = true;
+    logActivity("Aufgabe „" + task.title + "“ erledigt", task.customerId);
+    if (!task.recurrence || task.recurrence === "Keine") return null;
+    var due = addInterval(task.due, task.recurrence);
+    if (task.recurrenceUntil && due > task.recurrenceUntil) return null;
+    var next = {
+      id: "t" + nextId("task"), title: task.title, customerId: task.customerId, due: due, priority: task.priority,
+      note: task.note || "", done: false, assignee: task.assignee, recurrence: task.recurrence, recurrenceUntil: task.recurrenceUntil || null,
+      subtasks: (task.subtasks || []).map(function (st, i) { return { id: "s" + Date.now() + i, text: st.text, done: false }; }),
+    };
+    db().tasks.push(next);
+    return next;
+  }
+
+  function getOffer(id) {
+    var list = db().offers;
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+
   window.CRM = {
     ROLES: ROLES,
     CURRENT_USER: CURRENT_USER,
@@ -658,5 +837,10 @@
     nextId: nextId,
     logActivity: logActivity,
     normalizeText: normalizeText,
+    earliestTermination: earliestTermination,
+    addInterval: addInterval,
+    positionTotal: positionTotal,
+    getOffer: getOffer,
+    completeTask: completeTask,
   };
 })();

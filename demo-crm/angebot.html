@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Angebot – Kundenwerk CRM</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="angebote">
+    <header class="topbar" id="topbar"></header>
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <main class="main" id="main">
+      <nav class="breadcrumb" aria-label="Brotkrumen">
+        <a href="index.html">Dashboard</a> / <a href="angebote.html">Angebote</a> / <span id="crumb-number" aria-current="page">…</span>
+      </nav>
+
+      <div id="not-found" class="alert alert-error" role="alert" hidden>
+        Angebot nicht gefunden. <a href="angebote.html">Zurück zur Angebotsliste</a>
+      </div>
+
+      <div id="offer-view" hidden>
+        <div class="page-header">
+          <div>
+            <h1 id="offer-heading"></h1>
+            <p id="offer-sub"></p>
+          </div>
+          <div class="header-actions" id="workflow-actions">
+            <button type="button" class="btn btn-primary" id="wf-submit">Zur Freigabe einreichen</button>
+            <span class="tooltip-wrap" id="wf-approve-wrap">
+              <button type="button" class="btn btn-primary" id="wf-approve" aria-describedby="wf-approve-tip">Freigeben</button>
+              <span class="tooltip" role="tooltip" id="wf-approve-tip">Nur die Rollen Vertriebsleitung oder Admin dürfen Angebote freigeben.</span>
+            </span>
+            <button type="button" class="btn" id="wf-reject">Zurückweisen</button>
+            <span class="tooltip-wrap" id="wf-send-wrap">
+              <button type="button" class="btn btn-primary" id="wf-send" aria-describedby="wf-send-tip">Versenden</button>
+              <span class="tooltip" role="tooltip" id="wf-send-tip">Versenden ist erst möglich, wenn das Angebot freigegeben wurde.</span>
+            </span>
+            <button type="button" class="btn" id="wf-accepted">Als angenommen markieren</button>
+            <button type="button" class="btn" id="wf-declined">Als abgelehnt markieren</button>
+
+            <div class="menu-wrap">
+              <button type="button" class="btn js-menu-btn" id="offer-actions-button" aria-haspopup="menu" aria-expanded="false" aria-controls="offer-actions-menu">
+                Aktionen <span aria-hidden="true">▾</span>
+              </button>
+              <ul class="menu-popup js-menu-panel" id="offer-actions-menu" role="menu" aria-label="Aktionen" hidden>
+                <li role="none"><button type="button" role="menuitem" data-action="duplicate">Angebot duplizieren</button></li>
+                <li role="none">
+                  <button type="button" role="menuitem" class="js-menu-btn js-submenu-btn" id="export-submenu-button" aria-haspopup="menu" aria-expanded="false" aria-controls="export-submenu">
+                    Exportieren <span class="submenu-arrow" aria-hidden="true">◂</span>
+                  </button>
+                  <ul class="menu-popup submenu js-menu-panel" id="export-submenu" role="menu" aria-label="Exportieren" hidden>
+                    <li role="none"><button type="button" role="menuitem" data-action="pdf">Als PDF exportieren</button></li>
+                    <li role="none"><button type="button" role="menuitem" data-action="xlsx">Als Excel exportieren</button></li>
+                    <li role="none"><button type="button" role="menuitem" data-action="datev">Für DATEV exportieren</button></li>
+                  </ul>
+                </li>
+                <li role="none"><button type="button" role="menuitem" data-action="customer">Zum Kunden</button></li>
+                <li role="separator"></li>
+                <li role="none"><button type="button" role="menuitem" class="danger" data-action="delete" id="action-delete">Angebot löschen</button></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div id="workflow-error" class="alert alert-error" role="alert" hidden></div>
+
+        <ol class="steps" id="status-steps" aria-label="Status des Angebots">
+          <li data-status="Entwurf">Entwurf</li>
+          <li data-status="Zur Freigabe">Zur Freigabe</li>
+          <li data-status="Freigegeben">Freigegeben</li>
+          <li data-status="Versendet">Versendet</li>
+        </ol>
+
+        <div class="grid-2">
+          <section class="card" aria-labelledby="positions-title">
+            <div class="card-header">
+              <h2 id="positions-title">Positionen</h2>
+              <span class="unsaved" id="unsaved-hint" role="status" hidden>Ungespeicherte Änderungen</span>
+            </div>
+            <p class="alert alert-info" id="readonly-hint" hidden></p>
+            <form id="positions-form" novalidate>
+              <div style="overflow-x: auto">
+                <table class="positions-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 38%">Beschreibung</th>
+                      <th class="num">Menge</th>
+                      <th class="num">Einzelpreis (€)</th>
+                      <th class="num">Rabatt (%)</th>
+                      <th class="num">Summe</th>
+                      <th><span class="sr-only">Entfernen</span></th>
+                    </tr>
+                  </thead>
+                  <tbody id="position-rows"></tbody>
+                </table>
+              </div>
+              <div id="positions-error" class="alert alert-error" role="alert" hidden></div>
+              <button type="button" class="btn" id="add-position" style="margin-top: 10px">Position hinzufügen</button>
+
+              <dl class="totals" id="totals"></dl>
+
+              <div class="btn-row" style="justify-content: flex-end">
+                <button type="button" class="btn" id="discard-changes">Verwerfen</button>
+                <button type="submit" class="btn btn-primary" id="save-positions">Speichern</button>
+                <button type="button" class="btn" id="save-close">Speichern &amp; schließen</button>
+              </div>
+            </form>
+          </section>
+
+          <div>
+            <section class="card" aria-labelledby="meta-title">
+              <h2 id="meta-title">Details</h2>
+              <dl class="details" id="offer-meta"></dl>
+            </section>
+            <section class="card" aria-labelledby="log-title">
+              <h2 id="log-title">Statusverlauf</h2>
+              <ul class="list timeline" id="offer-log"></ul>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <dialog id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-text">
+      <div class="dialog-header"><h2 id="delete-title">Angebot löschen?</h2></div>
+      <div class="dialog-body"><p id="delete-text"></p></div>
+      <div class="dialog-footer">
+        <button type="button" class="btn" id="delete-cancel">Abbrechen</button>
+        <button type="button" class="btn btn-primary" id="delete-confirm">Endgültig löschen</button>
+      </div>
+    </dialog>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var CRM = window.CRM;
+        var ui = CRM.ui;
+        var esc = ui.escapeHtml;
+        function $(id) { return document.getElementById(id); }
+
+        var offer = CRM.getOffer(new URLSearchParams(location.search).get("id"));
+        if (!offer) {
+          $("crumb-number").textContent = "Unbekannt";
+          $("not-found").hidden = false;
+          return;
+        }
+        document.title = offer.number + " – Kundenwerk CRM";
+        $("offer-view").hidden = false;
+        $("crumb-number").textContent = offer.number;
+
+        var canEditRole = CRM.can("createOffer");
+        var canApprove = CRM.can("approveOffer");
+        var draft = [];
+        var dirty = false;
+
+        function editable() {
+          return canEditRole && offer.status === "Entwurf";
+        }
+
+        function setDirty(v) {
+          dirty = v;
+          $("unsaved-hint").hidden = !v;
+        }
+
+        function addLog(text) {
+          offer.log.unshift({ when: CRM.today(), text: text, author: CRM.CURRENT_USER.name });
+        }
+
+        // ---------- Kopf, Status, Details ----------
+        function renderHeader() {
+          $("offer-heading").textContent = offer.number + " · " + offer.title;
+          $("offer-sub").innerHTML = '<a href="kunde.html?id=' + encodeURIComponent(offer.customerId) + '">' + esc(CRM.customerName(offer.customerId)) + "</a> · " + ui.statusBadge(offer.status);
+          var order = ["Entwurf", "Zur Freigabe", "Freigegeben", "Versendet"];
+          var idx = order.indexOf(offer.status === "Angenommen" || offer.status === "Abgelehnt" ? "Versendet" : offer.status);
+          Array.prototype.forEach.call(document.querySelectorAll("#status-steps li"), function (li, i) {
+            if (i === idx) li.setAttribute("aria-current", "step");
+            else li.removeAttribute("aria-current");
+            li.classList.toggle("complete", i < idx || (i === idx && (offer.status === "Angenommen" || offer.status === "Abgelehnt")));
+          });
+
+          var s = offer.status;
+          $("wf-submit").hidden = s !== "Entwurf";
+          $("wf-approve-wrap").hidden = s !== "Zur Freigabe";
+          $("wf-reject").hidden = s !== "Zur Freigabe" || !canApprove;
+          $("wf-send-wrap").hidden = !(s === "Entwurf" || s === "Zur Freigabe" || s === "Freigegeben");
+          $("wf-accepted").hidden = s !== "Versendet";
+          $("wf-declined").hidden = s !== "Versendet";
+
+          // Freigeben: sichtbar, aber gesperrt (aria-disabled + Tooltip) ohne Berechtigung
+          if (canApprove) {
+            $("wf-approve").removeAttribute("aria-disabled");
+            $("wf-approve-tip").hidden = true;
+            $("wf-approve").removeAttribute("aria-describedby");
+          } else {
+            $("wf-approve").setAttribute("aria-disabled", "true");
+          }
+          // Versenden: echtes disabled + Tooltip, bis freigegeben
+          var sendable = s === "Freigegeben";
+          $("wf-send").disabled = !sendable;
+          $("wf-send-tip").hidden = sendable;
+          if (sendable) $("wf-send").removeAttribute("aria-describedby");
+          else $("wf-send").setAttribute("aria-describedby", "wf-send-tip");
+
+          $("action-delete").setAttribute("aria-disabled", String(!(s === "Entwurf" && canEditRole)));
+
+          var t = totals(offer.positions);
+          $("offer-meta").innerHTML =
+            "<dt>Kunde</dt><dd>" + esc(CRM.customerName(offer.customerId)) + "</dd>" +
+            "<dt>Status</dt><dd>" + ui.statusBadge(offer.status) + "</dd>" +
+            "<dt>Erstellt</dt><dd>" + CRM.formatDate(offer.date) + "</dd>" +
+            "<dt>Gültig bis</dt><dd>" + CRM.formatDate(offer.validUntil) + "</dd>" +
+            "<dt>Zahlungsziel</dt><dd>" + offer.paymentTermDays + " Tage netto</dd>" +
+            "<dt>Betrag (netto)</dt><dd>" + CRM.formatEuro(t.net) + "</dd>";
+          $("offer-log").innerHTML = offer.log.length
+            ? offer.log.map(function (l) {
+                return "<li><span>" + esc(l.text) + '</span><span class="meta">' + CRM.formatDate(l.when) + " · " + esc(l.author) + "</span></li>";
+              }).join("")
+            : '<li><span class="meta">Noch keine Statusänderungen.</span></li>';
+        }
+
+        // ---------- Positionen ----------
+        function totals(list) {
+          var gross = 0, net = 0;
+          list.forEach(function (p) {
+            gross += (Number(p.qty) || 0) * (Number(p.price) || 0);
+            net += CRM.positionTotal(p);
+          });
+          var vatRate = CRM.db().settings.defaultVatRate;
+          return { subtotal: gross, discount: gross - net, net: net, vat: (net * vatRate) / 100, total: net * (1 + vatRate / 100), vatRate: vatRate };
+        }
+
+        function renderTotals() {
+          var t = totals(draft);
+          $("totals").innerHTML =
+            "<dt>Zwischensumme</dt><dd>" + CRM.formatEuro(t.subtotal) + "</dd>" +
+            "<dt>Rabatt</dt><dd>− " + CRM.formatEuro(t.discount) + "</dd>" +
+            "<dt>Netto</dt><dd>" + CRM.formatEuro(t.net) + "</dd>" +
+            "<dt>MwSt. (" + t.vatRate + " %)</dt><dd>" + CRM.formatEuro(t.vat) + "</dd>" +
+            '<dt class="grand">Gesamt (brutto)</dt><dd class="grand" id="grand-total">' + CRM.formatEuro(t.total) + "</dd>";
+          draft.forEach(function (p, i) {
+            var cell = $("pos-sum-" + i);
+            if (cell) cell.textContent = CRM.formatEuro(CRM.positionTotal(p));
+          });
+        }
+
+        function renderPositions() {
+          var ro = !editable();
+          $("position-rows").innerHTML = draft
+            .map(function (p, i) {
+              var n = i + 1;
+              var dis = ro ? " disabled" : "";
+              return (
+                "<tr>" +
+                '<td><input type="text" data-i="' + i + '" data-field="desc" aria-label="Beschreibung Position ' + n + '" value="' + esc(p.desc) + '"' + dis + " /></td>" +
+                '<td class="num"><input type="number" data-i="' + i + '" data-field="qty" min="1" step="1" aria-label="Menge Position ' + n + '" value="' + esc(p.qty) + '"' + dis + " /></td>" +
+                '<td class="num"><input type="number" data-i="' + i + '" data-field="price" min="0" step="0.01" aria-label="Einzelpreis (€) Position ' + n + '" value="' + esc(p.price) + '"' + dis + " /></td>" +
+                '<td class="num"><input type="number" data-i="' + i + '" data-field="discount" min="0" max="100" step="0.5" aria-label="Rabatt (%) Position ' + n + '" value="' + esc(p.discount) + '"' + dis + " /></td>" +
+                '<td class="num" id="pos-sum-' + i + '"></td>' +
+                "<td>" + (ro || draft.length === 1 ? "" : '<button type="button" class="icon-btn danger" data-remove="' + i + '" aria-label="Position ' + n + ' entfernen">' + ui.ICONS.trash + "</button>") + "</td>" +
+                "</tr>"
+              );
+            })
+            .join("");
+          $("add-position").hidden = ro;
+          ["discard-changes", "save-positions", "save-close"].forEach(function (id) { $(id).hidden = ro; });
+          var hint = $("readonly-hint");
+          if (!canEditRole) {
+            hint.textContent = "Nur Lesen: Ihre Rolle " + CRM.getRole() + " darf Angebote nicht bearbeiten.";
+            hint.hidden = false;
+          } else if (offer.status !== "Entwurf") {
+            hint.textContent = "Positionen können nur im Status „Entwurf“ bearbeitet werden. Aktueller Status: " + offer.status + ".";
+            hint.hidden = false;
+          } else {
+            hint.hidden = true;
+          }
+          renderTotals();
+        }
+
+        function resetDraft() {
+          draft = offer.positions.map(function (p) { return { desc: p.desc, qty: p.qty, price: p.price, discount: p.discount || 0 }; });
+          setDirty(false);
+          $("positions-error").hidden = true;
+          renderPositions();
+        }
+
+        $("position-rows").addEventListener("input", function (e) {
+          var i = e.target.getAttribute("data-i");
+          if (i == null) return;
+          var f = e.target.getAttribute("data-field");
+          draft[i][f] = f === "desc" ? e.target.value : e.target.value === "" ? "" : Number(e.target.value);
+          setDirty(true);
+          renderTotals();
+        });
+        $("position-rows").addEventListener("click", function (e) {
+          var b = e.target.closest("[data-remove]");
+          if (!b) return;
+          draft.splice(Number(b.getAttribute("data-remove")), 1);
+          setDirty(true);
+          renderPositions();
+        });
+        $("add-position").addEventListener("click", function () {
+          draft.push({ desc: "", qty: 1, price: "", discount: 0 });
+          setDirty(true);
+          renderPositions();
+          var inputs = $("position-rows").querySelectorAll('[data-field="desc"]');
+          inputs[inputs.length - 1].focus();
+        });
+
+        function validatePositions() {
+          var errors = [];
+          Array.prototype.forEach.call($("position-rows").querySelectorAll("input"), function (inp) { inp.removeAttribute("aria-invalid"); });
+          draft.forEach(function (p, i) {
+            var n = i + 1;
+            function bad(field, msg) {
+              errors.push("Position " + n + ": " + msg);
+              var el = $("position-rows").querySelector('[data-i="' + i + '"][data-field="' + field + '"]');
+              if (el) el.setAttribute("aria-invalid", "true");
+            }
+            if (!String(p.desc).trim()) bad("desc", "Beschreibung fehlt.");
+            if (!(Number(p.qty) > 0)) bad("qty", "Menge muss größer als 0 sein.");
+            if (p.price === "" || !(Number(p.price) >= 0)) bad("price", "Einzelpreis fehlt.");
+            if (!(Number(p.discount) >= 0 && Number(p.discount) <= 100)) bad("discount", "Rabatt muss zwischen 0 und 100 % liegen.");
+          });
+          var box = $("positions-error");
+          if (errors.length) {
+            box.innerHTML = "<strong>Bitte korrigieren Sie die Positionen:</strong><ul>" + errors.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ul>";
+            box.hidden = false;
+            return false;
+          }
+          box.hidden = true;
+          return true;
+        }
+
+        function savePositions() {
+          if (!validatePositions()) return false;
+          offer.positions = draft.map(function (p) {
+            return { desc: String(p.desc).trim(), qty: Number(p.qty), price: Number(p.price), discount: Number(p.discount) || 0 };
+          });
+          offer.amount = Math.round(totals(offer.positions).net * 100) / 100;
+          CRM.logActivity("Angebot " + offer.number + " bearbeitet", offer.customerId);
+          CRM.save();
+          setDirty(false);
+          renderHeader();
+          return true;
+        }
+
+        $("positions-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (savePositions()) ui.toast("Angebot " + offer.number + " gespeichert.");
+        });
+        $("save-close").addEventListener("click", function () {
+          if (!savePositions()) return;
+          ui.flash("Angebot " + offer.number + " gespeichert.");
+          location.href = "angebote.html";
+        });
+        $("discard-changes").addEventListener("click", function () {
+          resetDraft();
+          ui.toast("Änderungen verworfen.", "info");
+        });
+
+        // ---------- Status-Workflow ----------
+        var wfError = $("workflow-error");
+        function guardDirty() {
+          if (!dirty) return true;
+          wfError.textContent = "Bitte speichern Sie zuerst Ihre Änderungen an den Positionen (Button „Speichern“).";
+          wfError.hidden = false;
+          ui.toast("Ungespeicherte Änderungen – bitte zuerst speichern.", "error");
+          return false;
+        }
+        function changeStatus(status, logText, toastText) {
+          offer.status = status;
+          addLog(logText);
+          CRM.logActivity("Angebot " + offer.number + ": " + logText, offer.customerId);
+          CRM.save();
+          wfError.hidden = true;
+          renderHeader();
+          resetDraft();
+          ui.toast(toastText);
+        }
+        $("wf-submit").addEventListener("click", function () {
+          if (!ui.requirePermission("createOffer", wfError, "Angebote können nur von den Rollen " + ui.rolesFor("createOffer") + " eingereicht werden.")) return;
+          if (!guardDirty()) return;
+          changeStatus("Zur Freigabe", "Zur Freigabe eingereicht", "Angebot " + offer.number + " wurde zur Freigabe eingereicht.");
+        });
+        $("wf-approve").addEventListener("click", function () {
+          if (!ui.requirePermission("approveOffer", wfError, "Angebote können nur von den Rollen " + ui.rolesFor("approveOffer") + " freigegeben werden.")) return;
+          changeStatus("Freigegeben", "Freigegeben", "Angebot " + offer.number + " wurde freigegeben.");
+        });
+        $("wf-reject").addEventListener("click", function () {
+          changeStatus("Entwurf", "Zurückgewiesen (zurück an Entwurf)", "Angebot " + offer.number + " wurde an den Entwurf zurückgegeben.");
+        });
+        $("wf-send").addEventListener("click", function () {
+          if (!ui.requirePermission("createOffer", wfError, "Angebote können nur von den Rollen " + ui.rolesFor("createOffer") + " versendet werden.")) return;
+          changeStatus("Versendet", "An Kunden versendet", "Angebot " + offer.number + " wurde an " + CRM.customerName(offer.customerId) + " versendet.");
+        });
+        $("wf-accepted").addEventListener("click", function () {
+          changeStatus("Angenommen", "Vom Kunden angenommen", "Angebot " + offer.number + " als angenommen markiert.");
+        });
+        $("wf-declined").addEventListener("click", function () {
+          changeStatus("Abgelehnt", "Vom Kunden abgelehnt", "Angebot " + offer.number + " als abgelehnt markiert.");
+        });
+
+        // ---------- Menü „Aktionen“ ----------
+        $("offer-actions-menu").addEventListener("click", function (e) {
+          var item = e.target.closest("[data-action]");
+          if (!item) return;
+          var action = item.getAttribute("data-action");
+          if (action === "pdf") ui.toast("PDF für " + offer.number + " wird erstellt … (Demo: kein Download)", "info");
+          if (action === "xlsx") ui.toast("Excel-Export für " + offer.number + " erstellt (Demo).", "info");
+          if (action === "datev") ui.toast("DATEV-Export ist nur für freigegebene Angebote sinnvoll – Demo-Export erstellt.", "info");
+          if (action === "customer") location.href = "kunde.html?id=" + encodeURIComponent(offer.customerId);
+          if (action === "duplicate") {
+            if (!ui.requirePermission("createOffer", wfError, "Angebote können nur von den Rollen " + ui.rolesFor("createOffer") + " dupliziert werden.")) return;
+            var nr = "ANG-2026-" + String(CRM.nextId("offer")).padStart(3, "0");
+            var copy = {
+              id: "o" + Date.now(), number: nr, title: offer.title + " (Kopie)", customerId: offer.customerId, amount: offer.amount,
+              status: "Entwurf", date: CRM.today(), validUntil: CRM.isoDate(30), paymentTermDays: offer.paymentTermDays,
+              positions: offer.positions.map(function (p) { return { desc: p.desc, qty: p.qty, price: p.price, discount: p.discount }; }),
+              log: [{ when: CRM.today(), text: "Dupliziert aus " + offer.number, author: CRM.CURRENT_USER.name }],
+            };
+            CRM.db().offers.push(copy);
+            CRM.logActivity("Angebot " + nr + " aus " + offer.number + " dupliziert", offer.customerId);
+            CRM.save();
+            ui.flash("Angebot " + offer.number + " wurde als " + nr + " dupliziert.");
+            location.href = "angebot.html?id=" + encodeURIComponent(copy.id);
+          }
+          if (action === "delete") {
+            if (item.getAttribute("aria-disabled") === "true") {
+              wfError.textContent = "Löschen nicht möglich: Nur Entwürfe können gelöscht werden" + (canEditRole ? "." : ", und Ihre Rolle " + CRM.getRole() + " darf Angebote nicht bearbeiten.");
+              wfError.hidden = false;
+              ui.closeMenus();
+              return;
+            }
+            $("delete-text").textContent = "Das Angebot " + offer.number + " „" + offer.title + "“ wird gelöscht. Dies kann nicht rückgängig gemacht werden.";
+            $("delete-dialog").showModal();
+          }
+        });
+        $("delete-cancel").addEventListener("click", function () { $("delete-dialog").close(); });
+        $("delete-confirm").addEventListener("click", function () {
+          var d = CRM.db();
+          d.offers = d.offers.filter(function (o) { return o.id !== offer.id; });
+          CRM.logActivity("Angebot " + offer.number + " gelöscht", offer.customerId);
+          CRM.save();
+          ui.flash("Angebot " + offer.number + " gelöscht.", "info");
+          location.href = "angebote.html";
+        });
+
+        renderHeader();
+        resetDraft();
+      })();
+    </script>
+  </body>
+</html>

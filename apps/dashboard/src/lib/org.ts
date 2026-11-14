@@ -14,7 +14,7 @@ export type OrgContext = {
 };
 
 /**
- * Signed-in user + their org. Redirects to /login without a session or membership.
+ * Signed-in user + their org. Redirects to /login without a session, to /onboarding without a membership.
  * RLS does the real access control; this only picks the org and the admin flag for the UI.
  */
 export async function getOrgContext(): Promise<OrgContext> {
@@ -30,7 +30,7 @@ export async function getOrgContext(): Promise<OrgContext> {
     .eq("user_id", claims.sub)
     .limit(1)
     .maybeSingle();
-  if (!member) redirect("/login?fehler=keine-organisation");
+  if (!member) redirect("/onboarding"); // signed in, no org yet → create one
 
   const org = member.orgs as unknown as { name: string } | null;
   return {

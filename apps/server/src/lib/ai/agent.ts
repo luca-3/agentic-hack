@@ -2,8 +2,10 @@ import "server-only";
 import { ToolLoopAgent, isStepCount, tool, type InferAgentUIMessage } from "ai";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { addDocuments, searchDocuments } from "./embeddings";
+import { searchDocuments } from "./embeddings";
 import { fastModel, google } from "./google";
+
+const DEMO_ORG_ID = "00000000-0000-0000-0000-0000000000f1";
 
 /**
  * Example agent: Gemini + Google Search + URL reading + Supabase (notes, RAG).
@@ -48,18 +50,11 @@ Keep answers short. Answer in the user's language.`,
         return data;
       },
     }),
-    saveKnowledge: tool({
-      description: "Store a piece of text in the knowledge base (vector store) so it can be found later.",
-      inputSchema: z.object({ content: z.string().min(1), source: z.string().optional() }),
-      execute: async ({ content, source }) => {
-        const [id] = await addDocuments([{ content, metadata: source ? { source } : {} }]);
-        return { id };
-      },
-    }),
     searchKnowledge: tool({
       description: "Semantic search in the team knowledge base (vector store).",
       inputSchema: z.object({ query: z.string().min(1) }),
-      execute: async ({ query }) => searchDocuments(query, { limit: 5 }),
+      // ponytail: playground has no user/org, so search is pinned to the seeded demo org; pass the caller's org when this agent serves real users.
+      execute: async ({ query }) => searchDocuments(query, { orgId: DEMO_ORG_ID, limit: 5 }),
     }),
   },
 });

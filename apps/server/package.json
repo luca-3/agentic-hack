@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "smoke": "node scripts/lotse-smoke.mjs",
+    "seed:dev-org": "node scripts/seed-dev-org.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.120",

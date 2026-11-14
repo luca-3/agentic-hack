@@ -1,0 +1,275 @@
+[
+  {
+    "name": "Kunden suchen und filtern",
+    "description": "Kundenliste öffnen und nach Firma, Ort oder Ansprechpartner suchen bzw. nach Status, Branche oder Betreuer filtern.",
+    "route": "/kunden.html",
+    "clickPath": ["Kunden", "Kunden durchsuchen", "Status"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Ansprechpartner eines Kunden ansehen",
+    "description": "Kundendetail öffnen und im Tab Ansprechpartner Namen, Position, E-Mail und Telefon sehen.",
+    "route": "/kunde.html",
+    "clickPath": ["Kunden", "<Kundenname>", "Ansprechpartner"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Bankverbindung (IBAN) eines Kunden ändern",
+    "description": "IBAN, BIC, Bank oder Kontoinhaber eines Kunden ändern. Liegt im Kundendetail im Tab Zahlungsdaten. Ungültige IBANs werden mit einer Fehlermeldung abgelehnt.",
+    "route": "/kunde.html",
+    "clickPath": ["Kunden", "<Kundenname>", "Zahlungsdaten", "Bankverbindung bearbeiten", "IBAN", "Speichern"],
+    "requiredRole": ["Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Notiz zu einem Kunden hinzufügen",
+    "description": "Gesprächsnotiz im Verlauf eines Kunden speichern.",
+    "route": "/kunde.html",
+    "clickPath": ["Kunden", "<Kundenname>", "Verlauf", "Neue Notiz", "Notiz speichern"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Neue Aufgabe anlegen",
+    "description": "Aufgabe (z. B. Rückruf) für einen Kunden mit Fälligkeitsdatum und Priorität anlegen. Öffnet einen Dialog.",
+    "route": "/aufgaben.html",
+    "clickPath": ["Aufgaben", "Neue Aufgabe", "Titel", "Kunde", "Fällig am", "Priorität", "Aufgabe speichern"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Aufgabe als erledigt markieren",
+    "description": "In der Aufgabenliste (oder auf dem Dashboard unter Meine Aufgaben heute) die Checkbox der Aufgabe anhaken.",
+    "route": "/aufgaben.html",
+    "clickPath": ["Aufgaben", "Erledigt: <Aufgabentitel>"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Angebot erstellen",
+    "description": "Neues Angebot in 3 Schritten anlegen: Kunde und Titel, Positionen, Prüfen und speichern. Wird als Entwurf gespeichert.",
+    "route": "/angebote.html",
+    "clickPath": ["Angebote", "Angebot erstellen", "Kunde", "Titel", "Weiter", "Beschreibung", "Menge", "Einzelpreis (€)", "Weiter", "Angebot speichern"],
+    "requiredRole": ["Vertrieb", "Admin"]
+  },
+  {
+    "name": "Angebote nach Status filtern",
+    "description": "Angebotsliste nach Entwurf, Versendet, Angenommen oder Abgelehnt filtern.",
+    "route": "/angebote.html",
+    "clickPath": ["Angebote", "Status"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Standard-Zahlungsziel ändern",
+    "description": "Standard-Zahlungsziel (Tage netto) für neue Kunden und Angebote ändern. Versteckt unter Einstellungen → Abrechnung → Erweitert (zugeklappt).",
+    "route": "/einstellungen.html",
+    "clickPath": ["Einstellungen", "Abrechnung", "Erweitert", "Standard-Zahlungsziel ändern", "Neues Standard-Zahlungsziel (Tage)", "Übernehmen"],
+    "requiredRole": ["Admin"]
+  },
+  {
+    "name": "Benutzer und Rollen ansehen",
+    "description": "Liste aller Benutzer mit ihren Rollen und die Rechte je Rolle.",
+    "route": "/einstellungen.html",
+    "clickPath": ["Einstellungen", "Benutzer & Rollen"],
+    "requiredRole": ["Admin"]
+  },
+  {
+    "name": "Globale Suche",
+    "description": "Über die Suche in der Kopfzeile Kunden, Aufgaben und Angebote finden. Findet keine Funktionen oder Einstellungen.",
+    "route": "*",
+    "clickPath": ["Globale Suche", "Suchen"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Rolle wechseln (Demo)",
+    "description": "Rolle des Demo-Benutzers in der Kopfzeile umschalten (Vertrieb, Buchhaltung, Admin). Navigation und Buttons passen sich an.",
+    "route": "*",
+    "clickPath": ["Rolle"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Demo-Daten zurücksetzen",
+    "description": "Alle Änderungen verwerfen und die ursprünglichen Demo-Daten wiederherstellen (Link unten in der Seitenleiste).",
+    "route": "*",
+    "clickPath": ["Demo-Daten zurücksetzen"],
+    "requiredRole": ["Vertrieb", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Mein Konto öffnen",
+    "description": "Persönliche Kontoeinstellungen öffnen (Profil, Sicherheit, Benachrichtigungen, Abwesenheit, Signatur, API-Zugang). Nur über das Benutzermenü oben rechts oder die Befehlspalette erreichbar – nicht in der Seitenleiste.",
+    "route": "/konto.html",
+    "clickPath": ["Benutzermenü", "Mein Konto"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Eigenes Profil bearbeiten",
+    "description": "Name, Position, Telefon, Mobilnummer, Sprache usw. im Konto ändern. Achtung: Validierungsfehler erscheinen nur oben im langen Formular. „Speichern“ bleibt auf der Seite, „Speichern & schließen“ springt zum Dashboard.",
+    "route": "/konto.html",
+    "clickPath": ["Benutzermenü", "Mein Konto", "Profil", "Telefon", "Speichern"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Passwort ändern",
+    "description": "Eigenes Passwort im Konto unter Sicherheit ändern (mind. 12 Zeichen, ein Großbuchstabe, eine Ziffer).",
+    "route": "/konto.html",
+    "clickPath": ["Benutzermenü", "Mein Konto", "Sicherheit", "Aktuelles Passwort", "Neues Passwort", "Neues Passwort wiederholen", "Passwort ändern"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Zwei-Faktor-Authentifizierung aktivieren",
+    "description": "2FA in einem 3-Schritt-Dialog aktivieren: Methode wählen, Bestätigungscode eingeben (Demo-Code 123456), Wiederherstellungscodes bestätigen. SMS setzt eine Mobilnummer im Profil voraus.",
+    "route": "/konto.html",
+    "clickPath": ["Benutzermenü", "Mein Konto", "Sicherheit", "Zwei-Faktor aktivieren", "Authenticator-App", "Weiter", "Bestätigungscode", "Weiter", "Ich habe die Wiederherstellungscodes gespeichert", "Aktivieren"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Tägliche Zusammenfassung per E-Mail einstellen",
+    "description": "Persönliche Benachrichtigungen im Konto. Das Feld für die Uhrzeit erscheint erst, nachdem der Schalter „Tägliche Zusammenfassung per E-Mail“ eingeschaltet wurde.",
+    "route": "/konto.html",
+    "clickPath": ["Benutzermenü", "Mein Konto", "Benachrichtigungen", "Tägliche Zusammenfassung per E-Mail", "Uhrzeit der Zusammenfassung", "Benachrichtigungen speichern"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Ruhezeiten für Benachrichtigungen festlegen",
+    "description": "Ruhezeiten liegen im Konto unter Benachrichtigungen → Erweiterte Optionen (zugeklappt) und erscheinen erst nach dem Schalter „Ruhezeiten aktivieren“.",
+    "route": "/konto.html",
+    "clickPath": ["Benutzermenü", "Mein Konto", "Benachrichtigungen", "Erweiterte Optionen", "Ruhezeiten aktivieren", "Ruhezeit von", "Ruhezeit bis", "Benachrichtigungen speichern"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Vertretung für Abwesenheit festlegen",
+    "description": "Urlaubs-/Abwesenheitsvertretung mit Zeitraum und Kollegin/Kollege festlegen. Versteckt: Konto → Abwesenheit → Schalter „Ich bin abwesend“ → „Vertretung festlegen“.",
+    "route": "/konto.html",
+    "clickPath": ["Benutzermenü", "Mein Konto", "Abwesenheit", "Ich bin abwesend", "Vertretung festlegen", "Vertretung von", "Vertretung bis", "Vertretung durch", "Vertretung speichern"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "E-Mail-Signatur bearbeiten",
+    "description": "Eigene E-Mail-Signatur mit einfacher Formatierung (Fett, Kursiv, Link) und Vorschau bearbeiten.",
+    "route": "/konto.html",
+    "clickPath": ["Benutzermenü", "Mein Konto", "Signatur", "E-Mail-Signatur", "Signatur speichern"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "API-Token erstellen",
+    "description": "Persönliches API-Token anlegen; nach „Weiter“ folgt ein zweiter Bestätigungsdialog. Für andere Rollen ist „Token erstellen“ gesperrt (Tooltip + Fehlermeldung).",
+    "route": "/konto.html",
+    "clickPath": ["Benutzermenü", "Mein Konto", "API-Zugang", "Token erstellen", "Name des Tokens", "Weiter", "Ja, Token erstellen"],
+    "requiredRole": ["Admin"]
+  },
+  {
+    "name": "Angebotspositionen mit Rabatt bearbeiten",
+    "description": "Angebotsdetail öffnen (Angebotsnummer in der Liste anklicken), Positionen hinzufügen/entfernen, Rabatt je Position eintragen – Summen rechnen sich neu. Nur im Status Entwurf. „Speichern“ bleibt auf der Seite, „Speichern & schließen“ geht zur Liste.",
+    "route": "/angebot.html",
+    "clickPath": ["Angebote", "<Angebotsnummer>", "Position hinzufügen", "Rabatt (%) Position 1", "Speichern"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Admin"]
+  },
+  {
+    "name": "Angebot zur Freigabe einreichen",
+    "description": "Entwurf im Angebotsdetail zur Freigabe einreichen. Ungespeicherte Positionsänderungen blockieren den Statuswechsel.",
+    "route": "/angebot.html",
+    "clickPath": ["Angebote", "<Angebotsnummer>", "Zur Freigabe einreichen"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Admin"]
+  },
+  {
+    "name": "Angebot freigeben",
+    "description": "Angebot im Status „Zur Freigabe“ freigeben. Für Vertrieb und Buchhaltung ist „Freigeben“ gesperrt (Tooltip, Fehlermeldung). Liste vorgefiltert über „Angebote zur Freigabe öffnen“ auf dem Dashboard.",
+    "route": "/angebot.html",
+    "clickPath": ["Angebote", "Status", "<Angebotsnummer>", "Freigeben"],
+    "requiredRole": ["Vertriebsleitung", "Admin"]
+  },
+  {
+    "name": "Angebot versenden",
+    "description": "Freigegebenes Angebot an den Kunden versenden. Vorher ist „Versenden“ deaktiviert (Tooltip: erst nach Freigabe).",
+    "route": "/angebot.html",
+    "clickPath": ["Angebote", "<Angebotsnummer>", "Versenden"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Admin"]
+  },
+  {
+    "name": "Angebot als PDF exportieren",
+    "description": "PDF-Export liegt im Angebotsdetail im Menü „Aktionen“ im Untermenü „Exportieren“ (simuliert, kein Download).",
+    "route": "/angebot.html",
+    "clickPath": ["Angebote", "<Angebotsnummer>", "Aktionen", "Exportieren", "Als PDF exportieren"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Angebot duplizieren",
+    "description": "Angebot als neuen Entwurf kopieren – nur über das Menü „Aktionen“ im Angebotsdetail.",
+    "route": "/angebot.html",
+    "clickPath": ["Angebote", "<Angebotsnummer>", "Aktionen", "Angebot duplizieren"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Admin"]
+  },
+  {
+    "name": "Wiederkehrende Aufgabe anlegen",
+    "description": "Aufgabe mit Wiederholung (täglich, wöchentlich, monatlich, quartalsweise) und Zuständigkeit anlegen. „Wiederholen bis“ erscheint erst nach Auswahl einer Wiederholung. Beim Abhaken wird die nächste Aufgabe automatisch angelegt.",
+    "route": "/aufgaben.html",
+    "clickPath": ["Aufgaben", "Neue Aufgabe", "Titel", "Kunde", "Wiederholung", "Wiederholen bis", "Zuständig", "Aufgabe speichern"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Unteraufgaben (Checkliste) abhaken oder hinzufügen",
+    "description": "Checkliste einer Aufgabe über „Details“ in der Aufgabenzeile aufklappen, Unteraufgaben abhaken oder neue hinzufügen.",
+    "route": "/aufgaben.html",
+    "clickPath": ["Aufgaben", "Details: <Aufgabentitel>", "Unteraufgabe erledigt: <Unteraufgabe>", "Neue Unteraufgabe", "Hinzufügen"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Aufgaben-Ansicht speichern",
+    "description": "Aktuelle Filter (Anzeigen, Priorität, Zuständig, Wiederholung) als benannte Ansicht speichern und später unter „Gespeicherte Ansicht“ wieder auswählen.",
+    "route": "/aufgaben.html",
+    "clickPath": ["Aufgaben", "Priorität", "Zuständig", "Ansicht speichern", "Name der Ansicht", "Ansicht anlegen"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Mehrere Aufgaben auf einmal erledigen",
+    "description": "Aufgaben über die Kästchen „Auswählen“ (erste Spalte, nicht „Erledigt“) markieren und gesammelt abhaken. Der Button ist deaktiviert, solange nichts ausgewählt ist (Tooltip).",
+    "route": "/aufgaben.html",
+    "clickPath": ["Aufgaben", "Auswählen: <Aufgabentitel>", "Ausgewählte als erledigt markieren"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Mehrere Aufgaben einer Kollegin zuweisen",
+    "description": "Ausgewählte Aufgaben gesammelt einer anderen Person zuweisen. Nur Vertriebsleitung und Admin.",
+    "route": "/aufgaben.html",
+    "clickPath": ["Aufgaben", "Auswählen: <Aufgabentitel>", "Ausgewählte zuweisen an", "Zuweisen"],
+    "requiredRole": ["Vertriebsleitung", "Admin"]
+  },
+  {
+    "name": "Vertrag eines Kunden kündigen",
+    "description": "Im Kundendetail Tab Verträge einen Vertrag kündigen: Grund wählen, Vertragsende (Kündigungsfrist beachten, Warnhinweis), danach zweiter Bestätigungsdialog.",
+    "route": "/kunde.html",
+    "clickPath": ["Kunden", "<Kundenname>", "Verträge", "Vertrag kündigen: <Vertragsname>", "Kündigungsgrund", "Gewünschtes Vertragsende", "Weiter", "Endgültig kündigen"],
+    "requiredRole": ["Vertriebsleitung", "Admin"]
+  },
+  {
+    "name": "Dokument zu einem Kunden hochladen",
+    "description": "Im Kundendetail Tab Dokumente ein Dokument erfassen (Demo: nur Dateiname, keine echte Datei).",
+    "route": "/kunde.html",
+    "clickPath": ["Kunden", "<Kundenname>", "Dokumente", "Dokument hochladen", "Dateiname", "Kategorie", "Hochladen"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Hauptansprechpartner festlegen",
+    "description": "Hauptansprechpartner eines Kunden ändern – nur über das Drei-Punkte-Menü „Weitere Aktionen“ in der Zeile des Ansprechpartners.",
+    "route": "/kunde.html",
+    "clickPath": ["Kunden", "<Kundenname>", "Ansprechpartner", "Weitere Aktionen", "Hauptansprechpartner festlegen"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Befehlspalette (Strg+K / ⌘K)",
+    "description": "Befehlspalette öffnen und Seiten oder Aktionen per Text finden (z. B. Passwort, Vertretung, Neue Aufgabe). Findet im Gegensatz zur globalen Suche auch Funktionen.",
+    "route": "*",
+    "clickPath": ["Befehlspalette öffnen", "Befehl suchen"],
+    "requiredRole": ["Vertrieb", "Vertriebsleitung", "Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Daten importieren oder exportieren",
+    "description": "Kunden/Aufgaben/Angebote exportieren oder per Datei importieren (simuliert). In der Seitenleiste unter der einklappbaren Gruppe „Verwaltung“.",
+    "route": "/import-export.html",
+    "clickPath": ["Verwaltung", "Import/Export", "Export starten"],
+    "requiredRole": ["Buchhaltung", "Admin"]
+  },
+  {
+    "name": "Benutzer über Verwaltung öffnen",
+    "description": "Benutzerliste über die Seitenleistengruppe „Verwaltung“ → „Benutzer“ öffnen (führt zu Einstellungen → Benutzer & Rollen).",
+    "route": "/einstellungen.html",
+    "clickPath": ["Verwaltung", "Benutzer"],
+    "requiredRole": ["Admin"]
+  }
+]

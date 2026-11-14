@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mein Konto – Kundenwerk CRM</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="konto">
+    <header class="topbar" id="topbar"></header>
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <main class="main" id="main">
+      <nav class="breadcrumb" aria-label="Brotkrumen">
+        <a href="index.html">Dashboard</a> / <a href="konto.html">Mein Konto</a> / <span id="crumb-tab" aria-current="page">Profil</span>
+      </nav>
+      <div class="page-header">
+        <div>
+          <h1>Mein Konto</h1>
+          <p>Persönliche Einstellungen von <span id="account-name"></span> · gelten nur für Ihr Benutzerkonto</p>
+        </div>
+      </div>
+
+      <div class="settings-layout card">
+        <div class="tabs" role="tablist" aria-label="Kontobereiche" aria-orientation="vertical" id="account-tabs">
+          <button type="button" role="tab" id="tab-profile" aria-controls="panel-profile" data-hash="profil">Profil</button>
+          <button type="button" role="tab" id="tab-security" aria-controls="panel-security" data-hash="sicherheit">Sicherheit</button>
+          <button type="button" role="tab" id="tab-notif" aria-controls="panel-notif" data-hash="benachrichtigungen">Benachrichtigungen</button>
+          <button type="button" role="tab" id="tab-absence" aria-controls="panel-absence" data-hash="abwesenheit">Abwesenheit</button>
+          <button type="button" role="tab" id="tab-signature" aria-controls="panel-signature" data-hash="signatur">Signatur</button>
+          <button type="button" role="tab" id="tab-api" aria-controls="panel-api" data-hash="api-zugang">API-Zugang</button>
+        </div>
+
+        <div>
+          <!-- ================= Profil (lange Form, Fehler nur oben) ================= -->
+          <section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" hidden>
+            <form id="profile-form" class="long-form" novalidate>
+              <div id="profile-errors" class="alert alert-error" role="alert" hidden></div>
+              <div class="settings-section">
+                <h2>Person</h2>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="pf-salutation">Anrede</label>
+                    <select id="pf-salutation"><option>Frau</option><option>Herr</option><option>Divers</option><option>Keine Angabe</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="pf-position">Position</label>
+                    <input type="text" id="pf-position" />
+                  </div>
+                  <div class="field">
+                    <label for="pf-first">Vorname</label>
+                    <input type="text" id="pf-first" autocomplete="given-name" />
+                  </div>
+                  <div class="field">
+                    <label for="pf-last">Nachname</label>
+                    <input type="text" id="pf-last" autocomplete="family-name" />
+                  </div>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h2>Kontakt</h2>
+                <div class="form-grid">
+                  <div class="field full">
+                    <label for="pf-email">E-Mail</label>
+                    <input type="email" id="pf-email" readonly aria-describedby="pf-email-hint" />
+                    <p class="field-hint" id="pf-email-hint">Die E-Mail-Adresse wird von der Administration verwaltet.</p>
+                  </div>
+                  <div class="field">
+                    <label for="pf-phone">Telefon</label>
+                    <input type="tel" id="pf-phone" autocomplete="tel" />
+                  </div>
+                  <div class="field">
+                    <label for="pf-mobile">Mobil</label>
+                    <input type="tel" id="pf-mobile" aria-describedby="pf-mobile-hint" />
+                    <p class="field-hint" id="pf-mobile-hint">Wird für SMS-Codes (Zwei-Faktor) benötigt.</p>
+                  </div>
+                  <div class="field">
+                    <label for="pf-location">Standort</label>
+                    <select id="pf-location"><option>Berlin</option><option>Hamburg</option><option>München</option><option>Köln</option><option>Homeoffice</option></select>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h2>Regionales</h2>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="pf-language">Sprache</label>
+                    <select id="pf-language"><option>Deutsch</option><option>English</option><option>Français</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="pf-timezone">Zeitzone</label>
+                    <select id="pf-timezone"><option>Europe/Berlin</option><option>Europe/Vienna</option><option>Europe/Zurich</option><option>Europe/London</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="pf-dateformat">Datumsformat</label>
+                    <select id="pf-dateformat"><option>TT.MM.JJJJ</option><option>JJJJ-MM-TT</option><option>MM/TT/JJJJ</option></select>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h2>Darstellung</h2>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="pf-startpage">Startseite nach der Anmeldung</label>
+                    <select id="pf-startpage"><option>Dashboard</option><option>Kunden</option><option>Aufgaben</option><option>Angebote</option></select>
+                  </div>
+                  <div class="field full">
+                    <label for="pf-about">Über mich</label>
+                    <textarea id="pf-about" rows="5" placeholder="Zuständigkeiten, Vertretungsregeln, Erreichbarkeit …"></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="btn-row">
+                <button type="submit" class="btn btn-primary" id="profile-save">Speichern</button>
+                <button type="button" class="btn" id="profile-save-close">Speichern &amp; schließen</button>
+                <button type="button" class="btn" id="profile-reset">Verwerfen</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- ================= Sicherheit ================= -->
+          <section role="tabpanel" id="panel-security" aria-labelledby="tab-security" hidden>
+            <div class="settings-section">
+              <h2>Passwort ändern</h2>
+              <form id="password-form" class="form-stack" novalidate>
+                <div class="field">
+                  <label for="pw-current">Aktuelles Passwort</label>
+                  <input type="password" id="pw-current" autocomplete="current-password" aria-describedby="pw-current-error" />
+                  <p class="field-error" id="pw-current-error" role="alert" hidden></p>
+                </div>
+                <div class="field">
+                  <label for="pw-new">Neues Passwort</label>
+                  <input type="password" id="pw-new" autocomplete="new-password" aria-describedby="pw-new-hint pw-new-error" />
+                  <p class="field-hint" id="pw-new-hint">Mindestens 12 Zeichen, mindestens ein Großbuchstabe und eine Ziffer.</p>
+                  <p class="field-error" id="pw-new-error" role="alert" hidden></p>
+                </div>
+                <div class="field">
+                  <label for="pw-repeat">Neues Passwort wiederholen</label>
+                  <input type="password" id="pw-repeat" autocomplete="new-password" aria-describedby="pw-repeat-error" />
+                  <p class="field-error" id="pw-repeat-error" role="alert" hidden></p>
+                </div>
+                <div><button type="submit" class="btn btn-primary">Passwort ändern</button></div>
+                <p class="field-hint" id="pw-changed"></p>
+              </form>
+            </div>
+            <div class="settings-section">
+              <h2>Zwei-Faktor-Authentifizierung</h2>
+              <p>Status: <span id="tfa-status"></span></p>
+              <div class="btn-row">
+                <button type="button" class="btn btn-primary" id="tfa-enable">Zwei-Faktor aktivieren</button>
+                <button type="button" class="btn" id="tfa-disable" hidden>Zwei-Faktor deaktivieren</button>
+              </div>
+            </div>
+            <div class="settings-section">
+              <h2>Aktive Sitzungen</h2>
+              <ul class="list">
+                <li><strong>Chrome · macOS</strong><span class="meta">Berlin · aktuelle Sitzung</span></li>
+                <li><strong>Safari · iPhone</strong><span class="meta">Berlin · vor 2 Tagen</span></li>
+              </ul>
+              <div class="btn-row"><button type="button" class="btn" id="logout-others">Alle anderen Sitzungen abmelden</button></div>
+            </div>
+          </section>
+
+          <!-- ================= Benachrichtigungen ================= -->
+          <section role="tabpanel" id="panel-notif" aria-labelledby="tab-notif" hidden>
+            <form id="notif-form" novalidate>
+              <h2>Persönliche Benachrichtigungen</h2>
+              <p class="field-hint" style="margin-bottom: 16px">Mandantenweite Benachrichtigungen legt die Administration unter Einstellungen fest.</p>
+              <div class="field" style="max-width: 280px; margin-bottom: 16px">
+                <label for="np-channel">Bevorzugter Kanal</label>
+                <select id="np-channel"><option>E-Mail</option><option>In-App</option><option>E-Mail und In-App</option></select>
+              </div>
+              <fieldset class="group">
+                <legend>Aufgaben</legend>
+                <div class="toggle-group">
+                  <label class="switch" for="np-taskDue"><input type="checkbox" role="switch" id="np-taskDue" /> Fällige Aufgaben</label>
+                  <label class="switch" for="np-taskAssigned"><input type="checkbox" role="switch" id="np-taskAssigned" /> Mir zugewiesene Aufgaben</label>
+                  <label class="switch" for="np-taskOverdue"><input type="checkbox" role="switch" id="np-taskOverdue" /> Tägliche Erinnerung an überfällige Aufgaben</label>
+                </div>
+              </fieldset>
+              <fieldset class="group">
+                <legend>Angebote</legend>
+                <div class="toggle-group">
+                  <label class="switch" for="np-offerAccepted"><input type="checkbox" role="switch" id="np-offerAccepted" /> Angebot angenommen</label>
+                  <label class="switch" for="np-offerRejected"><input type="checkbox" role="switch" id="np-offerRejected" /> Angebot abgelehnt</label>
+                  <label class="switch" for="np-offerApproval"><input type="checkbox" role="switch" id="np-offerApproval" aria-describedby="np-offerApproval-hint" /> Angebot wartet auf meine Freigabe</label>
+                  <p class="field-hint" id="np-offerApproval-hint">Nur für die Rollen Vertriebsleitung und Admin relevant.</p>
+                </div>
+              </fieldset>
+              <fieldset class="group">
+                <legend>Kunden</legend>
+                <div class="toggle-group">
+                  <label class="switch" for="np-bankChange"><input type="checkbox" role="switch" id="np-bankChange" /> Neue Bankverbindung angekündigt</label>
+                  <label class="switch" for="np-contractEnding"><input type="checkbox" role="switch" id="np-contractEnding" /> Vertrag läuft in 90 Tagen aus</label>
+                </div>
+              </fieldset>
+              <fieldset class="group">
+                <legend>Zusammenfassung</legend>
+                <div class="toggle-group">
+                  <label class="switch" for="np-dailyDigest"><input type="checkbox" role="switch" id="np-dailyDigest" aria-controls="np-digest-reveal" /> Tägliche Zusammenfassung per E-Mail</label>
+                  <div class="reveal" id="np-digest-reveal" hidden>
+                    <div class="field" style="max-width: 260px">
+                      <label for="np-digestTime">Uhrzeit der Zusammenfassung</label>
+                      <select id="np-digestTime"><option>06:00</option><option>07:30</option><option>09:00</option><option>17:00</option></select>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+              <details class="advanced" id="np-advanced">
+                <summary>Erweiterte Optionen</summary>
+                <div class="advanced-body toggle-group">
+                  <label class="switch" for="np-ownChanges"><input type="checkbox" role="switch" id="np-ownChanges" /> Auch über eigene Änderungen benachrichtigen</label>
+                  <label class="switch" for="np-quietHours"><input type="checkbox" role="switch" id="np-quietHours" aria-controls="np-quiet-reveal" /> Ruhezeiten aktivieren</label>
+                  <div class="reveal" id="np-quiet-reveal" hidden>
+                    <div class="form-grid">
+                      <div class="field">
+                        <label for="np-quietFrom">Ruhezeit von</label>
+                        <input type="time" id="np-quietFrom" />
+                      </div>
+                      <div class="field">
+                        <label for="np-quietTo">Ruhezeit bis</label>
+                        <input type="time" id="np-quietTo" aria-describedby="np-quiet-error" />
+                      </div>
+                    </div>
+                    <p class="field-error" id="np-quiet-error" role="alert" hidden></p>
+                  </div>
+                </div>
+              </details>
+              <div class="btn-row"><button type="submit" class="btn btn-primary">Benachrichtigungen speichern</button></div>
+            </form>
+          </section>
+
+          <!-- ================= Abwesenheit / Vertretung ================= -->
+          <section role="tabpanel" id="panel-absence" aria-labelledby="tab-absence" hidden>
+            <h2>Abwesenheit</h2>
+            <p class="field-hint" style="margin-bottom: 14px">Während einer Abwesenheit können Kolleginnen und Kollegen Ihre Kunden und Aufgaben übernehmen.</p>
+            <label class="switch" for="abs-active"><input type="checkbox" role="switch" id="abs-active" aria-controls="abs-reveal" /> Ich bin abwesend</label>
+            <div class="reveal" id="abs-reveal" hidden>
+              <form id="abs-message-form" class="field" novalidate>
+                <label for="abs-message">Abwesenheitsnotiz</label>
+                <textarea id="abs-message" rows="3" placeholder="z. B. Ich bin bis 15.12. nicht erreichbar. In dringenden Fällen …"></textarea>
+                <div><button type="submit" class="btn">Abwesenheitsnotiz speichern</button></div>
+              </form>
+              <div class="settings-section">
+                <h3>Vertretung</h3>
+                <p id="deputy-summary"></p>
+                <div class="btn-row" style="margin-top: 8px">
+                  <button type="button" class="btn btn-primary" id="deputy-open" aria-expanded="false" aria-controls="deputy-form">Vertretung festlegen</button>
+                  <button type="button" class="btn" id="deputy-remove" hidden>Vertretung entfernen</button>
+                </div>
+                <form id="deputy-form" class="card" style="margin-top: 14px; background: #fff" novalidate hidden>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="dep-from">Vertretung von</label>
+                      <input type="date" id="dep-from" aria-describedby="dep-from-error" />
+                      <p class="field-error" id="dep-from-error" role="alert" hidden></p>
+                    </div>
+                    <div class="field">
+                      <label for="dep-to">Vertretung bis</label>
+                      <input type="date" id="dep-to" aria-describedby="dep-to-error" />
+                      <p class="field-error" id="dep-to-error" role="alert" hidden></p>
+                    </div>
+                    <div class="field full">
+                      <label for="dep-user">Vertretung durch</label>
+                      <select id="dep-user" aria-describedby="dep-user-error"><option value="">Bitte wählen …</option></select>
+                      <p class="field-error" id="dep-user-error" role="alert" hidden></p>
+                    </div>
+                    <div class="field full">
+                      <label class="checkbox" for="dep-forward"><input type="checkbox" id="dep-forward" /> Meine Aufgaben in diesem Zeitraum an die Vertretung weiterleiten</label>
+                    </div>
+                  </div>
+                  <div class="btn-row">
+                    <button type="submit" class="btn btn-primary">Vertretung speichern</button>
+                    <button type="button" class="btn" id="deputy-cancel">Abbrechen</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <!-- ================= Signatur ================= -->
+          <section role="tabpanel" id="panel-signature" aria-labelledby="tab-signature" hidden>
+            <form id="sig-form" novalidate>
+              <h2>E-Mail-Signatur</h2>
+              <div class="field signature-editor">
+                <label for="sig-text">E-Mail-Signatur</label>
+                <div class="signature-toolbar" role="toolbar" aria-label="Formatierung" aria-controls="sig-text">
+                  <button type="button" data-format="bold" aria-label="Fett"><strong>F</strong></button>
+                  <button type="button" data-format="italic" aria-label="Kursiv"><em>K</em></button>
+                  <button type="button" data-format="link">Link einfügen</button>
+                  <button type="button" data-format="template">Vorlage einfügen</button>
+                </div>
+                <textarea id="sig-text" aria-describedby="sig-count sig-error"></textarea>
+                <p class="field-hint" id="sig-count"></p>
+                <p class="field-error" id="sig-error" role="alert" hidden></p>
+              </div>
+              <div class="field" style="margin-top: 12px">
+                <label class="switch" for="sig-replies"><input type="checkbox" role="switch" id="sig-replies" /> Signatur auch bei Antworten und Weiterleitungen verwenden</label>
+              </div>
+              <h3 style="margin-top: 18px">Vorschau</h3>
+              <div class="signature-preview" id="sig-preview" aria-live="polite"></div>
+              <div class="btn-row">
+                <button type="submit" class="btn btn-primary">Signatur speichern</button>
+                <button type="button" class="btn" id="sig-discard">Änderungen verwerfen</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- ================= API-Zugang (nur Admin) ================= -->
+          <section role="tabpanel" id="panel-api" aria-labelledby="tab-api" hidden>
+            <div class="card-header">
+              <h2>API-Zugang</h2>
+              <span class="tooltip-wrap">
+                <button type="button" class="btn btn-primary" id="token-create" aria-describedby="token-create-tip">Token erstellen</button>
+                <span class="tooltip" role="tooltip" id="token-create-tip">Nur die Rolle Admin kann API-Token erstellen.</span>
+              </span>
+            </div>
+            <p class="field-hint">Persönliche API-Token erlauben externen Systemen (z. B. DATEV-Sync) den Zugriff auf Kundenwerk. Behandeln Sie Token wie Passwörter.</p>
+            <div id="api-error" class="alert alert-error" role="alert" hidden></div>
+            <div id="token-created" class="alert alert-success" role="status" hidden>
+              <strong>Neues Token – wird nur einmal angezeigt:</strong>
+              <div class="token-box" id="token-value" style="margin-top: 8px"></div>
+              <div class="btn-row" style="margin-top: 8px"><button type="button" class="btn" id="token-copy">Token kopieren</button></div>
+            </div>
+            <table style="margin-top: 12px">
+              <thead><tr><th>Name</th><th>Berechtigungen</th><th>Erstellt</th><th>Läuft ab</th><th>Zuletzt verwendet</th><th>Status</th><th class="num">Aktion</th></tr></thead>
+              <tbody id="token-rows"></tbody>
+            </table>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- Dialog: Zwei-Faktor (3 Schritte) -->
+    <dialog id="tfa-dialog" aria-labelledby="tfa-title">
+      <form id="tfa-form" novalidate>
+        <div class="dialog-header">
+          <h2 id="tfa-title">Zwei-Faktor aktivieren</h2>
+          <button type="button" class="icon-btn js-close" aria-label="Dialog schließen"></button>
+        </div>
+        <div class="dialog-body">
+          <ol class="dialog-steps" id="tfa-steps">
+            <li data-step="1">Methode wählen</li>
+            <li data-step="2">Code bestätigen</li>
+            <li data-step="3">Wiederherstellungscodes</li>
+          </ol>
+          <div id="tfa-step-1">
+            <fieldset class="group">
+              <legend>Methode</legend>
+              <div class="toggle-group">
+                <label class="checkbox" for="tfa-app"><input type="radio" name="tfa-method" id="tfa-app" value="app" /> Authenticator-App</label>
+                <label class="checkbox" for="tfa-sms"><input type="radio" name="tfa-method" id="tfa-sms" value="sms" /> SMS an Mobilnummer</label>
+              </div>
+            </fieldset>
+            <p class="field-error" id="tfa-method-error" role="alert" hidden></p>
+          </div>
+          <div id="tfa-step-2" hidden>
+            <p id="tfa-instructions"></p>
+            <div class="field">
+              <label for="tfa-code">Bestätigungscode</label>
+              <input type="text" id="tfa-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" aria-describedby="tfa-code-hint tfa-code-error" />
+              <p class="field-hint" id="tfa-code-hint">Demo: Der Bestätigungscode lautet 123456.</p>
+              <p class="field-error" id="tfa-code-error" role="alert" hidden></p>
+            </div>
+          </div>
+          <div id="tfa-step-3" hidden>
+            <p>Mit diesen Codes können Sie sich anmelden, falls Sie keinen Zugriff auf Ihr Gerät haben. Jeder Code ist einmal gültig.</p>
+            <ul class="code-list" id="tfa-codes"></ul>
+            <label class="checkbox" for="tfa-saved"><input type="checkbox" id="tfa-saved" /> Ich habe die Wiederherstellungscodes gespeichert</label>
+            <p class="field-error" id="tfa-saved-error" role="alert" hidden></p>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button type="button" class="btn js-close">Abbrechen</button>
+          <button type="button" class="btn" id="tfa-back" hidden>Zurück</button>
+          <button type="submit" class="btn btn-primary" id="tfa-next">Weiter</button>
+          <button type="submit" class="btn btn-primary" id="tfa-finish" hidden>Aktivieren</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Dialog: Token erstellen -->
+    <dialog id="token-dialog" aria-labelledby="token-dialog-title">
+      <form id="token-form" novalidate>
+        <div class="dialog-header">
+          <h2 id="token-dialog-title">Neues API-Token</h2>
+          <button type="button" class="icon-btn js-close" aria-label="Dialog schließen"></button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="tok-name">Name des Tokens</label>
+              <input type="text" id="tok-name" placeholder="z. B. Reporting-Export" aria-describedby="tok-name-error" />
+              <p class="field-error" id="tok-name-error" role="alert" hidden></p>
+            </div>
+            <div class="field">
+              <label for="tok-scope">Berechtigungen</label>
+              <select id="tok-scope"><option>Lesen</option><option>Lesen und Schreiben</option></select>
+            </div>
+            <div class="field">
+              <label for="tok-validity">Gültigkeit</label>
+              <select id="tok-validity"><option value="30">30 Tage</option><option value="90" selected>90 Tage</option><option value="365">1 Jahr</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button type="button" class="btn js-close">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Weiter</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Bestätigung (verschachtelter Dialog über dem Token-Dialog) -->
+    <dialog id="token-confirm" aria-labelledby="token-confirm-title" aria-describedby="token-confirm-text">
+      <div class="dialog-header"><h2 id="token-confirm-title">Token wirklich erstellen?</h2></div>
+      <div class="dialog-body"><p id="token-confirm-text"></p></div>
+      <div class="dialog-footer">
+        <button type="button" class="btn" id="token-confirm-back">Zurück</button>
+        <button type="button" class="btn btn-primary" id="token-confirm-yes">Ja, Token erstellen</button>
+      </div>
+    </dialog>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var CRM = window.CRM;
+        var ui = CRM.ui;
+        var esc = ui.escapeHtml;
+        var d = CRM.db();
+        function $(id) { return document.getElementById(id); }
+
+        $("account-name").textContent = CRM.CURRENT_USER.name;
+        Array.prototype.forEach.call(document.querySelectorAll("dialog .js-close"), function (b) {
+          if (b.classList.contains("icon-btn")) b.innerHTML = ui.ICONS.close;
+          b.addEventListener("click", function () { b.closest("dialog").close(); });
+        });
+
+        // ================= Profil =================
+        var P = d.profile;
+        var profileFields = {
+          salutation: "pf-salutation", position: "pf-position", firstName: "pf-first", lastName: "pf-last",
+          phone: "pf-phone", mobile: "pf-mobile", location: "pf-location", language: "pf-language",
+          timezone: "pf-timezone", dateFormat: "pf-dateformat", startPage: "pf-startpage", about: "pf-about",
+        };
+        function fillProfile() {
+          Object.keys(profileFields).forEach(function (k) { $(profileFields[k]).value = P[k] || ""; });
+          $("pf-email").value = CRM.CURRENT_USER.email;
+          $("profile-errors").hidden = true;
+        }
+        var PHONE = /^\+?[0-9][0-9 ()\/-]{5,}$/;
+        function saveProfile() {
+          var v = {};
+          Object.keys(profileFields).forEach(function (k) { v[k] = $(profileFields[k]).value.trim(); });
+          var errors = [];
+          if (!v.firstName) errors.push("Vorname: Bitte geben Sie Ihren Vornamen ein.");
+          if (!v.lastName) errors.push("Nachname: Bitte geben Sie Ihren Nachnamen ein.");
+          if (!v.phone) errors.push("Telefon: Bitte geben Sie eine Telefonnummer ein.");
+          else if (!PHONE.test(v.phone)) errors.push("Telefon: Ungültiges Format. Erlaubt sind Ziffern, Leerzeichen, +, -, / und Klammern (z. B. +49 30 555 0199).");
+          if (v.mobile && !PHONE.test(v.mobile)) errors.push("Mobil: Ungültiges Format (z. B. +49 170 555 0123).");
+          if (v.about.length > 400) errors.push("Über mich: Höchstens 400 Zeichen (aktuell " + v.about.length + ").");
+          var box = $("profile-errors");
+          if (errors.length) {
+            // Absichtlich: Fehler stehen nur oben im Formular, ohne Markierung am Feld und ohne Scrollen.
+            box.innerHTML = "<strong>Das Profil konnte nicht gespeichert werden (" + errors.length + (errors.length === 1 ? " Fehler" : " Fehler") + "):</strong><ul>" +
+              errors.map(function (e) { return "<li>" + esc(e) + "</li>"; }).join("") + "</ul>";
+            box.hidden = false;
+            return false;
+          }
+          box.hidden = true;
+          Object.keys(v).forEach(function (k) { P[k] = v[k]; });
+          CRM.save();
+          return true;
+        }
+        $("profile-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (saveProfile()) ui.toast("Profil gespeichert.");
+        });
+        $("profile-save-close").addEventListener("click", function () {
+          if (!saveProfile()) return;
+          ui.flash("Profil gespeichert.");
+          location.href = "index.html";
+        });
+        $("profile-reset").addEventListener("click", function () {
+          fillProfile();
+          ui.toast("Änderungen verworfen.", "info");
+        });
+
+        // ================= Sicherheit: Passwort =================
+        function renderPwChanged() {
+          $("pw-changed").textContent = "Zuletzt geändert: " + CRM.formatDate(d.security.passwordChangedAt);
+        }
+        $("password-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var cur = $("pw-current"), nw = $("pw-new"), rep = $("pw-repeat");
+          var cMsg = cur.value ? null : "Bitte geben Sie Ihr aktuelles Passwort ein.";
+          var nMsg = null;
+          if (nw.value.length < 12) nMsg = "Das neue Passwort muss mindestens 12 Zeichen lang sein.";
+          else if (!/[A-ZÄÖÜ]/.test(nw.value) || !/[0-9]/.test(nw.value)) nMsg = "Das neue Passwort braucht mindestens einen Großbuchstaben und eine Ziffer.";
+          else if (nw.value === cur.value) nMsg = "Das neue Passwort muss sich vom aktuellen unterscheiden.";
+          var rMsg = !nMsg && rep.value !== nw.value ? "Die Passwörter stimmen nicht überein." : null;
+          ui.setFieldError(cur, $("pw-current-error"), cMsg);
+          ui.setFieldError(nw, $("pw-new-error"), nMsg);
+          ui.setFieldError(rep, $("pw-repeat-error"), rMsg);
+          if (cMsg || nMsg || rMsg) return;
+          d.security.passwordChangedAt = CRM.today();
+          CRM.save();
+          $("password-form").reset();
+          renderPwChanged();
+          ui.toast("Passwort geändert. Andere Sitzungen wurden abgemeldet.");
+        });
+        $("logout-others").addEventListener("click", function () {
+          ui.toast("Alle anderen Sitzungen wurden abgemeldet (Demo).", "info");
+        });
+
+        // ================= Sicherheit: Zwei-Faktor =================
+        var tfaDialog = $("tfa-dialog");
+        var tfaStep = 1;
+        var CODES = ["4F7Q-X2LM", "9K3D-PW8Z", "T6RA-2HNC", "M8VE-Q4JS", "B2YU-7GXD", "H5LC-3NRW", "Z9PK-6TFE", "C4WM-8QBA"];
+        function renderTfaStatus() {
+          var on = d.security.twoFactor;
+          $("tfa-status").innerHTML = on
+            ? '<span class="badge badge-green">Aktiviert</span> (' + (d.security.twoFactorMethod === "sms" ? "SMS" : "Authenticator-App") + ")"
+            : '<span class="badge badge-amber">Nicht aktiviert</span>';
+          $("tfa-enable").hidden = on;
+          $("tfa-disable").hidden = !on;
+        }
+        function showTfaStep(n) {
+          tfaStep = n;
+          [1, 2, 3].forEach(function (i) { $("tfa-step-" + i).hidden = i !== n; });
+          Array.prototype.forEach.call(document.querySelectorAll("#tfa-steps li"), function (li) {
+            if (Number(li.getAttribute("data-step")) === n) li.setAttribute("aria-current", "step");
+            else li.removeAttribute("aria-current");
+          });
+          $("tfa-back").hidden = n === 1;
+          $("tfa-next").hidden = n === 3;
+          $("tfa-finish").hidden = n !== 3;
+          if (n === 2) {
+            var sms = $("tfa-sms").checked;
+            $("tfa-instructions").innerHTML = sms
+              ? "Wir haben eine SMS mit einem 6-stelligen Code an <strong>" + esc(P.mobile) + "</strong> gesendet (Demo)."
+              : 'Scannen Sie den QR-Code mit Ihrer Authenticator-App oder geben Sie den Schlüssel manuell ein:<div class="token-box" style="margin-top:8px">KWCR MDEM O4F7 QX2L</div>';
+            $("tfa-code").focus();
+          }
+        }
+        function methodValue() {
+          var r = document.querySelector('input[name="tfa-method"]:checked');
+          return r ? r.value : "";
+        }
+        $("tfa-enable").addEventListener("click", function () {
+          $("tfa-form").reset();
+          ["tfa-method-error", "tfa-code-error", "tfa-saved-error"].forEach(function (id) { $(id).hidden = true; });
+          $("tfa-code").removeAttribute("aria-invalid");
+          $("tfa-codes").innerHTML = CODES.map(function (c) { return "<li>" + c + "</li>"; }).join("");
+          showTfaStep(1);
+          tfaDialog.showModal();
+        });
+        $("tfa-back").addEventListener("click", function () { showTfaStep(tfaStep - 1); });
+        $("tfa-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (tfaStep === 1) {
+            var m = methodValue();
+            var err = $("tfa-method-error");
+            if (!m) { err.textContent = "Bitte wählen Sie eine Methode aus."; err.hidden = false; return; }
+            if (m === "sms" && !P.mobile) {
+              err.textContent = "Für SMS ist eine Mobilnummer erforderlich. Bitte tragen Sie zuerst unter Profil → Mobil eine Nummer ein oder wählen Sie die Authenticator-App.";
+              err.hidden = false;
+              return;
+            }
+            err.hidden = true;
+            showTfaStep(2);
+          } else if (tfaStep === 2) {
+            var code = $("tfa-code").value.replace(/\s+/g, "");
+            ui.setFieldError($("tfa-code"), $("tfa-code-error"),
+              code === "123456" ? null : "Der Code ist ungültig. Bitte geben Sie den 6-stelligen Code aus Ihrer App ein.");
+            if (code === "123456") showTfaStep(3);
+          } else {
+            var ok = $("tfa-saved").checked;
+            var se = $("tfa-saved-error");
+            se.textContent = ok ? "" : "Bitte bestätigen Sie, dass Sie die Wiederherstellungscodes gespeichert haben.";
+            se.hidden = ok;
+            if (!ok) return;
+            d.security.twoFactor = true;
+            d.security.twoFactorMethod = methodValue();
+            CRM.logActivity("Zwei-Faktor-Authentifizierung aktiviert");
+            CRM.save();
+            tfaDialog.close();
+            renderTfaStatus();
+            ui.toast("Zwei-Faktor-Authentifizierung ist jetzt aktiviert.");
+          }
+        });
+        $("tfa-disable").addEventListener("click", function () {
+          d.security.twoFactor = false;
+          d.security.twoFactorMethod = null;
+          CRM.save();
+          renderTfaStatus();
+          ui.toast("Zwei-Faktor-Authentifizierung deaktiviert.", "info");
+        });
+
+        // ================= Benachrichtigungen =================
+        var N = d.notificationPrefs;
+        var switches = ["taskDue", "taskAssigned", "taskOverdue", "offerAccepted", "offerRejected", "offerApproval", "bankChange", "contractEnding", "dailyDigest", "ownChanges", "quietHours"];
+        function syncReveals() {
+          $("np-digest-reveal").hidden = !$("np-dailyDigest").checked;
+          $("np-quiet-reveal").hidden = !$("np-quietHours").checked;
+        }
+        function fillNotif() {
+          switches.forEach(function (k) { $("np-" + k).checked = !!N[k]; });
+          $("np-channel").value = N.channel;
+          $("np-digestTime").value = N.digestTime;
+          $("np-quietFrom").value = N.quietFrom;
+          $("np-quietTo").value = N.quietTo;
+          syncReveals();
+        }
+        $("np-dailyDigest").addEventListener("change", syncReveals);
+        $("np-quietHours").addEventListener("change", syncReveals);
+        $("notif-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var quietErr = $("np-quietHours").checked && $("np-quietFrom").value === $("np-quietTo").value
+            ? "Beginn und Ende der Ruhezeit dürfen nicht gleich sein." : null;
+          ui.setFieldError($("np-quietTo"), $("np-quiet-error"), quietErr);
+          if (quietErr) {
+            $("np-advanced").open = true;
+            return;
+          }
+          switches.forEach(function (k) { N[k] = $("np-" + k).checked; });
+          N.channel = $("np-channel").value;
+          N.digestTime = $("np-digestTime").value;
+          N.quietFrom = $("np-quietFrom").value;
+          N.quietTo = $("np-quietTo").value;
+          CRM.save();
+          ui.toast("Benachrichtigungen gespeichert.");
+        });
+
+        // ================= Abwesenheit / Vertretung =================
+        var A = d.absence;
+        $("dep-user").insertAdjacentHTML("beforeend", ui.userOptions(null, false));
+        function renderAbsence() {
+          $("abs-active").checked = A.active;
+          $("abs-reveal").hidden = !A.active;
+          $("abs-message").value = A.message || "";
+          $("deputy-summary").innerHTML = A.deputy
+            ? "Vertretung durch <strong>" + esc(A.deputy) + "</strong> vom " + CRM.formatDate(A.from) + " bis " + CRM.formatDate(A.to) +
+              (A.forwardTasks ? " · Aufgaben werden weitergeleitet." : ".")
+            : "Keine Vertretung festgelegt.";
+          $("deputy-remove").hidden = !A.deputy;
+        }
+        $("abs-active").addEventListener("change", function (e) {
+          A.active = e.target.checked;
+          CRM.save();
+          renderAbsence();
+          ui.toast(A.active ? "Abwesenheit aktiviert. Legen Sie jetzt eine Vertretung fest." : "Abwesenheit beendet.", "info");
+        });
+        $("abs-message-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          A.message = $("abs-message").value.trim();
+          CRM.save();
+          ui.toast("Abwesenheitsnotiz gespeichert.");
+        });
+        var depForm = $("deputy-form");
+        function closeDeputyForm() {
+          depForm.hidden = true;
+          $("deputy-open").setAttribute("aria-expanded", "false");
+        }
+        $("deputy-open").addEventListener("click", function () {
+          depForm.reset();
+          $("dep-from").value = A.from || CRM.isoDate(1);
+          $("dep-to").value = A.to || "";
+          $("dep-user").value = A.deputy || "";
+          $("dep-forward").checked = !!A.forwardTasks;
+          ["dep-from", "dep-to", "dep-user"].forEach(function (id) { ui.setFieldError($(id), $(id + "-error"), null); });
+          depForm.hidden = false;
+          $("deputy-open").setAttribute("aria-expanded", "true");
+          $("dep-from").focus();
+        });
+        $("deputy-cancel").addEventListener("click", closeDeputyForm);
+        depForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var from = $("dep-from").value, to = $("dep-to").value, who = $("dep-user").value;
+          var fMsg = !from ? "Bitte wählen Sie ein Startdatum." : from < CRM.today() ? "Das Startdatum darf nicht in der Vergangenheit liegen." : null;
+          var tMsg = !to ? "Bitte wählen Sie ein Enddatum." : from && to < from ? "Das Enddatum muss nach dem Startdatum liegen." : null;
+          var uMsg = who ? null : "Bitte wählen Sie eine Vertretung aus.";
+          ui.setFieldError($("dep-from"), $("dep-from-error"), fMsg);
+          ui.setFieldError($("dep-to"), $("dep-to-error"), tMsg);
+          ui.setFieldError($("dep-user"), $("dep-user-error"), uMsg);
+          if (fMsg || tMsg || uMsg) return;
+          A.from = from; A.to = to; A.deputy = who; A.forwardTasks = $("dep-forward").checked;
+          CRM.logActivity("Vertretung festgelegt: " + who + " (" + CRM.formatDate(from) + " – " + CRM.formatDate(to) + ")");
+          CRM.save();
+          closeDeputyForm();
+          renderAbsence();
+          ui.toast("Vertretung durch " + who + " vom " + CRM.formatDate(from) + " bis " + CRM.formatDate(to) + " festgelegt.");
+        });
+        $("deputy-remove").addEventListener("click", function () {
+          A.deputy = null; A.from = null; A.to = null; A.forwardTasks = false;
+          CRM.save();
+          renderAbsence();
+          ui.toast("Vertretung entfernt.", "info");
+        });
+
+        // ================= Signatur =================
+        var S = d.signature;
+        var sigText = $("sig-text");
+        var SIG_MAX = 500;
+        function renderSig() {
+          var safe = esc(sigText.value)
+            .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+            .replace(/_(.+?)_/g, "<em>$1</em>")
+            .replace(/\[(.+?)\]\((.+?)\)/g, '<span style="color:var(--primary);text-decoration:underline">$1</span>');
+          $("sig-preview").innerHTML = safe || '<span class="field-hint">(leer)</span>';
+          $("sig-count").textContent = sigText.value.length + " / " + SIG_MAX + " Zeichen";
+        }
+        function fillSig() {
+          sigText.value = S.text;
+          $("sig-replies").checked = S.useInReplies;
+          ui.setFieldError(sigText, $("sig-error"), null);
+          renderSig();
+        }
+        function wrapSelection(before, after, fallback) {
+          var start = sigText.selectionStart, end = sigText.selectionEnd;
+          var sel = sigText.value.slice(start, end) || fallback;
+          sigText.value = sigText.value.slice(0, start) + before + sel + after + sigText.value.slice(end);
+          sigText.focus();
+          sigText.setSelectionRange(start + before.length, start + before.length + sel.length);
+          renderSig();
+        }
+        document.querySelector(".signature-toolbar").addEventListener("click", function (e) {
+          var b = e.target.closest("[data-format]");
+          if (!b) return;
+          var f = b.getAttribute("data-format");
+          if (f === "bold") wrapSelection("**", "**", "fett");
+          if (f === "italic") wrapSelection("_", "_", "kursiv");
+          if (f === "link") wrapSelection("[", "](https://www.example.com)", "Linktext");
+          if (f === "template") {
+            sigText.value = "Viele Grüße\n" + P.firstName + " " + P.lastName + "\n" + P.position + " · Kundenwerk Demo GmbH\nTel. " + P.phone + "\n[www.example.com](https://www.example.com)";
+            renderSig();
+          }
+        });
+        sigText.addEventListener("input", renderSig);
+        $("sig-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var msg = sigText.value.length > SIG_MAX ? "Die Signatur darf höchstens " + SIG_MAX + " Zeichen lang sein." : null;
+          ui.setFieldError(sigText, $("sig-error"), msg);
+          if (msg) return;
+          S.text = sigText.value;
+          S.useInReplies = $("sig-replies").checked;
+          CRM.save();
+          ui.toast("Signatur gespeichert.");
+        });
+        $("sig-discard").addEventListener("click", function () {
+          fillSig();
+          ui.toast("Änderungen an der Signatur verworfen.", "info");
+        });
+
+        // ================= API-Zugang =================
+        var canApi = CRM.can("manageApi");
+        var createBtn = $("token-create");
+        if (canApi) {
+          $("token-create-tip").remove();
+          createBtn.removeAttribute("aria-describedby");
+        } else {
+          createBtn.setAttribute("aria-disabled", "true");
+        }
+        function renderTokens() {
+          var rows = d.apiTokens.map(function (t) {
+            return "<tr><td>" + esc(t.name) + "</td><td>" + esc(t.scopes) + "</td><td>" + CRM.formatDate(t.created) + "</td><td>" + CRM.formatDate(t.expires) +
+              "</td><td>" + (t.lastUsed ? CRM.formatDate(t.lastUsed) : "nie") + "</td><td>" +
+              (t.revoked ? '<span class="badge badge-red">Widerrufen</span>' : '<span class="badge badge-green">Aktiv</span>') + '</td><td class="num">' +
+              (t.revoked || !canApi ? "" : '<button type="button" class="btn" data-revoke="' + t.id + '" aria-label="Token widerrufen: ' + esc(t.name) + '">Widerrufen</button>') +
+              "</td></tr>";
+          });
+          $("token-rows").innerHTML = rows.join("") || '<tr class="empty-row"><td colspan="7">Keine Token vorhanden.</td></tr>';
+        }
+        var tokenDialog = $("token-dialog");
+        var tokenConfirm = $("token-confirm");
+        createBtn.addEventListener("click", function () {
+          if (!ui.requirePermission("manageApi", $("api-error"), "API-Token können nur von der Rolle Admin erstellt werden.")) return;
+          $("api-error").hidden = true;
+          $("token-form").reset();
+          ui.setFieldError($("tok-name"), $("tok-name-error"), null);
+          tokenDialog.showModal();
+          $("tok-name").focus();
+        });
+        $("token-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var name = $("tok-name").value.trim();
+          var msg = !name ? "Bitte geben Sie einen Namen für das Token ein."
+            : d.apiTokens.some(function (t) { return !t.revoked && t.name.toLowerCase() === name.toLowerCase(); }) ? "Es gibt bereits ein aktives Token mit diesem Namen." : null;
+          ui.setFieldError($("tok-name"), $("tok-name-error"), msg);
+          if (msg) return;
+          $("token-confirm-text").textContent = "Das Token „" + name + "“ erhält die Berechtigung „" + $("tok-scope").value + "“ für " +
+            $("tok-validity").selectedOptions[0].text + ". Es wird nur ein einziges Mal angezeigt – bewahren Sie es sicher auf.";
+          tokenConfirm.showModal();
+        });
+        $("token-confirm-back").addEventListener("click", function () { tokenConfirm.close(); });
+        $("token-confirm-yes").addEventListener("click", function () {
+          var hex = "";
+          for (var i = 0; i < 32; i++) hex += "0123456789abcdef"[Math.floor(Math.random() * 16)];
+          var token = { id: "tok" + Date.now(), name: $("tok-name").value.trim(), scopes: $("tok-scope").value, created: CRM.today(),
+            expires: CRM.isoDate(Number($("tok-validity").value)), lastUsed: null, revoked: false };
+          d.apiTokens.unshift(token);
+          CRM.logActivity("API-Token „" + token.name + "“ erstellt");
+          CRM.save();
+          tokenConfirm.close();
+          tokenDialog.close();
+          $("token-value").textContent = "kw_test_" + hex;
+          $("token-created").hidden = false;
+          renderTokens();
+          ui.toast("API-Token „" + token.name + "“ wurde erstellt.");
+        });
+        $("token-copy").addEventListener("click", function () {
+          ui.toast("Token in die Zwischenablage kopiert (Demo).", "info");
+        });
+        $("token-rows").addEventListener("click", function (e) {
+          var b = e.target.closest("[data-revoke]");
+          if (!b) return;
+          var t = d.apiTokens.filter(function (x) { return x.id === b.getAttribute("data-revoke"); })[0];
+          t.revoked = true;
+          CRM.save();
+          renderTokens();
+          ui.toast("Token „" + t.name + "“ widerrufen.", "info");
+        });
+
+        // ================= Init =================
+        fillProfile();
+        renderPwChanged();
+        renderTfaStatus();
+        fillNotif();
+        renderAbsence();
+        fillSig();
+        renderTokens();
+        ui.initTabs($("account-tabs"), function (tab) {
+          $("crumb-tab").textContent = tab.textContent;
+          $("api-error").hidden = true;
+        });
+      })();
+    </script>
+  </body>
+</html>

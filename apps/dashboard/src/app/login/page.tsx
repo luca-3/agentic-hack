@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { anmelden } from "@/app/actions";
 import { feld, knopf } from "@/components/Shell";
@@ -29,6 +30,9 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
         <button className={knopf}>Anmelden</button>
       </form>
       <p className="text-xs text-zinc-500">Demo: admin@demo.test · Passwort demo1234 (nur Testdaten)</p>
+      <p className="text-sm text-zinc-500">
+        Noch kein Konto? <Link href="/onboarding" className="underline">Neue Organisation einrichten</Link>
+      </p>
     </main>
   );
 }

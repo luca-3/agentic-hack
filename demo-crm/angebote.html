@@ -30,6 +30,8 @@
               <select id="offer-filter-status">
                 <option value="">Alle</option>
                 <option>Entwurf</option>
+                <option>Zur Freigabe</option>
+                <option>Freigegeben</option>
                 <option>Versendet</option>
                 <option>Angenommen</option>
                 <option>Abgelehnt</option>
@@ -167,7 +169,7 @@
           tbody.innerHTML = offers
             .map(function (o) {
               return (
-                '<tr id="offer-row-' + o.id + '"><td>' + esc(o.number) + "</td><td>" + esc(o.title) + "</td>" +
+                '<tr id="offer-row-' + o.id + '"><td><a href="angebot.html?id=' + encodeURIComponent(o.id) + '">' + esc(o.number) + "</a></td><td>" + esc(o.title) + "</td>" +
                 '<td><a href="kunde.html?id=' + o.customerId + '">' + esc(CRM.customerName(o.customerId)) + "</a></td>" +
                 "<td>" + ui.statusBadge(o.status) + "</td><td>" + CRM.formatDate(o.date) + "</td><td>" + CRM.formatDate(o.validUntil) + "</td>" +
                 '<td class="num">' + CRM.formatEuro(o.amount) + "</td></tr>"
@@ -176,6 +178,8 @@
             .join("");
         }
         statusSel.addEventListener("change", renderList);
+        var statusParam = new URLSearchParams(location.search).get("status");
+        if (statusParam) statusSel.value = statusParam;
 
         // ---------- Wizard ----------
         var listView = document.getElementById("offer-list-view");
@@ -370,7 +374,8 @@
             date: CRM.today(),
             validUntil: document.getElementById("offer-valid-until").value || CRM.isoDate(30),
             paymentTermDays: Number(document.getElementById("offer-payment-term").value),
-            positions: readPositions(),
+            positions: readPositions().map(function (p) { p.discount = 0; return p; }),
+            log: [],
           };
           d.offers.push(offer);
           CRM.logActivity("Angebot " + nr + " als Entwurf gespeichert", offer.customerId);

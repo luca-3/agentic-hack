@@ -23,6 +23,10 @@
       <section class="card">
         <div class="filters">
           <div class="field">
+            <label for="task-view">Gespeicherte Ansicht</label>
+            <select id="task-view"></select>
+          </div>
+          <div class="field">
             <label for="task-filter-state">Anzeigen</label>
             <select id="task-filter-state">
               <option value="open">Offene Aufgaben</option>
@@ -40,14 +44,44 @@
             </select>
           </div>
           <div class="field">
+            <label for="task-filter-assignee">Zuständig</label>
+            <select id="task-filter-assignee"><option value="">Alle</option></select>
+          </div>
+          <div class="field">
+            <label for="task-filter-recurrence">Wiederholung</label>
+            <select id="task-filter-recurrence">
+              <option value="">Alle</option>
+              <option value="recurring">Nur wiederkehrende</option>
+              <option value="once">Nur einmalige</option>
+            </select>
+          </div>
+          <div class="field">
             <label class="checkbox" for="task-filter-mine"><input type="checkbox" id="task-filter-mine" /> Nur meine Aufgaben</label>
           </div>
+          <div class="field">
+            <button type="button" class="btn" id="save-view-button">Ansicht speichern</button>
+          </div>
         </div>
+
+        <div class="bulk-bar" role="group" aria-label="Aktionen für ausgewählte Aufgaben">
+          <span class="bulk-count" id="bulk-count" aria-live="polite">0 ausgewählt</span>
+          <span class="tooltip-wrap">
+            <button type="button" class="btn btn-primary" id="bulk-done" disabled aria-describedby="bulk-done-tip">Ausgewählte als erledigt markieren</button>
+            <span class="tooltip" role="tooltip" id="bulk-done-tip">Wählen Sie zuerst mindestens eine Aufgabe aus (Kästchen „Auswählen“ in der ersten Spalte).</span>
+          </span>
+          <div class="field">
+            <label for="bulk-assignee">Ausgewählte zuweisen an</label>
+            <select id="bulk-assignee"><option value="">Bitte wählen …</option></select>
+          </div>
+          <button type="button" class="btn" id="bulk-assign">Zuweisen</button>
+        </div>
+        <div id="bulk-error" class="alert alert-error" role="alert" hidden></div>
 
         <p class="result-count" id="task-count" aria-live="polite"></p>
         <table>
           <thead>
             <tr>
+              <th style="width: 48px"><input type="checkbox" id="select-all" aria-label="Alle auswählen" /></th>
               <th style="width: 70px">Erledigt</th>
               <th>Aufgabe</th>
               <th>Kunde</th>
@@ -95,6 +129,30 @@
                 <option>Hoch</option>
               </select>
             </div>
+            <div class="field">
+              <label for="task-assignee">Zuständig</label>
+              <select id="task-assignee"></select>
+            </div>
+            <div class="field">
+              <label for="task-recurrence">Wiederholung</label>
+              <select id="task-recurrence" aria-controls="task-recurrence-reveal">
+                <option>Keine</option>
+                <option>Täglich</option>
+                <option>Wöchentlich</option>
+                <option>Monatlich</option>
+                <option>Quartalsweise</option>
+              </select>
+            </div>
+            <div class="field full" id="task-recurrence-reveal" hidden>
+              <label for="task-recurrence-until">Wiederholen bis</label>
+              <input type="date" id="task-recurrence-until" aria-describedby="task-recurrence-hint task-recurrence-error" />
+              <p class="field-hint" id="task-recurrence-hint">Beim Abhaken wird automatisch die nächste Aufgabe angelegt.</p>
+              <p class="field-error" id="task-recurrence-error" role="alert" hidden></p>
+            </div>
+            <div class="field full">
+              <label for="task-checklist">Checkliste (eine Unteraufgabe pro Zeile)</label>
+              <textarea id="task-checklist" placeholder="z. B.&#10;Unterlagen anfordern&#10;Termin bestätigen"></textarea>
+            </div>
             <div class="field full">
               <label for="task-note">Notiz (optional)</label>
               <textarea id="task-note"></textarea>
@@ -108,6 +166,27 @@
       </form>
     </dialog>
 
+    <dialog id="view-dialog" aria-labelledby="view-dialog-title">
+      <form id="view-form" novalidate>
+        <div class="dialog-header">
+          <h2 id="view-dialog-title">Ansicht speichern</h2>
+          <button type="button" class="icon-btn" id="view-dialog-close" aria-label="Dialog schließen"></button>
+        </div>
+        <div class="dialog-body">
+          <p id="view-summary" class="field-hint" style="margin-bottom: 12px"></p>
+          <div class="field">
+            <label for="view-name">Name der Ansicht</label>
+            <input type="text" id="view-name" placeholder="z. B. Meine dringenden Rückrufe" aria-describedby="view-name-error" />
+            <p class="field-error" id="view-name-error" role="alert" hidden></p>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button type="button" class="btn" id="view-cancel">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Ansicht anlegen</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="data.js"></script>
     <script src="app.js"></script>
     <script>
@@ -115,97 +194,342 @@
         var CRM = window.CRM;
         var ui = CRM.ui;
         var esc = ui.escapeHtml;
+        function $(id) { return document.getElementById(id); }
 
-        var stateSel = document.getElementById("task-filter-state");
-        var prioSel = document.getElementById("task-filter-priority");
-        var mineChk = document.getElementById("task-filter-mine");
+        var stateSel = $("task-filter-state");
+        var prioSel = $("task-filter-priority");
+        var assigneeSel = $("task-filter-assignee");
+        var recSel = $("task-filter-recurrence");
+        var mineChk = $("task-filter-mine");
+        var viewSel = $("task-view");
+        var selected = {};
+        var openDetails = {};
 
-        function render() {
-          var today = CRM.today();
-          var tasks = CRM.db()
+        assigneeSel.insertAdjacentHTML("beforeend", CRM.db().users.map(function (u) {
+          return '<option value="' + esc(u.name) + '">' + esc(u.name) + "</option>";
+        }).join(""));
+        $("bulk-assignee").insertAdjacentHTML("beforeend", ui.userOptions(null, true));
+
+        function findTask(id) {
+          return CRM.db().tasks.filter(function (t) { return t.id === id; })[0];
+        }
+
+        // ---------- Gespeicherte Ansichten ----------
+        function currentFilters() {
+          return { state: stateSel.value, priority: prioSel.value, assignee: assigneeSel.value, recurrence: recSel.value, mine: mineChk.checked };
+        }
+        function renderViews(selectedId) {
+          var views = CRM.db().savedViews;
+          viewSel.innerHTML =
+            '<option value="">Standard (offene Aufgaben)</option>' +
+            views.map(function (v) { return '<option value="' + v.id + '">' + esc(v.name) + "</option>"; }).join("") +
+            '<option value="custom" hidden>Angepasst (nicht gespeichert)</option>';
+          viewSel.value = selectedId || "";
+        }
+        function applyView(v) {
+          stateSel.value = v ? v.state : "open";
+          prioSel.value = v ? v.priority || "" : "";
+          assigneeSel.value = v ? v.assignee || "" : "";
+          recSel.value = v ? v.recurrence || "" : "";
+          mineChk.checked = v ? !!v.mine : false;
+          render();
+        }
+        viewSel.addEventListener("change", function () {
+          if (viewSel.value === "custom") return;
+          applyView(CRM.db().savedViews.filter(function (v) { return v.id === viewSel.value; })[0] || null);
+        });
+
+        // ---------- Liste ----------
+        function filtered() {
+          var f = currentFilters();
+          return CRM.db()
             .tasks.filter(function (t) {
-              if (stateSel.value === "open" && t.done) return false;
-              if (stateSel.value === "done" && !t.done) return false;
-              if (prioSel.value && t.priority !== prioSel.value) return false;
-              if (mineChk.checked && t.assignee !== CRM.CURRENT_USER.name) return false;
+              if (f.state === "open" && t.done) return false;
+              if (f.state === "done" && !t.done) return false;
+              if (f.priority && t.priority !== f.priority) return false;
+              if (f.assignee && t.assignee !== f.assignee) return false;
+              var rec = t.recurrence && t.recurrence !== "Keine";
+              if (f.recurrence === "recurring" && !rec) return false;
+              if (f.recurrence === "once" && rec) return false;
+              if (f.mine && t.assignee !== CRM.CURRENT_USER.name) return false;
               return true;
             })
             .sort(function (a, b) { return a.due.localeCompare(b.due); });
+        }
 
-          document.getElementById("task-count").textContent = tasks.length === 1 ? "1 Aufgabe" : tasks.length + " Aufgaben";
-          var tbody = document.getElementById("task-rows");
+        function detailRow(t) {
+          var subs = t.subtasks || [];
+          var doneCount = subs.filter(function (s) { return s.done; }).length;
+          return (
+            '<tr class="detail-row" id="task-detail-' + t.id + '"><td></td><td colspan="7">' +
+            "<strong>Checkliste</strong> <span class=\"meta\">(" + doneCount + " von " + subs.length + " erledigt)</span>" +
+            '<ul class="checklist">' +
+            (subs.length
+              ? subs.map(function (s) {
+                  return '<li><label class="checkbox' + (s.done ? " done" : "") + '"><input type="checkbox" data-sub="' + t.id + ":" + s.id + '" aria-label="Unteraufgabe erledigt: ' + esc(s.text) + '"' + (s.done ? " checked" : "") + " /> " + esc(s.text) + "</label></li>";
+                }).join("")
+              : '<li class="meta">Noch keine Unteraufgaben.</li>') +
+            "</ul>" +
+            '<form class="inline-form" data-subform="' + t.id + '" novalidate><div class="field"><label for="sub-new-' + t.id + '">Neue Unteraufgabe</label>' +
+            '<input type="text" id="sub-new-' + t.id + '" /></div><button type="submit" class="btn">Hinzufügen</button></form>' +
+            '<p class="meta" style="margin-top:10px">Wiederholung: ' + esc(t.recurrence || "Keine") +
+            (t.recurrenceUntil ? " bis " + CRM.formatDate(t.recurrenceUntil) : "") +
+            (t.note ? " · Notiz: " + esc(t.note) : "") + "</p>" +
+            "</td></tr>"
+          );
+        }
+
+        function updateBulk() {
+          var ids = Object.keys(selected);
+          $("bulk-count").textContent = ids.length + " ausgewählt";
+          $("bulk-done").disabled = ids.length === 0;
+          $("bulk-done-tip").hidden = ids.length > 0;
+          var boxes = $("task-rows").querySelectorAll("[data-select]");
+          var all = boxes.length > 0 && Array.prototype.every.call(boxes, function (b) { return b.checked; });
+          $("select-all").checked = all;
+        }
+
+        function render() {
+          var today = CRM.today();
+          var tasks = filtered();
+          // Auswahl auf sichtbare Aufgaben beschränken
+          var visibleIds = {};
+          tasks.forEach(function (t) { visibleIds[t.id] = true; });
+          Object.keys(selected).forEach(function (id) { if (!visibleIds[id]) delete selected[id]; });
+
+          $("task-count").textContent = tasks.length === 1 ? "1 Aufgabe" : tasks.length + " Aufgaben";
+          var tbody = $("task-rows");
           if (tasks.length === 0) {
-            tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Keine Aufgaben für diese Auswahl.</td></tr>';
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Keine Aufgaben für diese Auswahl.</td></tr>';
+            updateBulk();
             return;
           }
           tbody.innerHTML = tasks
             .map(function (t) {
               var late = !t.done && t.due < today;
               var dueLabel = t.due === today ? "Heute" : CRM.formatDate(t.due);
+              var subs = t.subtasks || [];
+              var badges = "";
+              if (t.recurrence && t.recurrence !== "Keine") badges += ' <span class="badge badge-blue" title="Wiederkehrende Aufgabe">↻ ' + esc(t.recurrence) + "</span>";
+              if (subs.length) badges += ' <span class="badge badge-gray">☑ ' + subs.filter(function (s) { return s.done; }).length + "/" + subs.length + "</span>";
+              var open = !!openDetails[t.id];
               return (
                 '<tr id="task-row-' + t.id + '"' + (t.done ? ' class="done-row"' : "") + ">" +
+                '<td><input type="checkbox" data-select="' + t.id + '" aria-label="Auswählen: ' + esc(t.title) + '"' + (selected[t.id] ? " checked" : "") + " /></td>" +
                 '<td><input type="checkbox" data-id="' + t.id + '" aria-label="Erledigt: ' + esc(t.title) + '"' + (t.done ? " checked" : "") + " /></td>" +
-                "<td>" + esc(t.title) + "</td>" +
+                "<td>" + esc(t.title) + badges + "</td>" +
                 '<td><a href="kunde.html?id=' + t.customerId + '">' + esc(CRM.customerName(t.customerId)) + "</a></td>" +
                 "<td" + (late ? ' class="overdue"' : "") + ">" + dueLabel + (late ? " (überfällig)" : "") + "</td>" +
                 "<td>" + ui.priorityBadge(t.priority) + "</td>" +
                 "<td>" + esc(t.assignee) + "</td>" +
-                '<td class="num"><button type="button" class="icon-btn danger" data-delete="' + t.id + '" aria-label="Aufgabe löschen: ' + esc(t.title) + '">' +
+                '<td class="num" style="white-space:nowrap">' +
+                '<button type="button" class="btn" data-details="' + t.id + '" aria-expanded="' + open + '" aria-controls="task-detail-' + t.id + '" aria-label="Details: ' + esc(t.title) + '">Details</button> ' +
+                '<button type="button" class="icon-btn danger" data-delete="' + t.id + '" aria-label="Aufgabe löschen: ' + esc(t.title) + '">' +
                 ui.ICONS.trash + "</button></td>" +
-                "</tr>"
+                "</tr>" +
+                (open ? detailRow(t) : "")
               );
             })
             .join("");
+          updateBulk();
         }
 
-        [stateSel, prioSel, mineChk].forEach(function (el) { el.addEventListener("change", render); });
+        [stateSel, prioSel, assigneeSel, recSel, mineChk].forEach(function (el) {
+          el.addEventListener("change", function () {
+            viewSel.value = "custom";
+            render();
+          });
+        });
 
-        document.getElementById("task-rows").addEventListener("change", function (e) {
+        $("task-rows").addEventListener("change", function (e) {
+          var sel = e.target.getAttribute("data-select");
+          if (sel) {
+            if (e.target.checked) selected[sel] = true;
+            else delete selected[sel];
+            $("bulk-error").hidden = true;
+            updateBulk();
+            return;
+          }
+          var sub = e.target.getAttribute("data-sub");
+          if (sub) {
+            var parts = sub.split(":");
+            var st = (findTask(parts[0]).subtasks || []).filter(function (s) { return s.id === parts[1]; })[0];
+            st.done = e.target.checked;
+            CRM.save();
+            ui.toast("Unteraufgabe „" + st.text + "“ " + (st.done ? "erledigt." : "wieder geöffnet."));
+            render();
+            return;
+          }
           var id = e.target.getAttribute("data-id");
           if (!id) return;
-          var task = CRM.db().tasks.filter(function (t) { return t.id === id; })[0];
-          task.done = e.target.checked;
-          if (task.done) CRM.logActivity("Aufgabe „" + task.title + "“ erledigt", task.customerId);
+          var task = findTask(id);
+          var next = null;
+          if (e.target.checked) next = CRM.completeTask(task);
+          else task.done = false;
           CRM.save();
-          ui.toast(task.done ? "Aufgabe „" + task.title + "“ erledigt." : "Aufgabe „" + task.title + "“ wieder geöffnet.");
+          ui.toast(task.done
+            ? "Aufgabe „" + task.title + "“ erledigt." + (next ? " Nächste Wiederholung am " + CRM.formatDate(next.due) + " angelegt." : "")
+            : "Aufgabe „" + task.title + "“ wieder geöffnet.");
           render();
         });
 
-        document.getElementById("task-rows").addEventListener("click", function (e) {
+        $("task-rows").addEventListener("submit", function (e) {
+          var id = e.target.getAttribute("data-subform");
+          if (!id) return;
+          e.preventDefault();
+          var input = $("sub-new-" + id);
+          var text = input.value.trim();
+          if (!text) {
+            ui.toast("Bitte geben Sie einen Text für die Unteraufgabe ein.", "error");
+            input.focus();
+            return;
+          }
+          var task = findTask(id);
+          task.subtasks = task.subtasks || [];
+          task.subtasks.push({ id: "s" + Date.now(), text: text, done: false });
+          CRM.save();
+          render();
+          $("sub-new-" + id).focus();
+          ui.toast("Unteraufgabe „" + text + "“ hinzugefügt.");
+        });
+
+        $("task-rows").addEventListener("click", function (e) {
+          var det = e.target.closest("[data-details]");
+          if (det) {
+            var tid = det.getAttribute("data-details");
+            if (openDetails[tid]) delete openDetails[tid];
+            else openDetails[tid] = true;
+            render();
+            return;
+          }
           var btn = e.target.closest("[data-delete]");
           if (!btn) return;
           var d = CRM.db();
           var id = btn.getAttribute("data-delete");
-          var task = d.tasks.filter(function (t) { return t.id === id; })[0];
+          var task = findTask(id);
           d.tasks = d.tasks.filter(function (t) { return t.id !== id; });
+          delete selected[id];
           CRM.save();
           ui.toast("Aufgabe „" + task.title + "“ gelöscht.", "info");
           render();
         });
 
+        $("select-all").addEventListener("change", function (e) {
+          filtered().forEach(function (t) {
+            if (e.target.checked) selected[t.id] = true;
+            else delete selected[t.id];
+          });
+          render();
+        });
+
+        // ---------- Sammelaktionen ----------
+        $("bulk-done").addEventListener("click", function () {
+          var ids = Object.keys(selected);
+          var created = 0, count = 0;
+          ids.forEach(function (id) {
+            var t = findTask(id);
+            if (t && !t.done) {
+              count += 1;
+              if (CRM.completeTask(t)) created += 1;
+            }
+          });
+          selected = {};
+          CRM.save();
+          render();
+          ui.toast((count === 1 ? "1 Aufgabe" : count + " Aufgaben") + " als erledigt markiert." + (created ? " " + created + " Wiederholung(en) neu angelegt." : ""));
+        });
+
+        $("bulk-assign").addEventListener("click", function () {
+          var err = $("bulk-error");
+          var ids = Object.keys(selected);
+          var who = $("bulk-assignee").value;
+          if (!ui.requirePermission("assignTasks", err, "Aufgaben anderen zuweisen dürfen nur die Rollen " + ui.rolesFor("assignTasks") + ".")) return;
+          if (ids.length === 0 || !who) {
+            err.textContent = ids.length === 0
+              ? "Bitte wählen Sie zuerst Aufgaben aus (Kästchen „Auswählen“ in der ersten Spalte)."
+              : "Bitte wählen Sie unter „Ausgewählte zuweisen an“ eine Person aus.";
+            err.hidden = false;
+            return;
+          }
+          err.hidden = true;
+          ids.forEach(function (id) { findTask(id).assignee = who; });
+          CRM.logActivity(ids.length + " Aufgabe(n) an " + who + " zugewiesen");
+          CRM.save();
+          selected = {};
+          render();
+          ui.toast((ids.length === 1 ? "1 Aufgabe" : ids.length + " Aufgaben") + " an " + who + " zugewiesen.");
+        });
+
+        // ---------- Dialog „Ansicht speichern“ ----------
+        var viewDialog = $("view-dialog");
+        $("view-dialog-close").innerHTML = ui.ICONS.close;
+        function closeViewDialog() { viewDialog.close(); }
+        $("view-dialog-close").addEventListener("click", closeViewDialog);
+        $("view-cancel").addEventListener("click", closeViewDialog);
+        $("save-view-button").addEventListener("click", function () {
+          var f = currentFilters();
+          $("view-form").reset();
+          ui.setFieldError($("view-name"), $("view-name-error"), null);
+          $("view-summary").textContent = "Gespeichert werden: Anzeigen = " + stateSel.selectedOptions[0].text +
+            ", Priorität = " + (f.priority || "Alle") + ", Zuständig = " + (f.assignee || "Alle") +
+            ", Wiederholung = " + recSel.selectedOptions[0].text + (f.mine ? ", nur meine Aufgaben" : "") + ".";
+          viewDialog.showModal();
+          $("view-name").focus();
+        });
+        $("view-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var name = $("view-name").value.trim();
+          var views = CRM.db().savedViews;
+          var msg = !name ? "Bitte geben Sie einen Namen für die Ansicht ein."
+            : views.some(function (v) { return v.name.toLowerCase() === name.toLowerCase(); }) ? "Eine Ansicht mit diesem Namen gibt es bereits." : null;
+          ui.setFieldError($("view-name"), $("view-name-error"), msg);
+          if (msg) return;
+          var f = currentFilters();
+          var v = { id: "v" + Date.now(), name: name, state: f.state, priority: f.priority, assignee: f.assignee, recurrence: f.recurrence, mine: f.mine };
+          views.push(v);
+          CRM.save();
+          closeViewDialog();
+          renderViews(v.id);
+          ui.toast("Ansicht „" + name + "“ gespeichert.");
+        });
+
         // ---------- Dialog „Neue Aufgabe“ ----------
-        var dialog = document.getElementById("task-dialog");
-        var form = document.getElementById("task-form");
-        var title = document.getElementById("task-title");
-        var customer = document.getElementById("task-customer");
-        var due = document.getElementById("task-due");
-        var priority = document.getElementById("task-priority");
-        var note = document.getElementById("task-note");
+        var dialog = $("task-dialog");
+        var form = $("task-form");
+        var title = $("task-title");
+        var customer = $("task-customer");
+        var due = $("task-due");
+        var priority = $("task-priority");
+        var note = $("task-note");
+        var assignee = $("task-assignee");
+        var recurrence = $("task-recurrence");
+        var recUntil = $("task-recurrence-until");
         var errs = {
-          title: document.getElementById("task-title-error"),
-          customer: document.getElementById("task-customer-error"),
-          due: document.getElementById("task-due-error"),
+          title: $("task-title-error"),
+          customer: $("task-customer-error"),
+          due: $("task-due-error"),
+          rec: $("task-recurrence-error"),
         };
-        document.getElementById("task-dialog-close").innerHTML = ui.ICONS.close;
+        $("task-dialog-close").innerHTML = ui.ICONS.close;
         customer.insertAdjacentHTML("beforeend", ui.customerOptions());
+        assignee.innerHTML = ui.userOptions(CRM.CURRENT_USER.name, true);
+
+        function syncRecurrence() {
+          $("task-recurrence-reveal").hidden = recurrence.value === "Keine";
+        }
+        recurrence.addEventListener("change", syncRecurrence);
 
         function openDialog(preselectCustomer) {
           form.reset();
           ui.setFieldError(title, errs.title, null);
           ui.setFieldError(customer, errs.customer, null);
           ui.setFieldError(due, errs.due, null);
+          ui.setFieldError(recUntil, errs.rec, null);
           due.value = CRM.today();
           priority.value = "Mittel";
+          assignee.value = CRM.CURRENT_USER.name;
+          recurrence.value = "Keine";
+          syncRecurrence();
           if (preselectCustomer && CRM.getCustomer(preselectCustomer)) customer.value = preselectCustomer;
           dialog.showModal();
           title.focus();
@@ -216,9 +540,9 @@
           if (location.hash === "#neu") history.replaceState(null, "", location.pathname + location.search);
         }
 
-        document.getElementById("new-task-button").addEventListener("click", function () { openDialog(); });
-        document.getElementById("task-cancel").addEventListener("click", closeDialog);
-        document.getElementById("task-dialog-close").addEventListener("click", closeDialog);
+        $("new-task-button").addEventListener("click", function () { openDialog(); });
+        $("task-cancel").addEventListener("click", closeDialog);
+        $("task-dialog-close").addEventListener("click", closeDialog);
         dialog.addEventListener("cancel", function () {
           if (location.hash === "#neu") history.replaceState(null, "", location.pathname + location.search);
         });
@@ -228,10 +552,16 @@
           var tMsg = title.value.trim() ? null : "Bitte geben Sie einen Titel ein.";
           var cMsg = customer.value ? null : "Bitte wählen Sie einen Kunden aus.";
           var dMsg = due.value ? null : "Bitte wählen Sie ein Fälligkeitsdatum.";
+          var rMsg = null;
+          if (recurrence.value !== "Keine") {
+            if (!recUntil.value) rMsg = "Bitte wählen Sie, bis wann die Aufgabe wiederholt wird.";
+            else if (due.value && recUntil.value <= due.value) rMsg = "„Wiederholen bis“ muss nach dem Fälligkeitsdatum liegen.";
+          }
           ui.setFieldError(title, errs.title, tMsg);
           ui.setFieldError(customer, errs.customer, cMsg);
           ui.setFieldError(due, errs.due, dMsg);
-          if (tMsg || cMsg || dMsg) return;
+          ui.setFieldError(recUntil, errs.rec, rMsg);
+          if (tMsg || cMsg || dMsg || rMsg) return;
 
           var task = {
             id: "t" + CRM.nextId("task"),
@@ -241,7 +571,11 @@
             priority: priority.value,
             note: note.value.trim(),
             done: false,
-            assignee: CRM.CURRENT_USER.name,
+            assignee: assignee.value || CRM.CURRENT_USER.name,
+            recurrence: recurrence.value,
+            recurrenceUntil: recurrence.value === "Keine" ? null : recUntil.value,
+            subtasks: $("task-checklist").value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean)
+              .map(function (text, i) { return { id: "s" + Date.now() + i, text: text, done: false }; }),
           };
           CRM.db().tasks.push(task);
           CRM.logActivity("Aufgabe „" + task.title + "“ angelegt", task.customerId);
@@ -249,14 +583,15 @@
           closeDialog();
           stateSel.value = "open";
           render();
-          var row = document.getElementById("task-row-" + task.id);
+          var row = $("task-row-" + task.id);
           if (row) {
             row.style.background = "#eef7ee";
             row.scrollIntoView({ block: "center" });
           }
-          ui.toast("Aufgabe „" + task.title + "“ wurde angelegt.");
+          ui.toast("Aufgabe „" + task.title + "“ wurde angelegt." + (task.assignee !== CRM.CURRENT_USER.name ? " Zuständig: " + task.assignee + "." : ""));
         });
 
+        renderViews("");
         render();
         if (location.hash === "#neu") {
           openDialog(new URLSearchParams(location.search).get("kunde"));

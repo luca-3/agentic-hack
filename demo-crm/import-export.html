@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Import/Export – Kundenwerk CRM</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="import-export">
+    <header class="topbar" id="topbar"></header>
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <main class="main" id="main">
+      <nav class="breadcrumb" aria-label="Brotkrumen">
+        <a href="index.html">Dashboard</a> / <span>Verwaltung</span> / <span aria-current="page">Import/Export</span>
+      </nav>
+      <div class="page-header">
+        <div>
+          <h1>Import/Export</h1>
+          <p>Kunden, Aufgaben und Angebote austauschen (Demo – es werden keine Dateien erzeugt)</p>
+        </div>
+      </div>
+
+      <div id="ie-denied" class="alert alert-error" role="alert" hidden>
+        Zugriff verweigert: Import/Export ist nur für die Rollen Buchhaltung oder Admin verfügbar.
+        <a href="index.html">Zum Dashboard</a>
+      </div>
+
+      <div id="ie-view" hidden>
+        <section class="card" aria-labelledby="export-title">
+          <h2 id="export-title">Export</h2>
+          <form id="export-form" class="inline-form" novalidate>
+            <div class="field">
+              <label for="export-type">Datentyp</label>
+              <select id="export-type"><option>Kunden</option><option>Aufgaben</option><option>Angebote</option></select>
+            </div>
+            <div class="field">
+              <label for="export-format">Format</label>
+              <select id="export-format"><option>CSV</option><option>Excel (XLSX)</option><option>DATEV</option></select>
+            </div>
+            <button type="submit" class="btn btn-primary">Export starten</button>
+          </form>
+          <p class="field-hint" id="export-hint" style="margin-top: 10px"></p>
+        </section>
+
+        <section class="card" aria-labelledby="import-title">
+          <h2 id="import-title">Import</h2>
+          <ol class="steps" id="import-steps">
+            <li data-step="1">Datei angeben</li>
+            <li data-step="2">Prüfen</li>
+            <li data-step="3">Importieren</li>
+          </ol>
+          <form id="import-form" novalidate>
+            <div id="import-step-1">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="import-type">Datentyp</label>
+                  <select id="import-type"><option>Kunden</option><option>Aufgaben</option></select>
+                </div>
+                <div class="field">
+                  <label for="import-file">Dateiname</label>
+                  <input type="text" id="import-file" placeholder="z. B. kunden_2026.csv" aria-describedby="import-file-error" />
+                  <p class="field-error" id="import-file-error" role="alert" hidden></p>
+                </div>
+                <div class="field full">
+                  <label class="switch" for="import-overwrite"><input type="checkbox" role="switch" id="import-overwrite" aria-controls="import-overwrite-warning" /> Vorhandene Datensätze überschreiben</label>
+                  <div class="alert alert-warning" id="import-overwrite-warning" role="note" hidden>
+                    Achtung: Bestehende Kunden mit gleicher Kundennummer werden ersetzt – inklusive Bankverbindung.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="import-step-2" hidden>
+              <p id="import-check"></p>
+            </div>
+            <div class="btn-row">
+              <button type="button" class="btn" id="import-back" hidden>Zurück</button>
+              <button type="submit" class="btn btn-primary" id="import-next">Datei prüfen</button>
+              <button type="button" class="btn btn-primary" id="import-run" hidden>Import ausführen</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+      (function () {
+        var CRM = window.CRM;
+        var ui = CRM.ui;
+        function $(id) { return document.getElementById(id); }
+
+        if (!CRM.can("dataExchange")) {
+          $("ie-denied").hidden = false;
+          return;
+        }
+        $("ie-view").hidden = false;
+
+        $("export-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var d = CRM.db();
+          var type = $("export-type").value;
+          var n = type === "Kunden" ? d.customers.length : type === "Aufgaben" ? d.tasks.length : d.offers.length;
+          $("export-hint").textContent = "Letzter Export: " + n + " " + type + " als " + $("export-format").value + " (Demo).";
+          ui.toast("Export von " + n + " " + type + " als " + $("export-format").value + " gestartet (Demo: kein Download).", "info");
+        });
+
+        $("import-overwrite").addEventListener("change", function (e) {
+          $("import-overwrite-warning").hidden = !e.target.checked;
+        });
+
+        function showStep(n) {
+          $("import-step-1").hidden = n !== 1;
+          $("import-step-2").hidden = n !== 2;
+          $("import-back").hidden = n !== 2;
+          $("import-next").hidden = n !== 1;
+          $("import-run").hidden = n !== 2;
+          Array.prototype.forEach.call(document.querySelectorAll("#import-steps li"), function (li) {
+            var s = Number(li.getAttribute("data-step"));
+            if (s === n) li.setAttribute("aria-current", "step");
+            else li.removeAttribute("aria-current");
+            li.classList.toggle("complete", s < n);
+          });
+        }
+
+        $("import-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var name = $("import-file").value.trim();
+          var msg = !name ? "Bitte geben Sie einen Dateinamen an." : !/\.(csv|xlsx)$/i.test(name) ? "Nur CSV- oder XLSX-Dateien können importiert werden." : null;
+          ui.setFieldError($("import-file"), $("import-file-error"), msg);
+          if (msg) return;
+          $("import-check").innerHTML = "Datei <strong>" + ui.escapeHtml(name) + "</strong>: 14 Datensätze erkannt, 12 gültig, <strong>2 mit Fehlern</strong> (Zeile 4: IBAN ungültig, Zeile 9: Pflichtfeld „Firma“ fehlt). Fehlerhafte Zeilen werden übersprungen." +
+            ($("import-overwrite").checked ? " Vorhandene Datensätze werden überschrieben." : "");
+          showStep(2);
+        });
+        $("import-back").addEventListener("click", function () { showStep(1); });
+        $("import-run").addEventListener("click", function () {
+          CRM.logActivity("Import " + $("import-type").value + " aus " + $("import-file").value.trim() + " (Demo)");
+          CRM.save();
+          showStep(1);
+          $("import-form").reset();
+          $("import-overwrite-warning").hidden = true;
+          ui.toast("Import abgeschlossen: 12 Datensätze übernommen, 2 übersprungen (Demo – keine Daten geändert).");
+        });
+
+        showStep(1);
+      })();
+    </script>
+  </body>
+</html>
