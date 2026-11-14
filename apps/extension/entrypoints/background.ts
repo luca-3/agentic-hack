@@ -218,15 +218,16 @@ async function maybeIntervene() {
   const owner = ++busyOwner;
   const epoch = generation;
   const tabId = recordingTab;
+  const current = () => epoch === generation && recording && recordingTab === tabId;
   inferencePending = false;
   try {
     const snapshot = await snapshotOf(tabId);
+    if (!current()) return;
     buffer.record({ snapshot });
     const context = buffer.getContext({ includeScreenshots: false });
     if (!context) return;
     const key = context.workflow.id + ":" + snapshot.id + ":" + (context.workflow.events.at(-1)?.id ?? "");
     if (key === lastInferenceKey) return;
-    const current = () => epoch === generation && recording && recordingTab === tabId;
     message = "Lotse versteht den aktuellen UI-Zustand …";
     const stateBody = UIStateRequestSchema.parse({ snapshot, events: context.workflow.events });
     const state = UIStateInferenceSchema.parse(await post("state", stateBody));
@@ -234,7 +235,9 @@ async function maybeIntervene() {
     if (state.snapshotId !== snapshot.id) throw new Error("Die UI-Inferenz gehört zu einem anderen Seitenzustand.");
     buffer.addState({ ...state, capturedAt: snapshot.capturedAt });
     schedulePersistence();
-    if ((await snapshotOf(tabId)).id !== snapshot.id) { queueInference(); return; }
+    const stateSnapshot = await snapshotOf(tabId);
+    if (!current()) return;
+    if (stateSnapshot.id !== snapshot.id) { queueInference(); return; }
     const textContext = buffer.getContext({ includeScreenshots: false });
     if (!textContext?.states?.length) return;
     message = "Lotse ordnet Workflow und Ziel ein …";
@@ -242,7 +245,9 @@ async function maybeIntervene() {
     const understood = WorkflowIntentSchema.parse(await post("intent", intentBody));
     if (!current()) return;
     inference = understood;
-    if ((await snapshotOf(tabId)).id !== snapshot.id) { queueInference(); return; }
+    const intentSnapshot = await snapshotOf(tabId);
+    if (!current()) return;
+    if (intentSnapshot.id !== snapshot.id) { queueInference(); return; }
     message = "Lotse prüft, ob Hilfe sinnvoll ist …";
     const signal = findStuckSignal(textContext);
     const trigger = signal?.type === "unsuccessful_searches" ? "repeated_search" :
@@ -259,12 +264,16 @@ async function maybeIntervene() {
     if (Date.now() - lastDecisionAt < 120_000) { message = "Lotse hält sich nach dem letzten Hinweis zurück."; return; }
     if (buffer.workflow?.id !== context.workflow.id) { queueInference(); return; }
     const latest = await snapshotOf(tabId);
+    if (!current()) return;
+    if (buffer.events.at(-1)?.id !== context.workflow.events.at(-1)?.id) { queueInference(); return; }
     if (latest.id !== snapshot.id) { queueInference(); return; }
     buffer.record({ snapshot: latest });
     // Screenshots are attached only now, after the explicit intervention decision.
     await captureFrame(tabId, latest);
     if (!current()) return;
     const helpSnapshot = await snapshotOf(tabId);
+    if (!current()) return;
+    if (buffer.events.at(-1)?.id !== context.workflow.events.at(-1)?.id) { queueInference(); return; }
     if (helpSnapshot.id !== snapshot.id) { queueInference(); return; }
     buffer.record({ snapshot: helpSnapshot });
     const answer = await requestHelp(tabId, helpSnapshot, buffer.getContext(), understood.intent.goal || understood.workflowName, understood.intent, "proactive");
@@ -284,7 +293,9 @@ async function explicitQuestion(question: string, source: "text" | "voice" | "pr
   const epoch = generation;
   try {
     const tab = await activeAppTab();
+    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
     const snapshot = await snapshotOf(tab.id);
+    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
     const questionBuffer = tab.id === recordingTab ? buffer : new ObservationBuffer();
     questionBuffer.record({ snapshot });
     await captureFrame(tab.id, snapshot, questionBuffer);
@@ -313,7 +324,10 @@ async function requestHelp(tabId: number, snapshot: ObservationSnapshot, observa
   let pointed = false;
   const point = async (elementNumber: number, sentence: string) => {
     if (epoch !== generation || (await activeAppTab()).id !== tabId) throw new Error("Die Anfrage wurde abgebrochen.");
-    if ((await snapshotOf(tabId)).id !== snapshot.id) throw new Error("Die Seite hat sich verändert. Stelle die Frage erneut.");
+    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
+    const currentSnapshot = await snapshotOf(tabId);
+    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
+    if (currentSnapshot.id !== snapshot.id) throw new Error("Die Seite hat sich verändert. Stelle die Frage erneut.");
     if (!snapshot.elements.some((element) => element.number === elementNumber && !element.disabled)) throw new Error("Das vorgeschlagene Element ist nicht verfügbar.");
     const result = await browser.tabs.sendMessage(tabId, { type: "lotse:highlight", elementNumber, sentence, snapshotId: snapshot.id } satisfies ExtensionMessage);
     if (!result?.ok) throw new Error("Das Element kann gerade nicht hervorgehoben werden.");
@@ -334,7 +348,9 @@ async function requestHelp(tabId: number, snapshot: ObservationSnapshot, observa
   if (answer.snapshotId && answer.snapshotId !== snapshot.id) throw new Error("Der Hinweis gehört zu einem anderen Seitenzustand.");
   if (answer.elementNumber !== null && !pointed) {
     if ((await activeAppTab()).id !== tabId) throw new Error("Der App-Tab ist nicht mehr aktiv. Stelle die Frage dort erneut.");
+    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
     const current = await snapshotOf(tabId);
+    if (epoch !== generation) throw new Error("Die Anfrage wurde abgebrochen.");
     if (current.id !== snapshot.id) throw new Error("Die Seite hat sich verändert. Stelle die Frage erneut.");
     if (!snapshot.elements.some((element) => element.number === answer.elementNumber && !element.disabled)) throw new Error("Das vorgeschlagene Element ist nicht verfügbar.");
     const result = await browser.tabs.sendMessage(tabId, { type: "lotse:highlight", elementNumber: answer.elementNumber, sentence: answer.sentence, snapshotId: snapshot.id } satisfies ExtensionMessage);

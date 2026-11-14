@@ -147,7 +147,7 @@ export type EventBatch = z.infer<typeof EventBatchSchema>;
 // Proactive help (extension rules → server decision)
 // ---------------------------------------------------------------------------
 
-/** Local rule in the extension that fired. Only then the server is asked. */
+/** Local rule annotation, or workflow_update for the staged observability pipeline. */
 export const StuckTriggerSchema = z.enum(["repeated_search", "page_pingpong", "form_idle", "repeated_error", "rage_click", "workflow_update"]);
 export type StuckTrigger = z.infer<typeof StuckTriggerSchema>;
 

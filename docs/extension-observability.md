@@ -129,7 +129,7 @@ The runtime streams application/x-ndjson, for example:
 {"type":"done"}
 ```
 
-The extension validates each event and highlights point events as they arrive. say text and plans are displayed; the first resolvable plan step can be highlighted. Automatic plan advancement remains open. done terminates the stream; error events surface to the operator. The old JSON response { elementNumber, sentence, snapshotId? } is still accepted.
+The extension validates each event and highlights point events as they arrive. say text and plans are displayed; the first plan step can be highlighted when resolvable. Automatic plan advancement remains open. done terminates the stream; error events surface to the operator. The old JSON response { elementNumber, sentence, snapshotId? } is still accepted.
 
 Use only Google Gemini for UI-state, workflow/intent, decision and guidance models. Keep keys server-only. The extension executes no model-generated code and never clicks or fills app controls.
 

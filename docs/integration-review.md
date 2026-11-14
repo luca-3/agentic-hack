@@ -1,5 +1,7 @@
 # Integration review: extension contract (Nils) ↔ server runtime (2026-11-14)
 
+Historical review of the earlier contract and skeleton. The current implementation, resolved mismatches and remaining integration work are documented in [the extension handoff](handoff-extension.md) and [the observability contract](extension-observability.md). D-23 supersedes the screenshot and rule-gating recommendations below.
+
 Read-only review of `main` (Nils' contract commit `6a4d03d` + `docs/extension-observability.md` vs. `apps/server`). `apps/extension` itself is still the walking skeleton and works with today's server (legacy JSON `/ask`).
 
 ## Contract mismatches
