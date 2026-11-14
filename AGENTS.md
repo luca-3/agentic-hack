@@ -14,6 +14,8 @@ One-day hackathon project ({Tech: Europe} Agentic AI Hack, co-hosted by Google D
 
 Human docs: `README.md` (overview), `SETUP.md` (setup, workflow, troubleshooting).
 
+**Product context — read first:** we are building **Lotse** (Chrome extension + dashboard + agent runtime, voice-native, Gemini). The agent wiki in `docs/` holds requirements, architecture, decisions and research: start at `docs/README.md`. Follow `docs/decisions.md`; when you make or change a product/architecture decision, append it there (next D-number) and update requirement status in `docs/requirements.md`.
+
 ## Stack — newer than your training data
 
 | Layer | Version | Read before coding |
@@ -54,6 +56,7 @@ npm run db:types      # regenerate src/lib/supabase/database.types.ts
 ## Where things live
 
 ```
+docs/                       agent wiki: requirements, architecture, decisions, research (Lotse)
 src/app/page.tsx            start page (DB status check)
 src/app/chat/page.tsx       agent chat UI (useChat, renders text / tool calls / sources)
 src/app/api/chat/route.ts   streams hackAgent to the UI

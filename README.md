@@ -5,6 +5,7 @@ Hackathon starter for the [{Tech: Europe} Agentic AI Hack Karlsruhe](https://lum
 
 > **New to the team?** Follow [SETUP.md](SETUP.md) (≈15 min) and run `npm run doctor`.
 > **Using a coding agent?** It should read [AGENTS.md](AGENTS.md) (Claude Code picks it up via `CLAUDE.md`).
+> **What are we building?** Lotse — see the product wiki in [docs/](docs/README.md) (requirements, architecture, decisions).
 
 ## Prerequisites
 
