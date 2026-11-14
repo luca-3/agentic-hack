@@ -5,7 +5,7 @@
  * and pushes `lotse:voice-state`, so the orb reacts to the wake word at once. Switches: `lotse:presence` (sync),
  * position + hidden hosts: `lotse:orb` (local).
  */
-import type { VoiceState } from "@lotse/shared";
+import { LOTSE_SETTINGS_KEY, LotseSettingsSchema, type VoiceState } from "@lotse/shared";
 import { shortcutLabels } from "../shortcuts";
 import { OrbView, type OrbMenuItem, type OrbViewModel } from "./view";
 import {
@@ -51,6 +51,7 @@ export function setupOrb(options: Options = {}): { destroy(): void } {
     if (current.base === "paused" || (current.base === "idle" && !current.autoActivate)) menu.push({ id: "resume", label: current.base === "paused" ? "Resume" : "Start Valo here" });
     else if (current.base === "active" || current.base === "blocked" || current.base === "idle") menu.push({ id: "pause", label: "Pause" });
     if (current.voiceOn && current.base !== "offline") menu.push({ id: "listen", label: mode === "listening" ? "Stop listening" : "Ask by voice" });
+    menu.push(current.voiceOn ? { id: "mute", label: "Mute (stop listening)" } : { id: "unmute", label: "Unmute (listen again)" });
     menu.push({ id: "panel", label: current.signedIn ? "Open side panel" : "Sign in · Open side panel" });
     menu.push({ id: "hide", label: "Hide on this page" });
     return { mode, title: ORB_TITLE[mode], detail, hint, note: live && !live.error ? live.text : null, badge: Boolean(current.offer), menu };
@@ -109,6 +110,18 @@ export function setupOrb(options: Options = {}): { destroy(): void } {
   function onMenu(id: string) {
     if (id === "panel") { openPanel(); return; }
     if (id === "listen") { onActivate(); return; }
+    if (id === "mute" || id === "unmute") {
+      const voice = id === "unmute";
+      void browser.storage.sync.get(LOTSE_SETTINGS_KEY)
+        .then((stored) => {
+          const parsed = LotseSettingsSchema.safeParse(stored[LOTSE_SETTINGS_KEY] ?? {});
+          const settings = parsed.success ? parsed.data : LotseSettingsSchema.parse({});
+          return browser.storage.sync.set({ [LOTSE_SETTINGS_KEY]: { ...settings, voice } });
+        })
+        .then(() => { showFlash(voice ? "Valo is listening again." : "Muted: Valo is not listening.", false, 3_000); void poll(); })
+        .catch(() => showFlash("That didn't work.", true));
+      return;
+    }
     if (id === "pause" || id === "resume") {
       void send({ type: "lotse:orb-pause", paused: id === "pause" }).then((reply) => {
         if (reply?.ok === false) showFlash(reply.error ?? "That didn't work.", true);
