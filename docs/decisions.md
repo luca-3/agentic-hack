@@ -98,6 +98,11 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 ### D-21 · Runtime safety: auth, limits, tracking (2026-11-14)
 - **Decision:** Supabase access token (dev: anonymous per session id); per-session rate limits and daily token budget; per-tier timeouts and max output tokens; kill switch `LOTSE_DISABLED`; every LLM call logged to `agent_usage`; page labels treated as untrusted data (prompt-injection).
 
+### D-22 · Decisions API + adaptive per-user threshold for proactive help (2026-11-14)
+- **Decision:** `/api/lotse/decide` uses Google's Decisions API (`gemini-decision-1`, available for our key) — Boolean "needs help?" with calibrated confidence + Choice over the app's feature names, one call; offer text from a template. Lotse intervenes only if yes AND confidence ≥ the user's threshold. Threshold starts at 0.80 (range 0.60–0.95, constants `PROACTIVE_THRESHOLD` in `@lotse/shared`): 👎 +0.05, 👍 −0.02, "Nein" +0.02; manual override via `PUT /api/lotse/prefs`.
+- **Why:** proactive offers are only good if they rarely annoy; calibrated confidence makes the cut-off meaningful, feedback personalizes it.
+- **Consequence:** feedback per offer is stored (pseudonymous) → aggregated "helpful offers per feature" for the dashboard; the per-user threshold is personal and never shown to admins.
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?
@@ -108,5 +113,5 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Promote to Demo?** Fading per person/task (R-INS-4, local learning state) and a "still stuck after the hint" metric (hints + later events) — the two features no competitor has.
 - **Second app:** is the EBV-Portal the same as the Erasmus funding helper Ismail mentioned, or two apps?
 - **Schedule:** submission deadline 19:10, opt-in 19:00 → "no building from 19:00" is too late; proposal: feature freeze 16:30, code freeze 17:30, submit by 18:45.
-- **Models:** the Google builder guide recommends `gemini-4-hydrogen` + `gemini-decision-1` (Decisions API, calibrated yes/no + choice with confidence) — neither is in the model list for our key; check ListModels / ask mentors before switching.
+- **Models:** the Google builder guide recommends `gemini-4-hydrogen` + `gemini-decision-1`. Both ARE listed for our key now (checked 2026-11-14); `gemini-decision-1` is used for `/decide` (D-22). Switch the main agent to `gemini-4-hydrogen`? Not yet tested.
 - **Pre-kickoff code:** starter commits are from 2026-11-13; the guide forbids "code written before kickoff" → disclose "starter template from 13.11., product code from kickoff 14.11." in the submission and confirm with organizers.
