@@ -34,14 +34,11 @@ Das Repo ist **öffentlich** (inkl. Historie) – alles Geheime nur als Codesphe
    | `DATABASE_URL` | `postgres://<superuser>:…@<host>:5432/valo` (Migrationen) |
    | `AUTHENTICATOR_DB_URL` | `postgres://authenticator:<authenticator_pw>@<host>:5432/valo` (PostgREST) |
    | `GOTRUE_DB_URL` | `postgres://supabase_auth_admin:<auth_admin_pw>@<host>:5432/valo` (GoTrue) |
-   | `API_EXTERNAL_URL` | `https://<workspace>/auth/v1` |
-   | `SITE_URL` | `https://<workspace>` |
-   | `GEMINI_API_KEY` | Gemini-Schlüssel |
-   | `LOTSE_KNOWLEDGE_SOURCE` | `db` |
-   | `LOTSE_SERVER_URL` | `https://<workspace>` |
-   | optional `GOTRUE_MAILER_AUTOCONFIRM` | Standard `true` (Autoconfirm an, kein SMTP) |
-   | optional `LOTSE_*` | wie `.env.example` – aber **nie** `LOTSE_DEV_AUTH` (Server startet sonst nicht) |
+         | `GEMINI_API_KEY` | Gemini-Schlüssel |
+      | `LOTSE_SERVER_URL` | `https://<workspace>` |
+| `LOTSE_PSEUDONYM_SALT` | zufällig (≥ 32 Zeichen) – sonst gilt der öffentliche Standardwert aus dem Repo |
 
+   Abgeleitet, nicht eintragen: `SITE_URL`, `API_EXTERNAL_URL` (aus `NEXT_PUBLIC_SUPABASE_URL`), `LOTSE_KNOWLEDGE_SOURCE` (Standard `auto` liest die DB). Nie setzen: `LOTSE_DEV_AUTH`.
    Fest im Skript, nicht als Variable: `GOTRUE_DISABLE_SIGNUP=true` (keine Selbstregistrierung, Konten nur per Einladung/Dashboard `/team`), Server immer `NODE_ENV=production`.
 
    Sonderzeichen in Passwörtern in den URLs prozent-kodieren. Die neuen Schlüssel `sb_publishable_…`/`sb_secret_…` funktionieren hier **nicht** (die tauscht nur Supabases Gateway gegen ein JWT).
