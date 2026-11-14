@@ -9,6 +9,7 @@
  */
 import { LOTSE_SETTINGS_KEY, LotseSettingsSchema, type VoiceState } from "@lotse/shared";
 import { SERVER_URL } from "../server-url";
+import { accessToken } from "../auth";
 import { browser } from "wxt/browser";
 import { shortenForSpeech, stripWakePhrase, VOICE_CONFIG_KEY, VOICE_DEFAULTS, VOICE_SESSION_KEY, WAKEWORD_MODEL_FILES } from "./config";
 import {
@@ -322,7 +323,8 @@ async function closeOffscreen(): Promise<void> {
 async function sendToOffscreen(body: OffscreenCommandBody): Promise<OffscreenReply> {
   if (!config) throw new Error("The voice module is not ready yet.");
   await ensureOffscreen();
-  const command = { ...body, target: OFFSCREEN_TARGET, config } as OffscreenCommand;
+  const authToken = (await accessToken().catch(() => null)) ?? undefined;
+  const command = { ...body, target: OFFSCREEN_TARGET, config: { ...config, authToken } } as OffscreenCommand;
   let lastError: unknown;
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
