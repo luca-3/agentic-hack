@@ -17,6 +17,8 @@ const SPEECH_OFF = 0.35;
 export interface UtteranceOptions {
   serverUrl: string;
   sessionId: string;
+  /** Bearer token for /api/lotse/live-token (required by the hosted server). */
+  authToken?: string;
   trigger: ListenTrigger;
   /** Speech probability 0…1 for one 80 ms frame (Silero VAD, energy fallback). */
   speechProbability(frame: Float32Array): Promise<number>;
@@ -113,7 +115,10 @@ export class LiveUtterance {
     try {
       const response = await fetch(`${this.options.serverUrl}/api/lotse/live-token`, {
         method: "POST",
-        headers: { [LOTSE_HEADERS.session]: this.options.sessionId },
+        headers: {
+          [LOTSE_HEADERS.session]: this.options.sessionId,
+          ...(this.options.authToken ? { Authorization: `Bearer ${this.options.authToken}` } : {}),
+        },
         signal: this.abort.signal,
       });
       if (!response.ok) {

@@ -283,6 +283,7 @@ function startUtterance(trigger: ListenTrigger): void {
   utterance = new LiveUtterance({
     serverUrl: config.serverUrl,
     sessionId: config.sessionId,
+    authToken: config.authToken,
     trigger,
     speechProbability: (frame) =>
       vad ? vad.speechProbability(frame).catch(() => energySpeechProbability(frame)) : Promise.resolve(energySpeechProbability(frame)),
@@ -340,7 +341,11 @@ async function speak(text: string): Promise<OffscreenReply> {
     const request = (stream: boolean) =>
       fetch(`${config!.serverUrl}/api/lotse/tts${stream ? "?stream=1" : ""}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", [LOTSE_HEADERS.session]: config!.sessionId },
+        headers: {
+          "Content-Type": "application/json",
+          [LOTSE_HEADERS.session]: config!.sessionId,
+          ...(config!.authToken ? { Authorization: `Bearer ${config!.authToken}` } : {}),
+        },
         body: JSON.stringify({ text }),
         signal: controller.signal,
       });

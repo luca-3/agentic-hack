@@ -24,6 +24,8 @@ export type OffscreenMode = "off" | "idle" | "listening";
 export interface OffscreenConfig {
   serverUrl: string;
   sessionId: string;
+  /** Access token of the signed-in user (fresh per command, D-21): the hosted server rejects voice calls without it. */
+  authToken?: string;
   /** Hold the microphone (wake word + hotkey listening). false = release the mic, playback only. */
   voice: boolean;
   /** Run the local wake-word detector while idle. */
