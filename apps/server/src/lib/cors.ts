@@ -1,3 +1,5 @@
+import { LOTSE_HEADERS } from "@lotse/shared";
+
 /**
  * CORS for runtime endpoints called from the dashboard (other port) or the extension.
  * Dev: any chrome-extension:// origin and any localhost port. Pin the extension id before going beyond localhost.
@@ -8,8 +10,9 @@ export function corsHeaders(origin: string | null): Record<string, string> {
   if (!origin || !ALLOWED_ORIGINS.some((re) => re.test(origin))) return {};
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Allow-Headers": `Content-Type, Authorization, Accept, ${LOTSE_HEADERS.session}, ${LOTSE_HEADERS.app}`,
+    "Access-Control-Expose-Headers": "Retry-After",
     Vary: "Origin",
   };
 }

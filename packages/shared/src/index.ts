@@ -46,7 +46,7 @@ export const LotseEventSchema = z.object({
   route: z.string(),
   elementRole: z.string().optional(),
   elementLabel: z.string().optional(),
-  detail: z.string().optional(), // e.g. "results=0", UI error text, "searchLength=4"
+  detail: z.string().optional(), // e.g. "results=0", UI error text, "searchLength=4", "matchedFeature=<feature name>" (local match of the search term against the feature list — the term itself never leaves the browser)
   ts: z.number(), // Date.now()
 });
 export type LotseEvent = z.infer<typeof LotseEventSchema>;
@@ -160,7 +160,7 @@ export const GuidanceEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("done"), usage: UsageSchema.optional() }),
   z.object({
     type: z.literal("error"),
-    code: z.enum(["bad_request", "unauthorized", "rate_limited", "budget_exceeded", "timeout", "internal"]),
+    code: z.enum(["bad_request", "unauthorized", "rate_limited", "budget_exceeded", "timeout", "disabled", "internal"]),
     message: z.string(),
   }),
 ]);

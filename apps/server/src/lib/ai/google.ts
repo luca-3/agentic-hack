@@ -13,8 +13,12 @@ export const google = createGoogle({
 export const MODELS = {
   /** Default: fast, cheap, supports tools, Google Search, URL context, structured output. */
   fast: "gemini-3.8-flash",
-  /** Strongest reasoning. Slower and more expensive — use for hard planning steps. */
+  /** Strongest reasoning. Slower and more expensive — use for hard planning steps. No `minimal` thinking. */
   smart: "gemini-4-argon",
+  /** Lite: ~0.6–1 s for structured output / one tool call (tested 2026-11-14, supports thinkingLevel "minimal"). Lotse decide + point tier. */
+  decide: "gemini-3.5-flash-lite",
+  /** Gemini Decisions API (experimental, v1beta): calibrated Boolean/Choice/Score answers, ~0.6 s. Use via `experimental_decide`. */
+  decision: "gemini-decision-1",
   /** Text + multimodal embeddings. We store 768 dims (see EMBEDDING_DIMENSIONS). */
   embedding: "gemini-embedding-2",
   /** Image generation / editing ("nano banana"). */
@@ -27,3 +31,4 @@ export const EMBEDDING_DIMENSIONS = 768;
 export const fastModel = google(MODELS.fast);
 export const smartModel = google(MODELS.smart);
 export const embeddingModel = google.embedding(MODELS.embedding);
+export const decisionModel = google.decisionModel(MODELS.decision);
