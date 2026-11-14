@@ -54,6 +54,13 @@ let thinkingTimer: ReturnType<typeof setTimeout> | undefined;
 let lastState: VoiceState | null = null;
 let creating: Promise<void> | null = null;
 let ready: Promise<void> = Promise.resolve();
+/** Last 20 voice messages/warnings of the worker side, oldest first (debug dump). */
+const workerLog: string[] = [];
+
+function logLine(text: string): void {
+  workerLog.push(`${new Date().toISOString().slice(11, 23)} ${text}`.slice(0, 300));
+  if (workerLog.length > 20) workerLog.shift();
+}
 
 /** Call once from the background service worker (synchronously, at top level of `defineBackground`). */
 export function setupVoice(next: VoiceHandlers): void {
@@ -136,6 +143,35 @@ export function voiceStatus(): { state: VoiceState; mic: MicStatus } {
   return { state: currentState(), mic };
 }
 
+export type VoiceDebug = {
+  state: VoiceState; mic: MicStatus; mode: OffscreenMode; speaking: boolean; voice: boolean; speak: boolean;
+  keywordModel: string | null; threshold: number | null; wakeWord: boolean | null; offscreenOpen: boolean;
+  /** Oldest first. */
+  offscreenLog: string[]; workerLog: string[];
+};
+
+/** Voice part of the side panel's debug dump. Never creates the offscreen document just to read its log. */
+export async function voiceDebug(): Promise<VoiceDebug> {
+  let offscreenOpen = false;
+  let offscreenLog: string[] = [];
+  try {
+    offscreenOpen = await hasOffscreen();
+    if (offscreenOpen && config) {
+      const command = { type: "debug-log", target: OFFSCREEN_TARGET, config } satisfies OffscreenCommand;
+      const timeout = new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 1_500));
+      const reply = (await Promise.race([browser.runtime.sendMessage(command), timeout])) as OffscreenReply | undefined;
+      offscreenLog = reply?.log ?? ["(Offscreen-Dokument hat nicht geantwortet)"];
+    }
+  } catch (error) {
+    offscreenLog = [`(Offscreen-Log nicht verfügbar: ${errorText(error)})`];
+  }
+  return {
+    state: currentState(), mic, mode, speaking, voice: settings.voice, speak: settings.speak,
+    keywordModel: config?.keywordModel ?? null, threshold: config?.threshold ?? null, wakeWord: config?.wakeWord ?? null,
+    offscreenOpen, offscreenLog, workerLog: [...workerLog],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Events from the offscreen document / mic-permission page
 // ---------------------------------------------------------------------------
@@ -209,6 +245,7 @@ async function refresh(): Promise<void> {
     else await closeOffscreen(); // releases the microphone; speak() recreates a playback-only document if needed
   } catch (error) {
     console.warn("[lotse voice] setup failed:", errorText(error));
+    logLine("setup failed: " + errorText(error));
   }
   emitState();
 }
@@ -242,6 +279,7 @@ async function syncOffscreen(): Promise<void> {
     await sendToOffscreen({ type: "configure" });
   } catch (error) {
     console.warn("[lotse voice] offscreen document unavailable:", errorText(error));
+    logLine("offscreen document unavailable: " + errorText(error));
   }
   emitState();
 }
@@ -326,6 +364,7 @@ function emitState(): void {
 
 function report(message: string): void {
   console.info("[lotse voice]", message);
+  logLine(message);
   try {
     handlers?.onError?.(message);
   } catch {

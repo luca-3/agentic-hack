@@ -42,6 +42,8 @@ export type OffscreenCommand = { target: typeof OFFSCREEN_TARGET; config: Offscr
   | { type: "cancel" }
   | { type: "speak"; text: string }
   | { type: "stop-speaking" }
+  /** Debug dump: the last `[lotse voice]` log lines of the offscreen document. Answered without reconfiguring. */
+  | { type: "debug-log" }
 );
 
 export interface OffscreenReply {
@@ -51,6 +53,8 @@ export interface OffscreenReply {
   mode?: OffscreenMode;
   /** "stopped" = speech was interrupted on purpose (not an error). */
   error?: string;
+  /** Reply to "debug-log", oldest first. */
+  log?: string[];
 }
 
 /** Offscreen / mic-permission page → service worker (fire-and-forget). */

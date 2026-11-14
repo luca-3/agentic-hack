@@ -1,7 +1,7 @@
 import { LOTSE_DEFAULTS, type VoiceState } from "@lotse/shared";
 import type { LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
-import { applyShortcutLabels, shortcutLabels } from "../../utils/shortcuts";
+import { applyShortcutLabels, isMac, shortcutLabels } from "../../utils/shortcuts";
 import "./presence"; // D-29 switches: "Automatisch aktiv", "Status-Kreis anzeigen"
 
 const get = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -238,6 +238,37 @@ get("#offer-no").addEventListener("click", () => { if (offerId) void act({ type:
 get("#plan-back").addEventListener("click", () => { void act({ type: "lotse:plan-command", action: "back" }); });
 get("#plan-next").addEventListener("click", () => { void act({ type: "lotse:plan-command", action: "next" }); });
 get("#plan-end").addEventListener("click", () => { void act({ type: "lotse:plan-command", action: "end" }); });
+
+const debugCopy = get<HTMLButtonElement>("#debug-copy");
+const debugNote = get<HTMLSpanElement>("#debug-note");
+const debugText = get<HTMLTextAreaElement>("#debug-text");
+debugCopy.addEventListener("click", () => { void copyDebug(); });
+
+/** "Debug-Kontext kopieren": the worker collects the session context as Markdown (≤ 40 KB), the panel copies it. */
+async function copyDebug() {
+  if (contextInvalidated()) { debugNote.textContent = RELOAD_HINT; return; }
+  debugCopy.disabled = true;
+  debugText.hidden = true;
+  debugNote.textContent = "Sammle …";
+  try {
+    const result = await send({ type: "lotse:debug-dump" });
+    if (!result.ok) throw new Error(result.error);
+    const text = result.debug ?? "";
+    try {
+      await navigator.clipboard.writeText(text);
+      debugNote.textContent = `Kopiert ✓ (${Math.max(1, Math.round(text.length / 1024))} KB)`;
+    } catch {
+      // The click's user activation can run out while the worker collects → let the user copy by hand.
+      debugText.value = text;
+      debugText.hidden = false;
+      debugText.focus();
+      debugText.select();
+      debugNote.textContent = `Automatisch kopieren ging nicht – der Text ist markiert, drücke ${isMac() ? "⌘C" : "Strg+C"}.`;
+    }
+  } catch (error) {
+    debugNote.textContent = error instanceof Error ? error.message : "Debug-Kontext ist gerade nicht verfügbar.";
+  } finally { debugCopy.disabled = false; }
+}
 
 async function refresh() {
   if (contextInvalidated()) {

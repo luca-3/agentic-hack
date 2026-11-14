@@ -164,6 +164,12 @@
         <button type="submit">Kontext übernehmen</button>
       </form>
     </details>
+    <section aria-labelledby="debug-title">
+      <h2 id="debug-title">Fehlersuche</h2>
+      <p class="muted">Kopiert den Sitzungs-Kontext (Einstellungen, Policy, letzte Server-Aufrufe, Hinweise, Sprach-Log, Events) als Text zum Einfügen in eine Nachricht an die Entwickler. Ohne Anmelde-Token, Schlüssel und Bilder; Seiteninhalte pseudonymisiert.</p>
+      <div class="row"><button id="debug-copy" class="secondary small" type="button">Debug-Kontext kopieren</button><span id="debug-note" class="muted" role="status"></span></div>
+      <textarea id="debug-text" rows="6" readonly hidden aria-label="Debug-Kontext"></textarea>
+    </section>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

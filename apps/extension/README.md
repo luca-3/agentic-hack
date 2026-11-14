@@ -27,7 +27,7 @@ Load `apps/extension/.output/chrome-mv3` via `chrome://extensions` → Developer
 | Matching | `utils/match.ts` | Fuzzy label match (case, umlauts, diacritics, quotes, whitespace, role prefixes), route compare |
 | Messages/settings | `utils/messages.ts` | Extension-internal message types and the unified settings object |
 | Pseudonymization | `utils/pseudonymize.ts` | D-26: page content strings + mask rects (content script); session mapping, `pseudonymize()`/`reidentify()` in `callRuntime`, frame masks (worker) |
-| Side panel | `entrypoints/sidepanel/` | Login, start/pause, question (text + 🎙), toggles (incl. auto-activation and orb), threshold, snooze, offer and plan controls |
+| Side panel | `entrypoints/sidepanel/` | Login, start/pause, question (text + 🎙), toggles (incl. auto-activation and orb), threshold, snooze, offer and plan controls, “Debug-Kontext kopieren” (Markdown dump ≤ 40 KB of settings, policy, last runtime calls, guidance, voice log, events — no token/keys/screenshots, page content pseudonymized; `utils/debug.ts`) |
 | Voice | `utils/voice/` (voice session) | Wake word / hotkey → Gemini Live transcript → explicit question; `speak()` for `say` |
 | Auto-activation | `utils/activation.ts` | Starts/stops observation for the focused org app tab (policy `autoStart`), manual pause, answers the orb's messages |
 | Status orb | `utils/orb/` | Floating status circle on app pages (top layer, draggable), push-to-talk click, menu; `sidepanel/presence.ts` = its switches |

@@ -14,9 +14,10 @@ import { DEFAULT_SETTINGS, DEMO_CONTEXT_KEY, type ExtensionSettings, type LotseM
 import * as auth from "../utils/auth";
 import { PAUSED_TEXT, clearPolicies, hostOf, locationOf, pageVerdict, policyFor } from "../utils/policy";
 import * as pseudo from "../utils/pseudonymize";
-import { noteError, setupActivation } from "../utils/activation";
+import { activationDebug, noteError, setupActivation } from "../utils/activation";
+import { Ring, formatDebugDump, maskEmail, type QuestionLog, type RuntimeCallLog, type TimedLine } from "../utils/debug";
 import * as voice from "../utils/voice";
-import { setupVoice, speak, stopSpeaking } from "../utils/voice";
+import { setupVoice, speak, stopSpeaking, voiceDebug } from "../utils/voice";
 
 // Optional voice API (mic button); typed loosely so this file builds against every stage of the voice module.
 const startListening = (voice as unknown as { startListening?: (trigger?: "button") => Promise<void> }).startListening;
@@ -61,14 +62,14 @@ export type PageStatus = {
   appName: string | null; orgName: string | null; role: string | null; signedIn: boolean; member: boolean;
 };
 export type LotseResult =
-  | { ok: true; status: LotseStatus; answer?: AskResponse; plan?: PlanView | null; policy?: PagePolicy | null }
+  | { ok: true; status: LotseStatus; answer?: AskResponse; plan?: PlanView | null; policy?: PagePolicy | null; debug?: string }
   | { ok: false; error: string };
 
 const HANDLED = new Set<string>([
   "lotse:start", "lotse:stop", "lotse:status", "lotse:settings", "lotse:update-settings", "lotse:observe", "lotse:ask", "lotse:wake-question",
   "lotse:plan-resume", "lotse:plan-update", "lotse:plan-end", "lotse:plan-command", "lotse:offer-accept", "lotse:offer-feedback",
   "lotse:prefs", "lotse:snooze", "lotse:listen", "lotse:get-policy", "lotse:paused", "lotse:login", "lotse:logout",
-  "lotse:explore-start", "lotse:explore-stop",
+  "lotse:explore-start", "lotse:explore-stop", "lotse:debug-dump",
 ]);
 const ANALYTICS_TYPES = new Set<LotseEvent["type"]>(["click", "route", "search", "error", "idle", "submit", "empty_results", "rage_click"]);
 const OFFER_COOLDOWN_MS = 120_000; // D-20: at most one proactive offer per two minutes
@@ -120,6 +121,12 @@ let exploreStatus: ExploreStatus = {
   startedAt: null, phaseStartedAt: null,
 };
 const feedbackGiven = new Set<string>();
+// In-memory history for "Debug-Kontext kopieren" (lost when the worker restarts — fine for a debug aid).
+const runtimeCalls = new Ring<RuntimeCallLog>(30);
+const guidanceLog = new Ring<TimedLine>(10);
+const questionLog = new Ring<QuestionLog>(10);
+const messageLog = new Ring<TimedLine>(10);
+let lastShown = { message: "", screenshotMessage: "", prefsMessage: "" };
 const STORE = "lotse-observation-session";
 const localUrl = (url?: string): boolean => {
   if (!url) return false;
@@ -235,6 +242,8 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
     case "lotse:explore-stop":
       await stopExplore();
       break;
+    case "lotse:debug-dump":
+      return { ok: true, status: status(), debug: await debugDump() };
     case "lotse:observe": {
       if (!recording || senderTab !== recordingTab) break;
       // Second line of defense after the content script: nothing from a blocked route enters the buffer.
@@ -719,6 +728,7 @@ async function loadPrefs(value?: number) {
 
 async function explicitQuestion(question: string, source: Source = "text", options: { offerId?: string; intent?: InferredIntent } = {}): Promise<AskResponse> {
   if (typeof question !== "string" || !question.trim() || question.length > 500) throw new Error("Bitte stelle eine Frage mit höchstens 500 Zeichen.");
+  questionLog.push({ at: Date.now(), source, text: question.trim() });
   try { stopSpeaking(); } catch { /* voice module not ready */ }
   if (source !== "proactive") { lastQuestion = { text: question.trim(), source }; dropOffer(true); }
   if (busy && busyMode === "proactive") { generation++; requestController?.abort(); busy = false; inferencePending = true; }
@@ -1120,6 +1130,7 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
   if (abortable) requestController = controller;
   if (exploreAbortable) exploreController = controller;
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const log: RuntimeCallLog = { at: Date.now(), endpoint, method, status: null, ms: 0 };
   try {
     const payload = (body ?? {}) as { snapshot?: ObservationSnapshot; context?: ObservationContext; appId?: string; appHost?: string };
     const snapshotUrl = payload.snapshot?.url ?? payload.context?.snapshot.url;
@@ -1142,8 +1153,11 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
       if (!fresh) void afterAuthChange().catch(() => undefined);
       response = await fetch(url, { ...init, headers: fresh ? { ...headers, Authorization: `Bearer ${fresh}` } : headers });
     }
+    log.status = response.status;
     if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as { error?: string | { message?: string } } | null;
+      const errorPayload = (await response.json().catch(() => null)) as { error?: string | { message?: string; code?: string }; code?: string } | null;
+      const errorCode = typeof errorPayload?.error === "object" ? errorPayload.error?.code : errorPayload?.code;
+      if (typeof errorCode === "string") log.code = errorCode.slice(0, 40);
       const serverMsg = typeof errorPayload?.error === "string"
         ? errorPayload.error
         : typeof errorPayload?.error?.message === "string"
@@ -1156,20 +1170,36 @@ async function callRuntime(endpoint: Endpoint, { method = "POST", body, onGuidan
       throw new Error(`Die Hilfe ist derzeit nicht verfügbar (Server ${response.status}).`);
     }
     if (endpoint === "events") return null;
-    if (endpoint === "ask" && response.headers.get("content-type")?.includes("ndjson")) return await readGuidance(response, onGuidance);
+    if (endpoint === "ask" && response.headers.get("content-type")?.includes("ndjson")) return await readGuidance(response, onGuidance, log);
     return pseudo.reidentify(await response.json());
   } catch (error) {
-    if (controller.signal.aborted) throw new Error("Die Anfrage wurde abgebrochen oder dauerte zu lange.");
-    if (error instanceof TypeError) throw new Error("Der Valo-Server ist nicht erreichbar. Starte npm run dev:server.");
-    throw error;
+    const failure = controller.signal.aborted ? new Error("Die Anfrage wurde abgebrochen oder dauerte zu lange.")
+      : error instanceof TypeError ? new Error("Der Valo-Server ist nicht erreichbar. Starte npm run dev:server.")
+      : error;
+    log.error = errorText(failure);
+    throw failure;
   } finally {
+    log.ms = Date.now() - log.at;
+    runtimeCalls.push(log);
     clearTimeout(timeout);
     if (requestController === controller) requestController = null;
     if (exploreController === controller) exploreController = null;
   }
 }
 
-async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent) => Promise<void>): Promise<AskResponse> {
+/** One line per guidance event for the debug dump — from the pseudonymized wire event, never the re-identified one. */
+function guidanceLine(event: GuidanceEvent): string {
+  switch (event.type) {
+    case "tier": return `tier ${event.tier} · ${event.model}`;
+    case "point": return `point #${event.elementNumber} „${event.label}“${event.hint ? " – " + event.hint : ""}`;
+    case "plan": return "plan " + event.steps.map((step, index) => `${index + 1}. ${step.label}`).join(" | ");
+    case "say": return "say " + event.text;
+    case "error": return `error ${event.code}: ${event.message}`;
+    case "done": return "done";
+  }
+}
+
+async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent) => Promise<void>, log?: RuntimeCallLog): Promise<AskResponse> {
   const reader = response.body?.getReader();
   if (!reader) throw new Error("Der Server hat keine Hilfe gesendet.");
   const decoder = new TextDecoder();
@@ -1179,7 +1209,11 @@ async function readGuidance(response: Response, onEvent?: (event: GuidanceEvent)
   const answer: AskResponse = { elementNumber: null, sentence: "" };
   const consume = async (line: string) => {
     if (!line.trim()) return;
-    const event = pseudo.reidentify(GuidanceEventSchema.parse(JSON.parse(line))); // real names for overlay + panel
+    const wire = GuidanceEventSchema.parse(JSON.parse(line));
+    guidanceLog.push({ at: Date.now(), text: guidanceLine(wire) });
+    if (log && wire.type === "tier") log.tier = `${wire.tier}/${wire.model}`;
+    if (log && wire.type === "error") log.code = wire.code;
+    const event = pseudo.reidentify(wire); // real names for overlay + panel
     received = true;
     if (event.type === "error") {
       if (event.code === "budget_exceeded") throw new Error("Valo macht Pause bis morgen (Tagesbudget erreicht).");
@@ -1223,7 +1257,107 @@ function clock(timestamp: number) {
 // Status + persistence
 // ---------------------------------------------------------------------------
 
+/** Status lines as the side panel shows them (it polls status() every second) → "Meldungen" in the debug dump. */
+function noteShown() {
+  const now = { message, screenshotMessage, prefsMessage };
+  for (const key of ["message", "screenshotMessage", "prefsMessage"] as const) {
+    if (now[key] && now[key] !== lastShown[key]) messageLog.push({ at: Date.now(), text: now[key] });
+  }
+  lastShown = now;
+}
+
+const pathOf = (url: string | undefined): string | null => {
+  if (!localUrl(url)) return null;
+  const u = new URL(url!);
+  return u.pathname + (u.hash.startsWith("#/") ? u.hash.split("?")[0] : ""); // never the query (may hold entered data)
+};
+
+/** Side panel "Debug-Kontext kopieren": Markdown, ≤ 40 KB. No token, keys or screenshots; page content pseudonymized (D-26). */
+async function debugDump(): Promise<string> {
+  await refreshPage().catch(() => undefined);
+  const manifest = browser.runtime.getManifest();
+  const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+  const [tab] = await browser.tabs.query({ active: true, lastFocusedWindow: true }).catch(() => []);
+  const activeUrl = localUrl(tab?.url) ? tab!.url : undefined;
+  const policy = activeUrl ? await pagePolicy(activeUrl).catch(() => null) : null;
+  const verdict = activeUrl ? pageVerdict(activeUrl, policy) : null;
+  const recordingUrl = recordingTab !== null ? (await browser.tabs.get(recordingTab).catch(() => null))?.url : undefined;
+  const activation = activationDebug();
+  const voiceInfo = await voiceDebug().catch(() => null);
+  const context = buffer.getContext({ includeScreenshots: false });
+  const step = plan?.steps[plan.index];
+  noteShown();
+  // Page content, model answers and status lines leave as tokens, like on the wire; the user's own questions stay readable.
+  const safe = await pseudo.pseudonymize({
+    observation: {
+      workflowName: inference?.workflowName ?? null, goal: inference?.intent.goal ?? null,
+      offer: decision?.offer ?? null, pendingOffer: pendingOffer?.text ?? null,
+      planStep: plan && step ? `${plan.index + 1}/${plan.steps.length} ${step.label}${step.hint ? " – " + step.hint : ""}` : null,
+      message, screenshotMessage,
+    },
+    calls: runtimeCalls.newestFirst(),
+    messages: messageLog.newestFirst(),
+    events: buffer.events.slice(-30).reverse().map((event) => ({ ts: event.ts, type: event.type, route: event.route, label: event.elementLabel, detail: event.detail })),
+  });
+  return formatDebugDump({
+    header: {
+      Zeit: new Date().toISOString(),
+      Erweiterung: `${manifest.name} ${manifest.version}`,
+      Plattform: nav.userAgentData?.platform || nav.platform,
+      Browser: nav.userAgent,
+      "Runtime-URL": LOTSE_DEFAULTS.serverUrl,
+      [LOTSE_HEADERS.session]: sessionId,
+      "App-Host (aktiver Tab)": activeUrl ? hostOf(activeUrl) : "(keine lokale App im aktiven Tab)",
+      Anmeldung: account ? `${maskEmail(account.email)}${account.isAdmin ? " (Org-Admin)" : ""}` : "nicht angemeldet (Dev-Modus, Demo-Rolle)",
+      Organisation: page?.orgName ?? null, App: page?.appName ?? null,
+      Rolle: page?.role ?? (account ? null : settings.role || null), Mitglied: page?.member ?? null,
+    },
+    settings: {
+      proactive: settings.proactive, voice: settings.voice, speak: settings.speak, screenshots: settings.screenshots,
+      autoActivate: activation.autoActivate, orb: activation.orb, "manuell pausiert": activation.manualPause,
+      "Auto-Tab": activation.autoTab, "App-Hosts": activation.appHosts.join(", ") || null,
+      "Demo-Rolle": settings.role || null, "App-Wissen (Zeichen)": settings.appKnowledge.length,
+      Schwelle: threshold, "Ruhe bis": snoozeUntil > Date.now() ? clock(snoozeUntil) : null,
+      "Orb-Fehler": activation.lastError ? `${new Date(activation.lastError.at).toISOString().slice(11, 19)} ${activation.lastError.text}` : null,
+    },
+    policy: policy && activeUrl ? {
+      Host: policy.app, bekannt: policy.known, erlaubt: policy.allowed, autoStart: policy.autoStart ?? null,
+      angemeldet: policy.signedIn, Mitglied: policy.member, Rolle: policy.role,
+      "gesperrte Routen": policy.blockedRoutes.join(", ") || null,
+      "Route gesperrt": routeBlocked(locationOf(activeUrl), policy.blockedRoutes),
+      pausiert: verdict?.paused ?? null, Grund: verdict?.reason || policy.reason || null, ttlSec: policy.ttlSec,
+    } : { Policy: activeUrl ? "unbekannt (Server nicht erreichbar?) → pausiert (fail closed)" : "keine lokale App im aktiven Tab" },
+    observation: {
+      Beobachtung: recording, "Beobachteter Tab": recordingTab, "Tab-Pfad": pathOf(recordingUrl ?? activeUrl),
+      beschäftigt: busy ? `ja (${busyMode ?? "?"})` : "nein",
+      "Workflow-ID": context?.workflow.id ?? null, Workflow: safe.observation.workflowName, Ziel: safe.observation.goal,
+      "Ziel-Konfidenz": inference?.intent.confidence ?? null,
+      Events: buffer.events.length, Snapshots: buffer.snapshots.length, Bilder: buffer.screenshots.length, "UI-Zustände": buffer.states.length,
+      "Analytics in Warteschlange": analytics.length,
+      "Letzte Entscheidung": decision ? `intervene=${decision.intervene} confidence=${decision.confidence.toFixed(2)} threshold=${decision.threshold ?? "–"}` : null,
+      Angebot: safe.observation.offer, offerId: decision?.offerId ?? null, "Offenes Angebot": safe.observation.pendingOffer,
+      "Plan-Schritt": safe.observation.planStep, Stimme: voiceState,
+      Erkundung: `${exploreStatus.phase} (${exploreStatus.pageCount} Seiten)`,
+      Statuszeile: safe.observation.message, Bildstatus: safe.observation.screenshotMessage || null,
+    },
+    calls: safe.calls,
+    guidance: guidanceLog.newestFirst(),
+    // Proactive "questions" are model-inferred goals (re-identified) → tokens; typed/spoken ones are the user's own.
+    questions: questionLog.newestFirst().map((q) => (q.source === "proactive" ? { ...q, text: pseudo.pseudonymizeText(q.text) } : q)),
+    voice: voiceInfo ? {
+      Zustand: voiceInfo.state, Mikrofon: voiceInfo.mic, "Offscreen-Modus": voiceInfo.mode, "Offscreen offen": voiceInfo.offscreenOpen,
+      spricht: voiceInfo.speaking, Sprache: voiceInfo.voice, Vorlesen: voiceInfo.speak,
+      Keyword: voiceInfo.keywordModel, Schwelle: voiceInfo.threshold, "Wake-Word": voiceInfo.wakeWord,
+    } : { Sprache: "Sprachmodul nicht verfügbar" },
+    voiceLog: voiceInfo?.offscreenLog ?? [],
+    voiceWorkerLog: voiceInfo?.workerLog ?? [],
+    events: safe.events,
+    messages: safe.messages,
+  });
+}
+
 function status(): LotseStatus {
+  noteShown();
   const context = buffer.getContext({ includeScreenshots: false });
   const step = plan?.steps[plan.index];
   return { recording, tabId: recordingTab, busy, busyMode, settings, decision, inference, stateCount: buffer.states.length, message, screenshotMessage,

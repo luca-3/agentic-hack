@@ -42,8 +42,23 @@ let wakeErrorReported = false;
 let utterance: LiveUtterance | null = null;
 let speech: AbortController | null = null;
 
+/** Last 50 `[lotse voice]` console lines of this document (wake score peaks, pipeline errors) for the debug dump. */
+const voiceLog: string[] = [];
+for (const level of ["info", "warn", "error"] as const) {
+  const original = console[level].bind(console);
+  console[level] = (...args: unknown[]) => {
+    if (typeof args[0] === "string" && args[0].startsWith("[lotse voice]")) {
+      const text = args.map((arg) => (typeof arg === "string" ? arg : arg instanceof Error ? arg.message : String(arg))).join(" ");
+      voiceLog.push(`${new Date().toISOString().slice(11, 23)} ${level} ${text}`.slice(0, 300));
+      if (voiceLog.length > 50) voiceLog.shift();
+    }
+    original(...args);
+  };
+}
+
 browser.runtime.onMessage.addListener((message: unknown, _sender, respond: (reply: OffscreenReply) => void) => {
   if (!isOffscreenCommand(message)) return; // not a voice command → let other listeners answer
+  if (message.type === "debug-log") { respond({ ok: true, mic, mode, log: [...voiceLog] }); return; }
   handle(message).then(
     (reply) => respond({ ...reply, mic, mode }),
     (error: unknown) => respond({ ok: false, mic, mode, error: errorText(error) }),
@@ -73,6 +88,8 @@ async function handle(command: OffscreenCommand): Promise<OffscreenReply> {
     case "stop-speaking":
       speech?.abort();
       return { ok: true, mic };
+    case "debug-log": // normally answered by the listener without reconfiguring
+      return { ok: true, mic, log: [...voiceLog] };
   }
 }
 

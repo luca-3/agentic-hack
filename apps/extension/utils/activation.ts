@@ -75,6 +75,11 @@ export function noteError(text: string) {
   if (text) lastError = { text: text.slice(0, 200), at: Date.now() };
 }
 
+/** Activation state for the side panel's debug dump. */
+export function activationDebug() {
+  return { autoActivate: presence.autoActivate, orb: presence.orb, manualPause, autoTab, lastError, appHosts: [...appHosts] };
+}
+
 async function load() {
   const [sync, session, local] = await Promise.all([
     browser.storage.sync.get(PRESENCE_KEY).catch(() => ({} as Record<string, unknown>)),
