@@ -21,10 +21,10 @@ from auth.users u where u.email like '%@demo.test';
 -- Org
 insert into public.orgs (id, name) values ('00000000-0000-0000-0000-0000000000f1', 'Fuller GmbH (Demo)');
 
-insert into public.org_members (org_id, user_id, role, is_admin) values
-  ('00000000-0000-0000-0000-0000000000f1', 'a0000000-0000-0000-0000-000000000001', 'Büro', true),
-  ('00000000-0000-0000-0000-0000000000f1', 'a0000000-0000-0000-0000-000000000002', 'Büro', false),
-  ('00000000-0000-0000-0000-0000000000f1', 'a0000000-0000-0000-0000-000000000003', 'Monteur', false);
+insert into public.org_members (org_id, user_id, role, is_admin, email) values
+  ('00000000-0000-0000-0000-0000000000f1', 'a0000000-0000-0000-0000-000000000001', 'Büro', true, 'admin@demo.test'),
+  ('00000000-0000-0000-0000-0000000000f1', 'a0000000-0000-0000-0000-000000000002', 'Büro', false, 'buero@demo.test'),
+  ('00000000-0000-0000-0000-0000000000f1', 'a0000000-0000-0000-0000-000000000003', 'Monteur', false, 'monteur@demo.test');
 
 -- Apps. Ports: this app runs on :3000, so the local CORPUS test instance runs on :3100.
 insert into public.apps (id, org_id, name, domains) values
