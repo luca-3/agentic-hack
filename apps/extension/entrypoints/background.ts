@@ -937,6 +937,8 @@ async function deliver(ctx: HelpContext, event: RenderEvent) {
     if (existing && (existing.pending || existing.text === CHAT_PENDING_TEXT)) {
       updateChat(ctx.chatId, { text: event.hint ?? `Highlighted “${event.label}” on the page.`, pending: false });
     }
+    // Spoken question → spoken answer: read the hint aloud too (pseudonymized, D-26), not only `say` events.
+    if (ctx.source === "voice" && settings.speak && event.hint) void pseudo.spokenText(event.hint).then((text) => speak(text)).catch(() => undefined);
   } else if (event.type === "plan") {
     plan = { id: crypto.randomUUID(), steps: event.steps, index: 0, snapshotId: ctx.snapshotId, offerId: ctx.offerId, tabId: ctx.tabId, updatedAt: Date.now() };
     schedulePersistence();
@@ -944,6 +946,8 @@ async function deliver(ctx: HelpContext, event: RenderEvent) {
     const existing = ctx.chatId ? chat.find((c) => c.id === ctx.chatId) : undefined;
     const nextText = existing && existing.text && existing.text !== CHAT_PENDING_TEXT ? existing.text : "Follow these steps:";
     updateChat(ctx.chatId, { text: nextText, steps: event.steps.map((s) => s.hint || s.label), pending: false });
+    const first = event.steps[0]?.hint || event.steps[0]?.label;
+    if (ctx.source === "voice" && settings.speak && first) void pseudo.spokenText(first).then((text) => speak(text)).catch(() => undefined);
   } else {
     await sendTab(ctx.tabId, { type: "lotse:say", text: event.text, offerId: ctx.offerId });
     const willSpeak = ctx.source === "voice" && settings.speak;

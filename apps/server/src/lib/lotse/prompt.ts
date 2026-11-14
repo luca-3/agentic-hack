@@ -3,6 +3,7 @@ import type { Feature, InferredIntent, LotseEvent, ObservationContext, PageSnaps
 import { cleanText } from "./guard";
 import { roleAllowed, routeMatches } from "./knowledge";
 import { memoryLines, type MemoryHint } from "./memory";
+import { speechLanguage } from "../voice/tts";
 
 /**
  * Prompt building for the Valo agent. Everything from the page / feature list / events is UNTRUSTED data:
@@ -188,6 +189,8 @@ export function buildUserPrompt(input: {
     sourceHint,
     tierHint,
     `Question: ${cleanText(input.question, 500)}`,
+    // The page, features and knowledge may be German while the question is English (or vice versa): pin the language.
+    `Reply language: ${speechLanguage(input.question) === "de-DE" ? "German" : "English"} — write every hint, plan step and say text in this language; keep page labels as they appear on the page.`,
   ]
     .filter(Boolean)
     .join("\n\n");
