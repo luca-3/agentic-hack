@@ -1,12 +1,12 @@
 /** Tunables of the voice pipeline (apps/extension/VOICE.md). Override per browser via chrome.storage.local `lotse:voice-config`. */
 export const VOICE_DEFAULTS = {
   /**
-   * openWakeWord keyword. No pre-trained "Hey Valo" model exists → the demo uses "hey_jarvis"
-   * (pre-trained models are CC BY-NC-SA 4.0: fine for the hackathon, not for commercial use).
+   * openWakeWord keyword set. "hey_valo" = our own head for "Hey Valo" and "Hey Daddy" (D-38) plus the pre-trained
+   * "Hey Jarvis" as a fallback (CC BY-NC-SA 4.0: fine for the hackathon, not for commercial use).
    */
-  keyword: "hey_jarvis",
-  /** Score threshold of the keyword head (openWakeWord default 0.5). Raise to ~0.6–0.7 if it fires by itself. */
-  threshold: 0.5,
+  keyword: "hey_valo",
+  /** Score threshold of the keyword heads (openWakeWord default 0.5). Raise to ~0.8 if it fires by itself, lower to 0.5 if it never fires. */
+  threshold: 0.7,
   /** No second wake-word hit within this window. */
   cooldownMs: 2_000,
   /** End of utterance after this much silence once speech has started. */
@@ -19,14 +19,16 @@ export const VOICE_DEFAULTS = {
   finalTranscriptTimeoutMs: 4_000,
   /** Absolute upper bound for one listening session (token + socket setup included). */
   sessionTimeoutMs: 20_000,
-  /** Speech in the first ms after the trigger does not start the utterance (tail of "…Jarvis", start beep). */
+  /** Speech in the first ms after the trigger does not start the utterance (tail of "…Valo", start beep). */
   graceMs: { wake: 350, hotkey: 250, button: 250 },
   /** Upper bound for the "thinking" state when the background never reports that the answer is done. */
   thinkingTimeoutMs: 25_000,
 } as const;
 
-/** Bundled keyword models (wxt.config.ts copies them to /wakeword/). Add a trained "hey_valo" here later. */
+/** Keyword sets → model files in /wakeword/ (comma = several heads, highest score wins). Our head lives in public/wakeword/. */
 export const WAKEWORD_MODEL_FILES: Record<string, string> = {
+  hey_valo: "hey_valo_daddy_v1.onnx,hey_jarvis_v0.1.onnx",
+  hey_valo_only: "hey_valo_daddy_v1.onnx",
   hey_jarvis: "hey_jarvis_v0.1.onnx",
 };
 
@@ -35,8 +37,8 @@ export const VOICE_CONFIG_KEY = "lotse:voice-config";
 /** chrome.storage.session key for the pseudonymous voice session id (rate-limit key on the server). */
 export const VOICE_SESSION_KEY = "lotse:voice-session";
 
-// "Hey Jarvis, …" / "Hello Valo: …" / "Hallo Valo: …" / "Valo …" at the start of the transcript (English and German).
-const WAKE_PHRASE = /^\s*(?:(?:hey|hei|hi|he|hello|hallo|ok|okay)[\s,!.]+)?(?:jarvis|valo|walo|lotse|lotsen|lotze)\b[\s,.!?:;–-]*/i;
+// "Hey Valo, …" / "Hey Daddy …" / "Hey Jarvis, …" / "Hallo Valo: …" / "Valo …" at the start of the transcript (English and German).
+const WAKE_PHRASE = /^\s*(?:(?:hey|hei|hi|he|hello|hallo|ok|okay)[\s,!.]+)?(?:jarvis|valo|walo|wallo|vallo|lotse|lotsen|lotze|daddy|daddi|dady|deddy)\b[\s,.!?:;–-]*/i;
 
 /** Removes a leading wake phrase from a transcript; "" when nothing else was said. */
 export function stripWakePhrase(text: string): string {

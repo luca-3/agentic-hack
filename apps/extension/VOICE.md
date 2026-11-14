@@ -3,11 +3,11 @@
 Decision D-16: **one brain on the server; voice is only input/output.** Server side of transcription: `apps/server/VOICE.md`.
 
 ```
-"Hey Jarvis" (local openWakeWord) ─┐
+"Hey Valo" / "Hey Daddy" (own head) or "Hey Jarvis" (local openWakeWord) ─┐
 Alt+Shift+L · ⌘⇧K (lotse-listen) ┴→ offscreen document: beep, mic audio buffered
    → POST /api/lotse/live-token → Gemini Live WebSocket (gemini-3.5-transcribe-live, config locked by the server)
    → end of utterance: ~1 s silence (Silero VAD) · 10 s cap · second Alt+Shift+L (⌘⇧K)
-   → final transcript → service worker strips "Hey Jarvis," → onTranscript(text)
+   → final transcript → service worker strips "Hey Valo," / "Hey Daddy," / "Hey Jarvis," → onTranscript(text)
    → background.ts: explicit question, source "voice" → /api/lotse/ask → point / plan (the real answer)
    → only for a `say` event: speak(text) → POST /api/lotse/tts → Gemini TTS (WAV) → played offscreen
 ```
@@ -49,7 +49,7 @@ stopSpeaking();   // when a new question starts
 ## Settings
 
 - `chrome.storage.sync["lotse:settings"]` (`LotseSettingsSchema`): `voice: false` → offscreen document closed, microphone released, hotkey ignored, state `off`. `speak: false` → `speak()` is a no-op.
-- `chrome.storage.local["lotse:voice-config"]` (optional, for tuning on a demo machine): `{ "threshold": 0.6, "wakeWord": false, "keyword": "hey_jarvis" }`. `wakeWord: false` keeps hotkey-only listening.
+- `chrome.storage.local["lotse:voice-config"]` (optional, for tuning on a demo machine): `{ "threshold": 0.8, "wakeWord": false, "keyword": "hey_valo" }` (`keyword`: `hey_valo` = Valo/Daddy + Jarvis, `hey_valo_only`, `hey_jarvis``. `wakeWord: false` keeps hotkey-only listening.
 - Server: `LOTSE_TTS_MODEL` (default `gemini-3.8-flash-tts`; `gemini-3.8-flash-lite-tts` also verified for our key on 2026-11-14), `LOTSE_TTS_VOICE` (default `Kore`). The TTS route uses the shared guard of the `ask` tier (rate limit + daily budget) and CORS.
 
 ## Permissions, manifest and bundling
@@ -62,7 +62,7 @@ stopSpeaking();   // when a new question starts
 
 ## Wake word
 
-- No pre-trained "Hey Valo" model exists → **"Hey Jarvis"** for the demo (`VOICE_DEFAULTS.keyword`). Our own model can be trained with openWakeWord's training notebook or LiveKit's wakeword trainer (synthetic speech → openWakeWord ONNX). Then add it to `WAKEWORD_MODEL_FILES` and `WAKEWORD_MODELS` in `wxt.config.ts`.
+- **Own wake word (D-38):** `public/wakeword/hey_valo_daddy_v1.onnx` is our own openWakeWord-compatible head for **"Hey Valo"** and **"Hey Daddy"** (input 16×96 embeddings → score). Trained on synthetic speech only: 30 Gemini TTS voices + 33 local macOS voices (de/en), augmented (speed, reverb, band-limit, noise/babble), hard negatives (pitch sentences with "Valo" without "hey", "Hey Danny", "Daddy" alone). Held-out voices: ~97 % of clips detected. Known weak spot: near-homophones ("Hey Danny"). The detector runs all heads of the keyword set and takes the highest score; the pre-trained "Hey Jarvis" stays in the default set as a fallback.
 - Pipeline (faithful port of openWakeWord `AudioFeatures`): 80 ms frame in int16 scale + 480 samples of context → mel (8 × 32, `x/10 + 2`) → last 76 mel frames → 96-d embedding → last 16 embeddings → keyword score; threshold 0.5, 2 s cooldown, ~1.3 s warm-up. The npm wrapper's own engine is **not** used: its worklet is a Blob URL (blocked by the CSP), it opens its own mic, and it feeds the mel model unscaled audio without context.
 - **Licenses:** openWakeWord code is Apache-2.0. Its **pre-trained keyword models (incl. `hey_jarvis`) are CC BY-NC-SA 4.0** (non-commercial, because the training data includes datasets with unknown or restrictive licenses). That's fine for the hackathon demo, but a commercial product needs its own model. The embedding model comes from Google's TF Hub speech_embedding (Apache-2.0). Silero VAD is MIT. The `openwakeword-wasm-browser` wrapper is MIT. ONNX Runtime Web is MIT.
 
@@ -75,8 +75,8 @@ Speech starts when Silero VAD reports ≥ 0.5, ignoring the first 250–350 ms (
 1. `npm run dev:server` (port 3001) and `npm run demo:crm` (port 4000). Then `npm run build -w @lotse/extension` and load `apps/extension/.output/chrome-mv3` via chrome://extensions → Developer mode → Load unpacked (reload after each build).
 2. Open the demo CRM, press **Alt+Shift+L** (macOS **⌘⇧K**). On the first use, the "Valo needs your microphone" tab opens → click Allow → the tab closes by itself.
 3. Press Alt+Shift+L (⌘⇧K) again → short rising beep, state `listening` (side panel). Ask "How do I change the IBAN?" and stop talking → about 1 s later the state goes to `thinking` and the question runs through the normal guidance path (the side panel shows it). Valo points at the field.
-4. Say **"Hey Jarvis"** (speak clearly, short pause optional) → beep → ask a question. If it never triggers, lower `threshold` to 0.4. If it triggers by itself, raise it to 0.6 (`lotse:voice-config`, see above).
-5. If the answer has a `say` event → at most two short sentences are spoken (state `speaking`). Say "Hey Jarvis" or press the hotkey during speech → speech stops immediately (barge-in).
+4. Say **"Hey Valo"** or **"Hey Daddy"** (or "Hey Jarvis") → beep → ask a question. If it never triggers, lower `threshold` to 0.5. If it triggers by itself, raise it to 0.85 (`lotse:voice-config`, see above).
+5. If the answer has a `say` event → at most two short sentences are spoken (state `speaking`). Say the wake word or press the hotkey during speech → speech stops immediately (barge-in).
 6. Set `lotse:settings.voice = false` → the mic indicator disappears. Set `speak = false` → answers stay silent.
 7. Debugging: chrome://extensions → Valo → "Inspect views: offscreen.html" (wake word, WebSocket, TTS logs `[lotse voice]`) and "service worker".
 8. TTS route alone: `curl -s -o /tmp/t.wav -w "%{http_code}\n" -X POST localhost:3001/api/lotse/tts -H "Content-Type: application/json" -H "x-lotse-session: t" -d '{"text":"Click on bank details."}'`, then play `/tmp/t.wav`. Checked 2026-11-14: 200, 24 kHz mono WAV, about 3 s including the first route compile.

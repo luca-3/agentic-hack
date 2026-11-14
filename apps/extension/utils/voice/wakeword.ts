@@ -4,7 +4,8 @@
  * Port of openWakeWord's streaming feature pipeline (github.com/dscripka/openWakeWord, `utils.AudioFeatures`):
  *   80 ms frame (1280 samples @16 kHz, int16 scale) + 480 samples context → melspectrogram.onnx → 8 frames × 32 bins
  *   → transform x/10+2 → last 76 frames → embedding_model.onnx → 96-d embedding per frame
- *   → last 16 embeddings → keyword head (hey_jarvis_v0.1.onnx) → score 0…1.
+ *   → last 16 embeddings → keyword head(s) → score 0…1 (several heads: the highest score counts).
+ * Heads: our own `hey_valo_daddy_v1.onnx` ("Hey Valo" / "Hey Daddy", trained on synthetic speech, D-38) + `hey_jarvis_v0.1.onnx`.
  * Plus Silero VAD (v4, 512-sample chunks) for client-side end-of-utterance.
  * Models come from the `openwakeword-wasm-browser` package (MIT wrapper); their engine is not used because it loads
  * its worklet from a Blob URL (blocked by the MV3 CSP), opens its own mic, and feeds the mel model unscaled audio.
@@ -24,6 +25,7 @@ export interface WakeWordOptions {
   modelBaseUrl: string;
   /** URL of ort-wasm-simd-threaded.wasm inside the extension (MV3: no remote code). */
   wasmUrl: string;
+  /** One keyword model file, or several separated by commas (e.g. "hey_valo_daddy_v1.onnx,hey_jarvis_v0.1.onnx"). */
   keywordModel: string;
   threshold: number;
   cooldownMs: number;
@@ -33,7 +35,7 @@ interface Sessions {
   mel: ort.InferenceSession;
   embedding: ort.InferenceSession;
   vad: ort.InferenceSession;
-  keyword: ort.InferenceSession;
+  keywords: ort.InferenceSession[];
 }
 
 const inputName = (session: ort.InferenceSession): string => session.inputNames[0] ?? "input";
@@ -81,11 +83,14 @@ export class WakeWordDetector {
     const mel = await open("melspectrogram.onnx");
     const embedding = await open("embedding_model.onnx");
     const vad = await open("silero_vad.onnx");
-    const keyword = await open(options.keywordModel);
-    const meta = keyword.inputMetadata[0];
+    const keywords: ort.InferenceSession[] = [];
+    for (const file of options.keywordModel.split(",").map((f) => f.trim()).filter(Boolean)) keywords.push(await open(file));
+    if (!keywords.length) throw new Error("No keyword model configured");
+    // All heads share the 16-embedding window of openWakeWord.
+    const meta = keywords[0]?.inputMetadata[0];
     const dim = meta?.isTensor ? meta.shape[1] : undefined;
     const window = typeof dim === "number" && dim > 0 ? dim : 16;
-    return new WakeWordDetector({ mel, embedding, vad, keyword }, window, options.cooldownMs, options.threshold);
+    return new WakeWordDetector({ mel, embedding, vad, keywords }, window, options.cooldownMs, options.threshold);
   }
 
   /** Clears the streaming buffers (after listening, the old audio must not re-trigger). */
@@ -146,10 +151,11 @@ export class WakeWordDetector {
 
     const features = new Float32Array(this.keywordWindow * EMBEDDING);
     this.embeddings.forEach((e, i) => features.set(e, i * EMBEDDING));
-    const kwOut = await this.s.keyword.run({
-      [inputName(this.s.keyword)]: new ort.Tensor("float32", features, [1, this.keywordWindow, EMBEDDING]),
-    });
-    const score = first(kwOut, this.s.keyword)[0] ?? 0;
+    let score = 0;
+    for (const keyword of this.s.keywords) {
+      const kwOut = await keyword.run({ [inputName(keyword)]: new ort.Tensor("float32", features, [1, this.keywordWindow, EMBEDDING]) });
+      score = Math.max(score, first(kwOut, keyword)[0] ?? 0);
+    }
     this.lastScore = score;
 
     // Warm-up: the keyword window must be filled with real audio before a score counts.

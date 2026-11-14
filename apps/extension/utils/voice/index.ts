@@ -260,7 +260,7 @@ function buildConfig(raw: unknown, sessionId: string): OffscreenConfig {
     sessionId,
     voice: settings.voice,
     wakeWord: settings.voice && custom.wakeWord !== false,
-    keywordModel: WAKEWORD_MODEL_FILES[keyword] ?? "hey_jarvis_v0.1.onnx",
+    keywordModel: WAKEWORD_MODEL_FILES[keyword] ?? "hey_valo_daddy_v1.onnx,hey_jarvis_v0.1.onnx",
     threshold,
   };
 }
