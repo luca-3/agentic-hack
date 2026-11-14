@@ -14,9 +14,9 @@ export type InsightRow = {
 export type Verdict = "improve" | "train" | "ok";
 
 export const VERDICT: Record<Verdict, { label: string; desc: string }> = {
-  improve: { label: "App verbessern", desc: "Der Hinweis hilft nicht – die Oberfläche ist das Problem." },
-  train: { label: "Schulung", desc: "Der Hinweis hilft, aber viele brauchen ihn." },
-  ok: { label: "Läuft", desc: "Kaum jemand bleibt hier hängen." },
+  improve: { label: "Improve app", desc: "The hint doesn't help – the interface is the problem." },
+  train: { label: "Training", desc: "The hint helps, but many people need it." },
+  ok: { label: "All good", desc: "Hardly anyone gets stuck here." },
 };
 export const VERDICTS = Object.keys(VERDICT) as Verdict[];
 
@@ -58,4 +58,4 @@ export function bewerte(rows: InsightRow[]): FeatureInsight[] {
   return list.sort((a, b) => order[a.verdict] - order[b.verdict] || b.persons - a.persons);
 }
 
-export const prozent = (v?: number) => (v === undefined ? "–" : `${Math.round(v * 100)} %`);
+export const prozent = (v?: number) => (v === undefined ? "–" : `${Math.round(v * 100)}%`);

@@ -12,14 +12,14 @@ const liste = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolea
 export async function anmelden(fd: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email: text(fd, "email"), password: text(fd, "password") });
-  if (error) redirect("/anmelden?fehler=anmeldung");
+  if (error) redirect("/login?error=credentials");
   redirect("/");
 }
 
 export async function abmelden() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/anmelden");
+  redirect("/login");
 }
 
 export async function appAnlegen(fd: FormData) {
@@ -29,7 +29,7 @@ export async function appAnlegen(fd: FormData) {
   const { error } = await supabase.from("apps").insert({ org_id: orgId, name, domains: liste(text(fd, "domains")) });
   if (error) throw new Error(error.message);
   revalidatePath("/apps");
-  redirect("/apps?ok=neu");
+  redirect("/apps?ok=created");
 }
 
 export async function domainsSpeichern(fd: FormData) {
@@ -37,7 +37,7 @@ export async function domainsSpeichern(fd: FormData) {
   const { error } = await supabase.from("apps").update({ domains: liste(text(fd, "domains")) }).eq("id", text(fd, "appId"));
   if (error) throw new Error(error.message);
   revalidatePath("/apps");
-  redirect("/apps?ok=gespeichert");
+  redirect("/apps?ok=saved");
 }
 
 /** Replaces the whole feature list of an app with pasted JSON (format of demo-crm/lotse-features.json). */
@@ -48,9 +48,9 @@ export async function funktionenImportieren(fd: FormData) {
   try {
     parsed = FeatureListSchema.safeParse(JSON.parse(text(fd, "json")));
   } catch {
-    redirect(`/apps?fehler=json&app=${appId}`);
+    redirect(`/apps?error=json&app=${appId}`);
   }
-  if (!parsed.success) redirect(`/apps?fehler=format&app=${appId}`);
+  if (!parsed.success) redirect(`/apps?error=format&app=${appId}`);
 
   // RLS (admins manage features) checks that the app belongs to the admin's org.
   const { error: delError } = await supabase.from("app_features").delete().eq("app_id", appId);
@@ -78,24 +78,24 @@ export async function schulungAnlegen(fd: FormData) {
   const url = text(fd, "url") || null;
   const { error } = await supabase.from("training_catalog").insert({ org_id: orgId, title, topics: liste(text(fd, "topics")), url });
   if (error) throw new Error(error.message);
-  revalidatePath("/schulungen");
-  revalidatePath("/erkenntnisse");
-  redirect("/schulungen?ok=1");
+  revalidatePath("/trainings");
+  revalidatePath("/insights");
+  redirect("/trainings?ok=1");
 }
 
 export async function mitgliedSpeichern(fd: FormData) {
   const { supabase, orgId, userId } = await requireAdmin();
   const memberId = text(fd, "userId");
   const isAdmin = fd.get("isAdmin") === "on";
-  if (memberId === userId && !isAdmin) throw new Error("Du kannst dir die Admin-Rechte nicht selbst nehmen.");
+  if (memberId === userId && !isAdmin) throw new Error("You can't remove your own admin rights.");
   const { error } = await supabase
     .from("org_members")
-    .update({ role: text(fd, "role") || "Mitarbeiter", is_admin: isAdmin })
+    .update({ role: text(fd, "role") || "Employee", is_admin: isAdmin })
     .eq("org_id", orgId)
     .eq("user_id", memberId);
   if (error) throw new Error(error.message);
   revalidatePath("/team");
-  redirect("/team?ok=gespeichert");
+  redirect("/team?ok=saved");
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -107,22 +107,22 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export async function organisationAnlegen(fd: FormData) {
   const orgName = text(fd, "orgName");
-  const role = text(fd, "role") || "Büro";
-  if (!orgName) redirect("/registrieren?fehler=name");
+  const role = text(fd, "role") || "Office";
+  if (!orgName) redirect("/signup?error=name");
 
   const supabase = await createClient();
   let { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     const email = text(fd, "email").toLowerCase();
     const password = String(fd.get("password") ?? "");
-    if (!EMAIL.test(email)) redirect("/registrieren?fehler=email");
-    if (password.length < 8) redirect("/registrieren?fehler=passwort");
+    if (!EMAIL.test(email)) redirect("/signup?error=email");
+    if (password.length < 8) redirect("/signup?error=password");
     const { error: signUpError } = await supabase.auth.signUp({ email, password });
-    if (signUpError) redirect("/registrieren?fehler=konto");
+    if (signUpError) redirect("/signup?error=account");
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) redirect("/registrieren?fehler=konto");
+    if (signInError) redirect("/signup?error=account");
     ({ data: { user } } = await supabase.auth.getUser());
-    if (!user) redirect("/registrieren?fehler=konto");
+    if (!user) redirect("/signup?error=account");
   }
 
   const admin = createAdminClient();
@@ -130,7 +130,7 @@ export async function organisationAnlegen(fd: FormData) {
   if (count) redirect("/");
 
   const { data: org, error: orgError } = await admin.from("orgs").insert({ name: orgName }).select("id").single();
-  if (orgError || !org) throw new Error(orgError?.message ?? "Organisation konnte nicht angelegt werden.");
+  if (orgError || !org) throw new Error(orgError?.message ?? "Could not create the organization.");
   const { error: memberError } = await admin
     .from("org_members")
     .insert({ org_id: org.id, user_id: user.id, role, is_admin: true, email: user.email ?? null });
@@ -138,7 +138,7 @@ export async function organisationAnlegen(fd: FormData) {
     await admin.from("orgs").delete().eq("id", org.id);
     throw new Error(memberError.message);
   }
-  redirect("/registrieren?ok=1");
+  redirect("/signup?ok=1");
 }
 
 /** Admin invites a person: creates the auth user with a start password (or reuses an existing one) and adds them to the org. */
@@ -148,9 +148,9 @@ export async function mitgliedEinladen(fd: FormData) {
   const role = text(fd, "role");
   const password = String(fd.get("password") ?? "");
   const isAdmin = fd.get("isAdmin") === "on";
-  if (!EMAIL.test(email)) redirect("/team?fehler=email");
-  if (!role) redirect("/team?fehler=rolle");
-  if (password.length < 8) redirect("/team?fehler=passwort"); // also for existing accounts: keeps the rule simple
+  if (!EMAIL.test(email)) redirect("/team?error=email");
+  if (!role) redirect("/team?error=role");
+  if (password.length < 8) redirect("/team?error=password"); // also for existing accounts: keeps the rule simple
 
   const admin = createAdminClient();
   let neu = false;
@@ -163,23 +163,23 @@ export async function mitgliedEinladen(fd: FormData) {
     // ponytail: scans the first 1000 users; fine for the demo, use a lookup by email if the project grows.
     const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
     userId = list?.users.find((u) => u.email?.toLowerCase() === email)?.id;
-    if (!userId) redirect("/team?fehler=konto");
+    if (!userId) redirect("/team?error=account");
   }
 
   // RLS "admins manage members" checks the org.
   const { error } = await supabase.from("org_members").insert({ org_id: orgId, user_id: userId, role, is_admin: isAdmin, email });
-  if (error) redirect(error.code === "23505" ? "/team?fehler=schon-dabei" : "/team?fehler=speichern");
+  if (error) redirect(error.code === "23505" ? "/team?error=already-member" : "/team?error=save");
   revalidatePath("/team");
-  redirect(neu ? "/team?ok=eingeladen" : "/team?ok=hinzugefuegt");
+  redirect(neu ? "/team?ok=invited" : "/team?ok=added");
 }
 
 /** Removes a person from the org (only the membership — the login account stays). */
 export async function mitgliedEntfernen(fd: FormData) {
   const { supabase, orgId, userId } = await requireAdmin();
   const memberId = text(fd, "userId");
-  if (!memberId || memberId === userId) redirect("/team?fehler=selbst");
+  if (!memberId || memberId === userId) redirect("/team?error=self");
   const { error } = await supabase.from("org_members").delete().eq("org_id", orgId).eq("user_id", memberId);
-  if (error) redirect("/team?fehler=speichern");
+  if (error) redirect("/team?error=save");
   revalidatePath("/team");
-  redirect("/team?ok=entfernt");
+  redirect("/team?ok=removed");
 }

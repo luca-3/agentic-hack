@@ -46,7 +46,7 @@ type BtnProps = ComponentProps<"button"> & { variant?: keyof typeof btnVariant; 
 export function Button({ variant = "primary", size = "md", className, ...p }: BtnProps) {
   return <button {...p} className={cx(btnBase, btnSize[size], btnVariant[variant], className)} />;
 }
-/** Lösch-Button: immer rot gefüllt. */
+/** Delete button: always filled red. */
 export const DangerButton = (p: Omit<BtnProps, "variant">) => <Button variant="danger" size="sm" {...p} />;
 
 /** Link that looks like a button. */
@@ -54,19 +54,19 @@ export function ButtonLink({ variant = "primary", size = "md", className, ...p }
   return <a {...p} className={cx(btnBase, btnSize[size], btnVariant[variant], "no-underline", className)} />;
 }
 
-/** Abbrechen links, Speichern rechts. */
+/** Cancel on the left, submit on the right. */
 export function FormActions({ submitLabel, cancelHref }: { submitLabel: string; cancelHref?: string }) {
   return (
     <div className="flex justify-end gap-3">
       {cancelHref
-        ? <a href={cancelHref} className={cx(btnBase, btnSize.md, btnVariant.secondary, "no-underline")}>Abbrechen</a>
-        : <Button type="reset" variant="secondary">Abbrechen</Button>}
+        ? <a href={cancelHref} className={cx(btnBase, btnSize.md, btnVariant.secondary, "no-underline")}>Cancel</a>
+        : <Button type="reset" variant="secondary">Cancel</Button>}
       <Button type="submit">{submitLabel}</Button>
     </div>
   );
 }
 
-/* ---------- Formularfeld ---------- */
+/* ---------- Form field ---------- */
 const inputCls = "h-11 w-full rounded-xl border border-line-strong bg-input px-3 text-base text-text disabled:bg-input-disabled disabled:border-line disabled:text-muted aria-[invalid=true]:border-2 aria-[invalid=true]:border-danger";
 type FieldProps = ComponentProps<"input"> & { label: ReactNode; hint?: string; error?: string; mono?: boolean };
 export function Field({ label, hint, error, mono, id, name, className, ...p }: FieldProps) {
@@ -102,7 +102,7 @@ export const Checkbox = (p: ComponentProps<"input">) => (
   <input type="checkbox" className="size-5 accent-primary m-0" {...p} />
 );
 
-/* ---------- Hinweis (Notice) ---------- */
+/* ---------- Notice ---------- */
 const noticeTone = {
   info: { box: "bg-surface border-line-strong", icon: <IconInfo className="size-5 text-muted shrink-0" /> },
   warning: { box: "bg-warn-soft border-warn-line", icon: <IconWarn className="size-6 text-warn-text shrink-0" /> },
@@ -120,20 +120,20 @@ export function Notice({ tone = "info", title, children, role }: { tone?: keyof 
   );
 }
 
-/* ---------- Karte, Seitenkopf ---------- */
+/* ---------- Card ---------- */
 export const Card = ({ className, ...p }: ComponentProps<"section">) => (
   <section className={cx("rounded-lg border border-line bg-surface p-6", className)} {...p} />
 );
-/** Datenschutz-Hinweis als Pill (Violett). */
+/** Privacy note as a pill (violet). */
 export const Footnote = ({ children }: { children: ReactNode }) => (
   <p className="m-0 inline-flex items-center gap-2 justify-self-start rounded-full border border-priv-line bg-priv-soft py-2 pr-4 pl-3 text-sm font-medium text-priv-text"><IconShield className="size-[18px] text-priv-accent" />{children}</p>
 );
 
-/* ---------- Kachel ---------- */
+/* ---------- Tile ---------- */
 export const IconArrowUpRight = ({ className = "size-[18px]" }: IconProps) => (
   <svg className={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M7 13l6-6M8 7h5v5" strokeLinecap="round" strokeLinejoin="round" /></svg>
 );
-/** tone="ink": dunkle, invertierte Hervorhebungskachel (höchstens eine pro Seite). */
+/** tone="ink": dark, inverted highlight tile (at most one per page). */
 export function StatTile({ href, value, text, cta, tone = "default", className }: { href: string; value: string; text: string; cta: string; tone?: "default" | "ink"; className?: string }) {
   const ink = tone === "ink";
   return (
@@ -149,7 +149,7 @@ export function StatTile({ href, value, text, cta, tone = "default", className }
   );
 }
 
-/* ---------- Urteil-Badge ---------- */
+/* ---------- Verdict badge ---------- */
 const verdictCls: Record<Verdict, string> = { improve: "bg-warn-soft text-warn-text", train: "bg-info-soft text-info-text", ok: "bg-ok-soft text-ok-text" };
 export function VerdictBadge({ verdict, size = "md" }: { verdict: Verdict; size?: "sm" | "md" }) {
   return (
@@ -159,38 +159,38 @@ export function VerdictBadge({ verdict, size = "md" }: { verdict: Verdict; size?
   );
 }
 
-/* ---------- Kennzahl ---------- */
+/* ---------- Metric ---------- */
 /** Values are percent (0–100) or null/undefined = no statement possible. */
-export const pct = (v?: number | null) => (v == null ? "–" : `${v} %`);
+export const pct = (v?: number | null) => (v == null ? "–" : `${v}%`);
 export const num = (v?: number | null) => (v == null ? "–" : String(v));
 /** DB rate 0..1 → whole percent. */
 export const toPct = (v?: number) => (v === undefined ? null : Math.round(v * 100));
 
 
-/** Ehrlicher Vergleich: gleiche Skala 0–100 %, gleiche Balkenstärke, Bezugsgröße benannt. */
+/** Honest comparison: same 0–100 % scale, same bar thickness, base named. */
 export function CompareBars({ stuck, stuckAgain }: { stuck: number | null; stuckAgain: number | null }) {
   return (
     <div className="grid gap-2.5">
       <div className="px-0.5">
         <div className="flex items-baseline justify-between gap-3">
-          <span>Feststecken <span className="text-xs text-muted">von allen Personen</span></span>
+          <span>Stuck <span className="text-xs text-muted">of all people</span></span>
           <span className="text-xl font-semibold tabular-nums">{pct(stuck)}</span>
         </div>
         <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-track"><div className="h-full rounded-full bg-bar" style={{ width: `${stuck ?? 0}%` }} /></div>
       </div>
       <div className="-mx-3 rounded-[10px] border border-primary-line bg-primary-soft px-3.5 py-3">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="font-semibold text-primary-text">Trotz Hinweis wieder fest <span className="text-xs font-normal text-text">von denen mit Hinweis</span></span>
+          <span className="font-semibold text-primary-text">Stuck again despite the hint <span className="text-xs font-normal text-text">of those who got a hint</span></span>
           <span className="text-[28px] leading-tight font-bold text-primary-text tabular-nums">{pct(stuckAgain)}</span>
         </div>
         <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-track"><div className="h-full rounded-full bg-primary" style={{ width: `${stuckAgain ?? 0}%` }} /></div>
-        {stuckAgain == null && <span className="mt-1.5 block text-xs">Noch zu wenige Hinweise für eine Aussage.</span>}
+        {stuckAgain == null && <span className="mt-1.5 block text-xs">Too few hints so far to tell.</span>}
       </div>
     </div>
   );
 }
 
-/* ---------- Tabelle ---------- */
+/* ---------- Table ---------- */
 export const Table = ({ children }: { children: ReactNode }) => (
   <div className="overflow-hidden rounded-lg border border-line bg-surface"><table className="w-full border-collapse">{children}</table></div>
 );
@@ -201,7 +201,7 @@ export const Td = ({ className, ...p }: ComponentProps<"td">) => (
   <td className={cx("border-b border-line px-4 py-3 align-top", className)} {...p} />
 );
 
-/* ---------- Leer-Zustand ---------- */
+/* ---------- Empty state ---------- */
 export const EmptyState = ({ title, text }: { title: string; text?: string }) => (
   <div className="rounded-lg border border-dashed border-line-strong bg-surface p-6"><p className="m-0 font-semibold">{title}</p>{text && <p className="mt-0.5 mb-0 text-muted">{text}</p>}</div>
 );

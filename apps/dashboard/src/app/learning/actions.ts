@@ -12,15 +12,15 @@ const text = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim();
 const serverUrl = () => process.env.LOTSE_SERVER_URL ?? LOTSE_DEFAULTS.serverUrl;
 const token = async (ctx: OrgContext) => (await ctx.supabase.auth.getSession()).data.session?.access_token;
 
-/** Back to /lernen with the current filters (hidden fields app/status) plus a message. */
+/** Back to /learning with the current filters (hidden fields app/status) plus a message. */
 function zurueck(fd: FormData, meldung: Record<string, string>): never {
   const q = new URLSearchParams(meldung);
   const app = text(fd, "app");
   const status = text(fd, "status");
   if (UUID.test(app)) q.set("app", app);
   if (STATUS.includes(status)) q.set("status", status);
-  revalidatePath("/lernen");
-  redirect(`/lernen?${q}`);
+  revalidatePath("/learning");
+  redirect(`/learning?${q}`);
 }
 
 async function vorschlag(ctx: OrgContext, fd: FormData) {
@@ -43,7 +43,7 @@ async function statusSetzen(ctx: OrgContext, id: number, status: "accepted" | "d
   return !error;
 }
 
-/** "Jetzt auswerten": lets the server run the learning detectors for this org (optionally one app). */
+/** "Analyze now": lets the server run the learning detectors for this org (optionally one app). */
 export async function auswerten(fd: FormData) {
   const ctx = await requireAdmin();
   const app = text(fd, "app");
@@ -59,27 +59,27 @@ export async function auswerten(fd: FormData) {
   } catch {
     ergebnis = undefined;
   }
-  if (!ergebnis) zurueck(fd, { fehler: "server" });
-  zurueck(fd, { vorschlaege: String(ergebnis.suggestions), erkenntnisse: String(ergebnis.insights) });
+  if (!ergebnis) zurueck(fd, { error: "server" });
+  zurueck(fd, { suggestions: String(ergebnis.suggestions), insights: String(ergebnis.insights) });
 }
 
 export async function erledigen(fd: FormData) {
   const ctx = await requireAdmin();
-  zurueck(fd, (await statusSetzen(ctx, Number(text(fd, "id")), "accepted")) ? { ok: "erledigt" } : { fehler: "speichern" });
+  zurueck(fd, (await statusSetzen(ctx, Number(text(fd, "id")), "accepted")) ? { ok: "done" } : { error: "save" });
 }
 
 export async function verwerfen(fd: FormData) {
   const ctx = await requireAdmin();
-  zurueck(fd, (await statusSetzen(ctx, Number(text(fd, "id")), "dismissed")) ? { ok: "verworfen" } : { fehler: "speichern" });
+  zurueck(fd, (await statusSetzen(ctx, Number(text(fd, "id")), "dismissed")) ? { ok: "dismissed" } : { error: "save" });
 }
 
 /** Feature suggestion → app_features row (skipped if the same route + name already exists), then accepted. */
 export async function funktionUebernehmen(fd: FormData) {
   const ctx = await requireAdmin();
   const v = await vorschlag(ctx, fd);
-  if (!v || v.kind !== "feature" || !v.app_id) zurueck(fd, { fehler: "format" });
+  if (!v || v.kind !== "feature" || !v.app_id) zurueck(fd, { error: "format" });
   const parsed = FeatureSchema.safeParse(v.payload);
-  if (!parsed.success) zurueck(fd, { fehler: "format" });
+  if (!parsed.success) zurueck(fd, { error: "format" });
   const f = parsed.data;
 
   const { data: vorhanden } = await ctx.supabase
@@ -98,22 +98,22 @@ export async function funktionUebernehmen(fd: FormData) {
       click_path: f.clickPath,
       required_roles: f.requiredRole?.length ? f.requiredRole : null,
     });
-    if (error) zurueck(fd, { fehler: "speichern" });
+    if (error) zurueck(fd, { error: "save" });
   }
-  if (!(await statusSetzen(ctx, v.id, "accepted"))) zurueck(fd, { fehler: "speichern" });
+  if (!(await statusSetzen(ctx, v.id, "accepted"))) zurueck(fd, { error: "save" });
   revalidatePath("/apps");
-  zurueck(fd, { ok: vorhanden?.length ? "funktion_da" : "funktion" });
+  zurueck(fd, { ok: vorhanden?.length ? "feature-exists" : "feature" });
 }
 
-/** Knowledge gap → knowledge_sources row + server ingest (same flow as /wissen), rollback on failure, then accepted. */
+/** Knowledge gap → knowledge_sources row + server ingest (same flow as /knowledge), rollback on failure, then accepted. */
 export async function wissenUebernehmen(fd: FormData) {
   const ctx = await requireAdmin();
   const v = await vorschlag(ctx, fd);
-  if (!v || v.kind !== "knowledge_gap") zurueck(fd, { fehler: "format" });
+  if (!v || v.kind !== "knowledge_gap") zurueck(fd, { error: "format" });
   const inhalt = text(fd, "text");
-  if (new TextEncoder().encode(inhalt).length > MAX_BYTES) zurueck(fd, { fehler: "gross" });
+  if (new TextEncoder().encode(inhalt).length > MAX_BYTES) zurueck(fd, { error: "too-large" });
   const chunks = chunkText(inhalt).slice(0, KNOWLEDGE_LIMITS.maxChunks);
-  if (!chunks.length) zurueck(fd, { fehler: "leer" });
+  if (!chunks.length) zurueck(fd, { error: "empty" });
   const topic = typeof v.payload.topic === "string" && v.payload.topic.trim() ? v.payload.topic.trim() : v.title;
 
   const { data: source, error } = await ctx.supabase
@@ -121,7 +121,7 @@ export async function wissenUebernehmen(fd: FormData) {
     .insert({ org_id: ctx.orgId, app_id: v.app_id, title: topic, kind: inhalt.includes("#") ? "markdown" : "text" })
     .select("id")
     .single();
-  if (error || !source) zurueck(fd, { fehler: "speichern" });
+  if (error || !source) zurueck(fd, { error: "save" });
 
   let ok = false;
   try {
@@ -136,9 +136,9 @@ export async function wissenUebernehmen(fd: FormData) {
   }
   if (!ok) {
     await ctx.supabase.from("knowledge_sources").delete().eq("id", source.id);
-    zurueck(fd, { fehler: "server_wissen" });
+    zurueck(fd, { error: "server-knowledge" });
   }
   await statusSetzen(ctx, v.id, "accepted");
-  revalidatePath("/wissen");
-  zurueck(fd, { ok: "wissen" });
+  revalidatePath("/knowledge");
+  zurueck(fd, { ok: "knowledge" });
 }

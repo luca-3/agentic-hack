@@ -6,7 +6,7 @@ import { getOrgContext } from "@/lib/org";
 
 export default function DashboardHome() {
   return (
-    <Shell href="/" title="Übersicht" intro="Wir finden Schwachstellen in der Oberfläche, nicht in Menschen.">
+    <Shell href="/" title="Overview" intro="We find weak spots in the interface, not in people.">
       <Inhalt />
     </Shell>
   );
@@ -28,22 +28,22 @@ async function Inhalt() {
   return (
     <>
       <div className="grid grid-cols-6 gap-4">
-        <StatTile tone="ink" className="col-span-3" href="/erkenntnisse?filter=improve" value={anzahl("improve")} text="Stellen, an denen die App sich ändern sollte" cta="Zu den Erkenntnissen" />
-        <StatTile className="col-span-3" href="/erkenntnisse?filter=train" value={anzahl("train")} text="Stellen mit Schulungsbedarf" cta="Zu den Erkenntnissen" />
-        <StatTile className="col-span-2" href="/apps" value={`${apps} / ${features}`} text="Apps / Funktionen im App-Wissen" cta="Zu Apps & Funktionen" />
-        <StatTile className="col-span-2" href="/team" value={String(members)} text="Personen in der Organisation" cta="Zum Team" />
-        <StatTile className="col-span-2" href="/schulungen" value={String(trainings)} text="Schulungen im Katalog" cta="Zu den Schulungen" />
+        <StatTile tone="ink" className="col-span-3" href="/insights?filter=improve" value={anzahl("improve")} text="Spots where the app should change" cta="Go to insights" />
+        <StatTile className="col-span-3" href="/insights?filter=train" value={anzahl("train")} text="Spots that need training" cta="Go to insights" />
+        <StatTile className="col-span-2" href="/apps" value={`${apps} / ${features}`} text="Apps / features in app knowledge" cta="Go to apps & features" />
+        <StatTile className="col-span-2" href="/team" value={String(members)} text="People in the organization" cta="Go to team" />
+        <StatTile className="col-span-2" href="/trainings" value={String(trainings)} text="Trainings in the catalog" cta="Go to trainings" />
       </div>
       {bewertet.length === 0 && (
         <Card className="grid gap-4">
           <div>
-            <h2 className="m-0 text-xl font-semibold">Noch keine Daten</h2>
-            <p className="mt-1 mb-0 text-muted">Erkenntnisse erscheinen, sobald mindestens 5 Personen eine Funktion genutzt haben. So geht es los:</p>
+            <h2 className="m-0 text-xl font-semibold">No data yet</h2>
+            <p className="mt-1 mb-0 text-muted">Insights appear once at least 5 people have used a feature. Here’s how to get started:</p>
           </div>
           <ol className="m-0 grid list-none grid-cols-3 gap-4 p-0">
-            {[["App eintragen", "/apps", "Zu Apps & Funktionen"], ["Wissen hinzufügen", "/wissen", "Zum Wissen"], ["Team einladen", "/team", "Zum Team"]].map(([t, h, l], i) => (
+            {[["Add an app", "/apps", "Go to apps & features"], ["Add knowledge", "/knowledge", "Go to knowledge"], ["Invite your team", "/team", "Go to team"]].map(([t, h, l], i) => (
               <li key={h} className="grid justify-items-start gap-2 rounded-[10px] border border-line p-[18px]">
-                <span className="text-xs font-semibold text-muted">Schritt {i + 1}</span>
+                <span className="text-xs font-semibold text-muted">Step {i + 1}</span>
                 <span className="font-semibold">{t}</span>
                 <Link href={h} className="font-semibold">{l}</Link>
               </li>
@@ -51,7 +51,7 @@ async function Inhalt() {
           </ol>
         </Card>
       )}
-      <Footnote>Gruppen unter 5 Personen bleiben unsichtbar.</Footnote>
+      <Footnote>Groups of fewer than 5 people stay hidden.</Footnote>
     </>
   );
 }

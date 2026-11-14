@@ -4,12 +4,12 @@ import { PRODUCT_NAME } from "@/components/ui";
 import { getOrgContext } from "@/lib/org";
 import { auswerten, erledigen, funktionUebernehmen, verwerfen, wissenUebernehmen } from "./actions";
 
-export default function LernenPage({ searchParams }: PageProps<"/lernen">) {
+export default function LearningPage({ searchParams }: PageProps<"/learning">) {
   return (
     <Shell
-      href="/lernen"
-      title="Lernen"
-      intro={`Beim ersten Mal erkundet ${PRODUCT_NAME} die App (ein Admin startet die Erkundung in der Erweiterung). Danach lernt ${PRODUCT_NAME} aus der Nutzung. Vorschläge gelten erst, wenn ein Admin sie übernimmt.`}
+      href="/learning"
+      title="Learning"
+      intro={`The first time, ${PRODUCT_NAME} explores the app (an admin starts the exploration in the extension). After that, ${PRODUCT_NAME} learns from usage. Suggestions only take effect once an admin accepts them.`}
     >
       <Inhalt searchParams={searchParams} />
     </Shell>
@@ -17,39 +17,39 @@ export default function LernenPage({ searchParams }: PageProps<"/lernen">) {
 }
 
 const FEHLER: Record<string, string> = {
-  server: "Server nicht erreichbar.",
-  server_wissen: "Server nicht erreichbar oder Fehler beim Indexieren. Es wurde nichts gespeichert.",
-  speichern: "Speichern hat nicht geklappt.",
-  format: "Der Vorschlag hat ein ungültiges Format.",
-  leer: "Bitte einen Text eingeben.",
-  gross: "Der Text ist zu groß (höchstens 200 KB).",
+  server: "Server not reachable.",
+  "server-knowledge": "Server not reachable or indexing failed. Nothing was saved.",
+  save: "Saving didn't work.",
+  format: "The suggestion has an invalid format.",
+  empty: "Please enter some text.",
+  "too-large": "The text is too large (200 KB max).",
 };
 const OK: Record<string, string> = {
-  erledigt: "Als erledigt markiert.",
-  verworfen: "Vorschlag verworfen.",
-  funktion: "Funktion übernommen.",
-  funktion_da: "Die Funktion gab es schon. Vorschlag als übernommen markiert.",
-  wissen: "Als Wissen übernommen.",
+  done: "Marked as done.",
+  dismissed: "Suggestion dismissed.",
+  feature: "Feature added.",
+  "feature-exists": "The feature already existed. Suggestion marked as accepted.",
+  knowledge: "Added as knowledge.",
 };
 const REGEL: Record<string, string> = {
-  contrast: "Kontrast zu schwach",
-  target_size: "Klickfläche zu klein",
-  unlabeled_icon: "Symbol ohne Beschriftung",
-  duplicate_label: "Gleiche Beschriftung doppelt",
-  deep_path: "Zu viele Klicks",
-  overloaded: "Seite überladen",
-  dead_end: "Sackgasse",
-  other: "Sonstiges",
+  contrast: "Contrast too low",
+  target_size: "Click target too small",
+  unlabeled_icon: "Icon without a label",
+  duplicate_label: "Duplicate label",
+  deep_path: "Too many clicks",
+  overloaded: "Page overloaded",
+  dead_end: "Dead end",
+  other: "Other",
 };
 const SCHWERE: Record<string, { text: string; klasse: string }> = {
-  high: { text: "hoch", klasse: "bg-danger-soft text-danger-text" },
-  medium: { text: "mittel", klasse: "bg-warn-soft text-warn-text" },
-  low: { text: "niedrig", klasse: "bg-info-soft text-info-text" },
+  high: { text: "high", klasse: "bg-danger-soft text-danger-text" },
+  medium: { text: "medium", klasse: "bg-warn-soft text-warn-text" },
+  low: { text: "low", klasse: "bg-info-soft text-info-text" },
 };
 const TABS = [
-  { status: "open", label: "Offen" },
-  { status: "accepted", label: "Übernommen" },
-  { status: "dismissed", label: "Verworfen" },
+  { status: "open", label: "Open" },
+  { status: "accepted", label: "Accepted" },
+  { status: "dismissed", label: "Dismissed" },
 ] as const;
 
 type Zeile = {
@@ -64,12 +64,12 @@ type Zeile = {
   persons: number;
 };
 const ABSCHNITTE: { titel: string; passt: (z: Zeile) => boolean }[] = [
-  { titel: "Erste Analyse: Funktionen gefunden", passt: (z) => z.kind === "feature" && z.source === "explore" },
-  { titel: "Erste Analyse: Design-Befunde", passt: (z) => z.kind === "design" },
-  { titel: "Neue Funktionen aus der Nutzung", passt: (z) => z.kind === "feature" && z.source === "learn" },
-  { titel: "Veraltete Klickpfade", passt: (z) => z.kind === "stale_feature" },
-  { titel: `Hier irrt ${PRODUCT_NAME}`, passt: (z) => z.kind === "agent_error" },
-  { titel: "Wissenslücken", passt: (z) => z.kind === "knowledge_gap" },
+  { titel: "First analysis: features found", passt: (z) => z.kind === "feature" && z.source === "explore" },
+  { titel: "First analysis: design findings", passt: (z) => z.kind === "design" },
+  { titel: "New features from usage", passt: (z) => z.kind === "feature" && z.source === "learn" },
+  { titel: "Outdated click paths", passt: (z) => z.kind === "stale_feature" },
+  { titel: `Where ${PRODUCT_NAME} gets it wrong`, passt: (z) => z.kind === "agent_error" },
+  { titel: "Knowledge gaps", passt: (z) => z.kind === "knowledge_gap" },
 ];
 
 const karte = "rounded-lg border border-line bg-surface p-6";
@@ -82,9 +82,9 @@ const UUID = /^[0-9a-f-]{36}$/i;
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 const kurz = (s: string, n = 300) => (s.length > n ? `${s.slice(0, n)} …` : s);
 
-async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["searchParams"] }) {
+async function Inhalt({ searchParams }: { searchParams: PageProps<"/learning">["searchParams"] }) {
   const [{ supabase, isAdmin }, sp] = await Promise.all([getOrgContext(), searchParams]);
-  if (!isAdmin) return <p className="text-sm text-muted">Nur Admins sehen Lernvorschläge.</p>;
+  if (!isAdmin) return <p className="text-sm text-muted">Only admins can see learning suggestions.</p>;
 
   const app = typeof sp.app === "string" && UUID.test(sp.app) ? sp.app : "";
   const status = TABS.find((t) => t.status === sp.status)?.status ?? "open";
@@ -105,7 +105,7 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["se
     const s = p.status ?? status;
     if (a) q.set("app", a);
     if (s !== "open") q.set("status", s);
-    return `/lernen${q.size ? `?${q}` : ""}`;
+    return `/learning${q.size ? `?${q}` : ""}`;
   };
   const chip = (aktiv: boolean) =>
     `inline-flex h-10 items-center rounded-full border px-3.5 text-sm font-semibold no-underline ${aktiv ? "border-primary bg-primary text-on-primary" : "border-line-strong bg-surface text-text hover:bg-surface-2"}`;
@@ -118,26 +118,26 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["se
 
   return (
     <div className="flex flex-col gap-6">
-      {typeof sp.fehler === "string" && <p className={rot}>{FEHLER[sp.fehler] ?? "Etwas ist schiefgelaufen."}</p>}
-      {typeof sp.vorschlaege === "string" && (
+      {typeof sp.error === "string" && <p className={rot}>{FEHLER[sp.error] ?? "Something went wrong."}</p>}
+      {typeof sp.suggestions === "string" && (
         <p className={gruen}>
-          {Number(sp.vorschlaege)} Vorschläge, {Number(sp.erkenntnisse ?? 0)} Erkenntnisse aktualisiert
+          {Number(sp.suggestions)} suggestions, {Number(sp.insights ?? 0)} insights updated
         </p>
       )}
       {typeof sp.ok === "string" && OK[sp.ok] && <p className={gruen}>{OK[sp.ok]}</p>}
 
       <form action={auswerten} className="flex flex-wrap items-center gap-3">
         {filter}
-        <button className={knopf}>Jetzt auswerten</button>
+        <button className={knopf}>Analyze now</button>
         <span className="text-sm text-muted">
-          Wertet die Nutzung aus{app ? ` für ${appName.get(app) ?? "diese App"}` : " für alle Apps"}.
+          Analyzes usage{app ? ` for ${appName.get(app) ?? "this app"}` : " for all apps"}.
         </span>
       </form>
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
           <Link href={link({ app: "" })} className={chip(!app)}>
-            Alle Apps
+            All apps
           </Link>
           {(apps ?? []).map((a) => (
             <Link key={a.id} href={link({ app: a.id })} className={chip(app === a.id)}>
@@ -159,7 +159,7 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["se
       </div>
 
       {zeilen.length === 0 && (
-        <p className="m-0 rounded-lg border border-dashed border-line-strong bg-surface p-6 text-muted">Starte die Erkundung in der {PRODUCT_NAME}-Erweiterung oder klicke ‚Jetzt auswerten‘.</p>
+        <p className="m-0 rounded-lg border border-dashed border-line-strong bg-surface p-6 text-muted">Start the exploration in the {PRODUCT_NAME} extension or click “Analyze now”.</p>
       )}
 
       {ABSCHNITTE.map((ab) => {
@@ -171,7 +171,7 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/lernen">["se
               <span className="text-sm text-muted">{liste.length}</span>
             </div>
             {liste.length === 0 ? (
-              <p className="mt-2 text-sm text-muted">Noch nichts gefunden.</p>
+              <p className="mt-2 text-sm text-muted">Nothing found yet.</p>
             ) : (
               <ul className="mt-3 flex flex-col gap-3">
                 {liste.map((z) => (
@@ -192,12 +192,12 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
   const p = z.payload ?? {};
   const meta = [
     appName,
-    z.occurrences > 0 && `${z.occurrences}× gesehen`,
-    z.persons > 0 && `${z.persons} Personen`,
+    z.occurrences > 0 && `seen ${z.occurrences}×`,
+    z.persons > 0 && `${z.persons} people`,
   ].filter(Boolean);
 
   let inhalt: React.ReactNode = null;
-  let annehmen: { action: (fd: FormData) => Promise<void>; label: string } = { action: erledigen, label: "Erledigt" };
+  let annehmen: { action: (fd: FormData) => Promise<void>; label: string } = { action: erledigen, label: "Done" };
   if (z.kind === "feature") {
     const pfad = Array.isArray(p.clickPath) ? p.clickPath.filter((s) => typeof s === "string") : [];
     inhalt = (
@@ -208,24 +208,24 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
         {str(p.description) && <div className="text-muted">{str(p.description)}</div>}
       </div>
     );
-    annehmen = { action: funktionUebernehmen, label: "Übernehmen" };
+    annehmen = { action: funktionUebernehmen, label: "Accept" };
   } else if (z.kind === "design") {
     const s = SCHWERE[str(p.severity)];
     inhalt = (
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
         {s && <span className={`rounded px-2 py-0.5 text-xs font-medium ${s.klasse}`}>{s.text}</span>}
-        <span className="font-medium">{REGEL[str(p.rule)] ?? "Sonstiges"}</span>
+        <span className="font-medium">{REGEL[str(p.rule)] ?? "Other"}</span>
         {str(p.route) && <span className="font-mono text-xs text-muted">{str(p.route)}</span>}
-        {str(p.elementLabel) && <span>„{str(p.elementLabel)}“</span>}
-        {str(p.measured) && <span className="text-muted">Gemessen: {str(p.measured)}</span>}
+        {str(p.elementLabel) && <span>“{str(p.elementLabel)}”</span>}
+        {str(p.measured) && <span className="text-muted">Measured: {str(p.measured)}</span>}
       </div>
     );
   } else if (z.kind === "stale_feature") {
     inhalt = (
       <p className="mt-2">
-        ‚{str(p.missingLabel)}‘ wurde länger nicht gesehen — Klickpfad von ‚{str(p.feature)}‘ prüfen.{" "}
+        “{str(p.missingLabel)}” hasn’t been seen for a while — check the click path of “{str(p.feature)}”.{" "}
         <Link href="/apps" className="font-semibold">
-          Zu Apps &amp; Funktionen
+          Go to apps &amp; features
         </Link>
       </p>
     );
@@ -236,7 +236,7 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
           Status: <span className="font-medium">{str(p.status) || "–"}</span>
           {str(p.route) && <span className="ml-3 font-mono text-xs text-muted">{str(p.route)}</span>}
         </div>
-        {str(p.lastError) && <div className="text-muted">Letzter Fehler: {kurz(str(p.lastError))}</div>}
+        {str(p.lastError) && <div className="text-muted">Last error: {kurz(str(p.lastError))}</div>}
       </div>
     );
   }
@@ -252,9 +252,9 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
       {inhalt}
       {knowledge && (
         <label className="mt-2 flex flex-col gap-1">
-          Thema: <span className="font-medium">{str(p.topic) || z.title}</span>
+          Topic: <span className="font-medium">{str(p.topic) || z.title}</span>
           {offen ? (
-            <textarea name="text" rows={6} defaultValue={str(p.draft)} className={feld} placeholder="Antwort für dieses Thema schreiben …" />
+            <textarea name="text" rows={6} defaultValue={str(p.draft)} className={feld} placeholder="Write an answer for this topic …" />
           ) : (
             str(p.draft) && <p className="whitespace-pre-wrap text-muted">{str(p.draft)}</p>
           )}
@@ -264,7 +264,7 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
         <div className="mt-2 flex gap-2">
           {knowledge ? (
             <button formAction={wissenUebernehmen} className={knopf}>
-              Als Wissen übernehmen
+              Add as knowledge
             </button>
           ) : (
             <button formAction={annehmen.action} className={knopf}>
@@ -272,7 +272,7 @@ function Karte({ z, appName, offen, filter }: { z: Zeile; appName?: string; offe
             </button>
           )}
           <button formAction={verwerfen} className={zweit}>
-            Verwerfen
+            Dismiss
           </button>
         </div>
       )}

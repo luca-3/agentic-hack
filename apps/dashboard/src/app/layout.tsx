@@ -8,12 +8,12 @@ const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"
 
 export const metadata: Metadata = {
   title: `${PRODUCT_NAME} – Admin`,
-  description: "Wir finden Schwachstellen in der Oberfläche, nicht in Menschen.",
+  description: "We find weak spots in the interface, not in people.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="de" data-shell="nachtblau" className={`${plexSans.variable} ${plexMono.variable} antialiased`}>
+    <html lang="en" data-shell="nachtblau" className={`${plexSans.variable} ${plexMono.variable} antialiased`}>
       <body className="min-h-screen">{children}</body>
     </html>
   );

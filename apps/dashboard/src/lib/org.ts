@@ -15,7 +15,7 @@ export type OrgContext = {
 };
 
 /**
- * Signed-in user + their org. Redirects to /anmelden without a session, to /registrieren without a membership.
+ * Signed-in user + their org. Redirects to /login without a session, to /signup without a membership.
  * RLS does the real access control; this only picks the org and the admin flag for the UI.
  * cache(): header, sidebar and page share one lookup per request.
  */
@@ -24,7 +24,7 @@ export const getOrgContext = cache(async (): Promise<OrgContext> => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
-  if (!claims?.sub) redirect("/anmelden");
+  if (!claims?.sub) redirect("/login");
 
   const { data: member } = await supabase
     .from("org_members")
@@ -32,7 +32,7 @@ export const getOrgContext = cache(async (): Promise<OrgContext> => {
     .eq("user_id", claims.sub)
     .limit(1)
     .maybeSingle();
-  if (!member) redirect("/registrieren"); // signed in, no org yet → create one
+  if (!member) redirect("/signup"); // signed in, no org yet → create one
 
   const org = member.orgs as unknown as { name: string } | null;
   return {
@@ -49,6 +49,6 @@ export const getOrgContext = cache(async (): Promise<OrgContext> => {
 /** For Server Actions that change org data: signed in AND org admin, otherwise throw. */
 export async function requireAdmin(): Promise<OrgContext> {
   const ctx = await getOrgContext();
-  if (!ctx.isAdmin) throw new Error("Nur Admins der Organisation dürfen das ändern.");
+  if (!ctx.isAdmin) throw new Error("Only organization admins can change this.");
   return ctx;
 }

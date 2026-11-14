@@ -4,34 +4,34 @@ import { Button, Checkbox, DangerButton, Field, FormActions, Notice, PRODUCT_NAM
 import { getOrgContext } from "@/lib/org";
 
 const OK: Record<string, string> = {
-  gespeichert: "Gespeichert.",
-  eingeladen: "Konto angelegt und zur Organisation hinzugefügt. Gib der Person E-Mail und Startpasswort weiter.",
-  hinzugefuegt: "Das Konto gab es schon. Es ist jetzt in deiner Organisation (das bisherige Passwort gilt weiter).",
-  entfernt: "Person aus der Organisation entfernt. Ihr Konto bleibt bestehen.",
+  saved: "Saved.",
+  invited: "Account created and added to the organization. Share the email and start password with the person.",
+  added: "This account already existed. It's now part of your organization (the existing password still applies).",
+  removed: "Person removed from the organization. Their account remains.",
 };
 const FEHLER: Record<string, string> = {
-  email: "Bitte gib eine gültige E-Mail ein.",
-  rolle: "Bitte gib eine Rolle ein.",
-  passwort: "Das Startpasswort braucht mindestens 8 Zeichen.",
-  konto: "Das Konto konnte nicht angelegt werden.",
-  "schon-dabei": "Diese Person ist schon in deiner Organisation.",
-  selbst: "Du kannst dich nicht selbst entfernen.",
-  speichern: "Speichern hat nicht geklappt. Bitte versuch es noch einmal.",
+  email: "Please enter a valid email address.",
+  role: "Please enter a role.",
+  password: "The start password needs at least 8 characters.",
+  account: "The account could not be created.",
+  "already-member": "This person is already in your organization.",
+  self: "You can't remove yourself.",
+  save: "Saving didn't work. Please try again.",
 };
 
 export default function TeamPage({ searchParams }: PageProps<"/team">) {
   return (
-    <Shell href="/team" title="Team" intro={`Wer ${PRODUCT_NAME} nutzt und wer Admin ist. Die Rolle steuert, welche Hinweise jemand bekommt.`}>
+    <Shell href="/team" title="Team" intro={`Who uses ${PRODUCT_NAME} and who is an admin. The role decides which hints someone gets.`}>
       <Inhalt searchParams={searchParams} />
     </Shell>
   );
 }
 
 async function Inhalt({ searchParams }: { searchParams: PageProps<"/team">["searchParams"] }) {
-  const [{ supabase, isAdmin, userId }, { ok, fehler }] = await Promise.all([getOrgContext(), searchParams]);
+  const [{ supabase, isAdmin, userId }, { ok, error }] = await Promise.all([getOrgContext(), searchParams]);
   const { data: members } = await supabase.from("org_members").select("user_id, email, role, is_admin").order("email");
   const okText = typeof ok === "string" ? OK[ok] : undefined;
-  const fehlerText = typeof fehler === "string" ? FEHLER[fehler] : undefined;
+  const fehlerText = typeof error === "string" ? FEHLER[error] : undefined;
 
   return (
     <>
@@ -41,10 +41,10 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/team">["sear
         <Table>
           <thead>
             <tr>
-              <Th>E-Mail</Th>
-              <Th className="w-[260px]">Rolle</Th>
+              <Th>Email</Th>
+              <Th className="w-[260px]">Role</Th>
               <Th className="w-[90px]">Admin</Th>
-              {isAdmin && <Th className="w-[240px] text-right">Aktionen</Th>}
+              {isAdmin && <Th className="w-[240px] text-right">Actions</Th>}
             </tr>
           </thead>
           <tbody>
@@ -54,42 +54,42 @@ async function Inhalt({ searchParams }: { searchParams: PageProps<"/team">["sear
               const email = m.email ?? m.user_id;
               return isAdmin ? (
                 <tr key={m.user_id} className="hover:bg-surface-hover">
-                  <Td className="py-2 align-middle">{email} {me && <span className="text-muted">(du)</span>}</Td>
-                  <Td className="py-2 align-middle"><input form={fid} name="role" defaultValue={m.role} aria-label={`Rolle von ${email}`} className="h-10 w-full rounded-md border border-line-strong bg-input px-2.5 text-base text-text" /></Td>
-                  <Td className="py-2 align-middle"><label className="inline-flex size-10 cursor-pointer items-center justify-center"><Checkbox form={fid} name="isAdmin" defaultChecked={m.is_admin} aria-label={`${email} ist Admin`} /></label></Td>
+                  <Td className="py-2 align-middle">{email} {me && <span className="text-muted">(you)</span>}</Td>
+                  <Td className="py-2 align-middle"><input form={fid} name="role" defaultValue={m.role} aria-label={`Role of ${email}`} className="h-10 w-full rounded-md border border-line-strong bg-input px-2.5 text-base text-text" /></Td>
+                  <Td className="py-2 align-middle"><label className="inline-flex size-10 cursor-pointer items-center justify-center"><Checkbox form={fid} name="isAdmin" defaultChecked={m.is_admin} aria-label={`${email} is admin`} /></label></Td>
                   <Td className="py-2 align-middle">
                     <div className="flex justify-end gap-2">
-                      <form id={fid} action={mitgliedSpeichern}><input type="hidden" name="userId" value={m.user_id} /><Button type="submit" variant="secondary" size="sm">Speichern</Button></form>
-                      {!me && <form action={mitgliedEntfernen}><input type="hidden" name="userId" value={m.user_id} /><DangerButton type="submit" aria-label={`${email} entfernen`}>Entfernen</DangerButton></form>}
+                      <form id={fid} action={mitgliedSpeichern}><input type="hidden" name="userId" value={m.user_id} /><Button type="submit" variant="secondary" size="sm">Save</Button></form>
+                      {!me && <form action={mitgliedEntfernen}><input type="hidden" name="userId" value={m.user_id} /><DangerButton type="submit" aria-label={`Remove ${email}`}>Remove</DangerButton></form>}
                     </div>
                   </Td>
                 </tr>
               ) : (
                 <tr key={m.user_id} className="hover:bg-surface-hover">
-                  <Td>{email} {me && <span className="text-muted">(du)</span>}</Td>
+                  <Td>{email} {me && <span className="text-muted">(you)</span>}</Td>
                   <Td>{m.role}</Td>
-                  <Td>{m.is_admin ? "ja" : "nein"}</Td>
+                  <Td>{m.is_admin ? "yes" : "no"}</Td>
                 </tr>
               );
             })}
           </tbody>
         </Table>
-        <span className="px-4 text-sm text-muted">{members?.length ?? 0} Personen</span>
+        <span className="px-4 text-sm text-muted">{members?.length ?? 0} people</span>
       </div>
 
       {isAdmin && (
-        <form id="einladen" action={mitgliedEinladen} className="grid gap-4 rounded-lg border border-line bg-surface p-6">
+        <form id="invite" action={mitgliedEinladen} className="grid gap-4 rounded-lg border border-line bg-surface p-6">
           <div>
-            <h2 className="m-0 text-xl font-semibold">Person einladen</h2>
-            <p className="mt-1 mb-0 text-muted">Legt ein Konto mit Startpasswort an. Die Person ändert das Startpasswort bei der ersten Anmeldung.</p>
+            <h2 className="m-0 text-xl font-semibold">Invite someone</h2>
+            <p className="mt-1 mb-0 text-muted">Creates an account with a start password. The person changes it at their first sign-in.</p>
           </div>
           <div className="grid grid-cols-[1.4fr_1fr_1fr_auto] items-end gap-4">
-            <Field label="E-Mail" name="email" type="email" required placeholder="name@demo.test" />
-            <Field label="Rolle" name="role" required placeholder="z. B. Monteur" />
-            <Field label="Startpasswort" name="password" minLength={8} required autoComplete="off" defaultValue={crypto.randomUUID().slice(0, 12)} mono />
+            <Field label="Email" name="email" type="email" required placeholder="name@demo.test" />
+            <Field label="Role" name="role" required placeholder="e.g. Technician" />
+            <Field label="Start password" name="password" minLength={8} required autoComplete="off" defaultValue={crypto.randomUUID().slice(0, 12)} mono />
             <label className="flex h-11 cursor-pointer items-center gap-2.5 font-semibold"><Checkbox name="isAdmin" />Admin</label>
           </div>
-          <FormActions submitLabel="Einladen" />
+          <FormActions submitLabel="Invite" />
         </form>
       )}
     </>

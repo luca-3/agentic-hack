@@ -7,21 +7,21 @@ import { requireAdmin } from "@/lib/org";
 
 const MAX_BYTES = 200 * 1024;
 const text = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim();
-const fehler = (code: string): never => redirect(`/wissen?fehler=${code}`);
+const fehler = (code: string): never => redirect(`/knowledge?error=${code}`);
 
 /** Saves a knowledge source, chunks it and lets the server embed it. Rolls the source back if indexing fails. */
 export async function wissenHinzufuegen(fd: FormData) {
   const { supabase, orgId } = await requireAdmin();
   const datei = fd.get("datei");
   const hatDatei = datei instanceof File && datei.size > 0;
-  if (hatDatei && datei.size > MAX_BYTES) fehler("gross");
+  if (hatDatei && datei.size > MAX_BYTES) fehler("too-large");
   const inhalt = hatDatei ? (await datei.text()).trim() : text(fd, "text");
-  if (new TextEncoder().encode(inhalt).length > MAX_BYTES) fehler("gross");
+  if (new TextEncoder().encode(inhalt).length > MAX_BYTES) fehler("too-large");
   const title = text(fd, "title") || (hatDatei ? datei.name : "");
-  if (!title) fehler("titel");
+  if (!title) fehler("title");
 
   const alle = chunkText(inhalt);
-  if (!alle.length) fehler("leer");
+  if (!alle.length) fehler("empty");
   const chunks = alle.slice(0, KNOWLEDGE_LIMITS.maxChunks);
 
   const { data: source, error } = await supabase
@@ -35,7 +35,7 @@ export async function wissenHinzufuegen(fd: FormData) {
     })
     .select("id")
     .single();
-  if (error || !source) fehler("speichern");
+  if (error || !source) fehler("save");
 
   const token = (await supabase.auth.getSession()).data.session?.access_token;
   let ok = false;
@@ -54,8 +54,8 @@ export async function wissenHinzufuegen(fd: FormData) {
     fehler("server");
   }
 
-  revalidatePath("/wissen");
-  redirect(`/wissen?ok=${chunks.length}${alle.length > chunks.length ? `&gekuerzt=${alle.length}` : ""}`);
+  revalidatePath("/knowledge");
+  redirect(`/knowledge?ok=${chunks.length}${alle.length > chunks.length ? `&truncated=${alle.length}` : ""}`);
 }
 
 /** Deleting the source cascades to its embedded chunks (documents.source_id on delete cascade). */
@@ -63,6 +63,6 @@ export async function wissenLoeschen(fd: FormData) {
   const { supabase } = await requireAdmin();
   const { error } = await supabase.from("knowledge_sources").delete().eq("id", text(fd, "id"));
   if (error) throw new Error(error.message);
-  revalidatePath("/wissen");
-  redirect("/wissen?ok=geloescht");
+  revalidatePath("/knowledge");
+  redirect("/knowledge?ok=deleted");
 }
