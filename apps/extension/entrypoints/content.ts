@@ -134,6 +134,15 @@ export default defineContentScript({
       if (element) sendObservation(makeEvent("click", element), buildSnapshot());
       scheduleState();
     });
+    // Explicit trigger (D-30): ≥ 5 presses on the same spot within 20 s — e.g. a disabled button that "does nothing".
+    // pointerdown, because Chrome dispatches no click event on disabled form controls.
+    listen(document, "pointerdown", (event) => {
+      if (!observeUserEvent(event)) return;
+      const hit = repeatedClick(event as PointerEvent);
+      if (!hit) return;
+      sendObservation({ ...makeEvent("repeated_click", hit.element), detail: hit.detail }, buildSnapshot());
+      scheduleState();
+    });
     listen(document, "focusin", (event) => {
       if (!observeUserEvent(event)) return;
       const element = interactiveTarget(event);
@@ -338,6 +347,38 @@ function interactiveTarget(event: Event) {
 function isSearch(element: HTMLElement) {
   return (element instanceof HTMLInputElement && element.type === "search") || element.getAttribute("role") === "searchbox" ||
     Boolean(element.closest('[role="search"]')) || SEARCH_LABEL.test(accessibleName(element));
+}
+
+const REPEATED_CLICKS = { count: 5, windowMs: 20_000, cell: 24 } as const;
+let pointerHits: Array<{ key: string; ts: number }> = [];
+const repeatedClickFired = new Map<string, number>();
+
+/** Counts presses per element (role + label + route) or per 24-px screen cell; fires once per spot and window. */
+function repeatedClick(event: PointerEvent): { element?: HTMLElement; detail: string } | null {
+  if (event.button !== 0) return null;
+  const target = event.target instanceof Element ? event.target : document.elementFromPoint(event.clientX, event.clientY);
+  const element = target?.closest<HTMLElement>(INTERACTIVE) ?? undefined;
+  const spot = element
+    ? `${roleOf(element)}:${accessibleName(element)}`
+    : `pt:${Math.round(event.clientX / REPEATED_CLICKS.cell)},${Math.round(event.clientY / REPEATED_CLICKS.cell)}`;
+  const key = `${route()}|${spot}`;
+  const now = Date.now();
+  pointerHits = pointerHits.filter((hit) => now - hit.ts <= REPEATED_CLICKS.windowMs);
+  pointerHits.push({ key, ts: now });
+  const count = pointerHits.filter((hit) => hit.key === key).length;
+  if (count < REPEATED_CLICKS.count || now - (repeatedClickFired.get(key) ?? 0) < REPEATED_CLICKS.windowMs) return null;
+  repeatedClickFired.set(key, now);
+  const disabled = Boolean(element && (element.matches(":disabled") || element.getAttribute("aria-disabled") === "true"));
+  const reason = element ? disabledReason(element) : "";
+  return { element, detail: [`clicks=${count}`, `disabled=${disabled}`, reason ? `reason=${reason}` : ""].filter(Boolean).join(";") };
+}
+
+/** Visible explanation of why a control is locked: title, aria-describedby text, a tooltip attribute, or an ancestor's title. */
+function disabledReason(element: HTMLElement): string {
+  const describedBy = element.getAttribute("aria-describedby");
+  const described = describedBy ? describedBy.split(/\s+/).map((id) => document.getElementById(id)?.textContent ?? "").join(" ") : "";
+  const text = element.getAttribute("title") || described || element.getAttribute("data-tooltip") || element.closest("[title]")?.getAttribute("title") || "";
+  return text.replace(/\s+/g, " ").replace(/;/g, ",").trim().slice(0, 120);
 }
 
 function makeEvent(type: LotseEvent["type"], element?: HTMLElement, label?: string): LotseEvent {

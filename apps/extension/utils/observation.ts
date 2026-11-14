@@ -207,6 +207,14 @@ export class ObservationBuffer {
 export function findStuckSignal(context: ObservationContext | null): StuckSignal | null {
   if (!context) return null;
   const recent = context.workflow.events.filter((event) => event.ts >= Date.now() - 60_000);
+  // D-30 explicit trigger (highest priority): ≥ 5 presses on the same spot, detected in the content script.
+  const pressed = recent.filter((event) => event.type === "repeated_click" && event.ts >= Date.now() - 30_000).pop();
+  if (pressed) {
+    const label = pressed.elementLabel ? `"${pressed.elementLabel}"` : "the same spot";
+    return pressed.detail?.includes("disabled=true")
+      ? { type: "repeated_click", reason: `Clicked the disabled element ${label} at least 5 times.` }
+      : { type: "repeated_click", reason: `Clicked ${label} at least 5 times.` };
+  }
   const errors = recent.filter((event) => event.type === "error");
   if (errors.some((event) => event.elementLabel && errors.filter((other) => other.elementLabel === event.elementLabel && other.route === event.route).length >= 2)) {
     return { type: "repeated_error", reason: "The same visible error occurred at least twice." };

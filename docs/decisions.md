@@ -139,6 +139,10 @@ Append-only log. Format: decision · why · consequence. Superseded entries stay
 - **Why:** "…wenn man sich einmal angemeldet hat, den Lotsen nicht nochmal manuell aktivieren muss, sondern er automatisch dauerhaft aktiv ist, sobald diese spezielle Domain … aufgerufen wird" and "ein Overlay UI-Element in Form eines Kreises … soll … den Status des Lotsen anzeigen … bei Default immer angezeigt werden und auch direkt auf den Voice-Cue reagieren" (user, 2026-11-14). The orb is also D-12's visible "Lotse aktiv" indicator.
 - **Consequence:** auto-start never weakens D-27 — the same fail-closed policy gates every start, and an unknown or unreachable policy means no start (orb: "nicht verbunden"). The content script and `activeAppTab()` are still localhost-only; real org domains need optional host permissions + dynamically registered content scripts (README). The orb polls the worker every 1.5 s while visible; voice state is pushed.
 
+### D-30 · Explicit trigger: repeated clicks on the same spot (2026-11-14)
+- **Decision:** ≥ 5 presses on the same element (role + label + route; else the same 24-px screen cell) within 20 s emit a `repeated_click` event (detail `clicks=n;disabled=true|false;reason=<tooltip>`), captured via `pointerdown` because Chrome fires no click on disabled controls. It is the highest-priority local rule; `/decide` treats it as strong evidence (P ≥ 0.9, the user's adaptive threshold still applies) and offers "„X“ ist gerade gesperrt – soll ich dir zeigen, warum?". `/ask` sees disabled elements as "(deaktiviert)" and points at what unlocks them.
+- **Why:** users press disabled buttons that "do nothing" and don't understand why (user, 2026-11-14).
+
 ## Open questions
 
 - Train a custom "Hey Lotse" openWakeWord model today, or start with a pre-trained word (e.g. "hey jarvis") and swap later?

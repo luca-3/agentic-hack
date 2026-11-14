@@ -50,7 +50,8 @@ export type PageSnapshot = z.infer<typeof PageSnapshotSchema>;
 export const LotseEventSchema = z.object({
   id: z.string().optional(),
   snapshotId: z.string().optional(),
-  type: z.enum(["click", "route", "search", "error", "idle", "focus", "submit", "empty_results", "dom_change", "rage_click"]),
+  // repeated_click (D-30): ≥ 5 presses on the same element/spot within 20 s; detail "clicks=n;disabled=true|false;reason=<tooltip>"
+  type: z.enum(["click", "route", "search", "error", "idle", "focus", "submit", "empty_results", "dom_change", "rage_click", "repeated_click"]),
   route: z.string(),
   elementRole: z.string().optional(),
   elementLabel: z.string().optional(),
@@ -105,7 +106,7 @@ export const ObservationContextSchema = z.object({
 export type ObservationContext = z.infer<typeof ObservationContextSchema>;
 /** Local rule annotation inside the extension. On the wire it is sent as a StuckTrigger (see DecideRequestSchema). */
 export const StuckSignalSchema = z.object({
-  type: z.enum(["repeated_error", "unsuccessful_searches", "route_ping_pong", "form_idle", "workflow_update"]),
+  type: z.enum(["repeated_click", "repeated_error", "unsuccessful_searches", "route_ping_pong", "form_idle", "workflow_update"]),
   reason: z.string().max(500),
 });
 export type StuckSignal = z.infer<typeof StuckSignalSchema>;
@@ -146,7 +147,7 @@ export type EventBatch = z.infer<typeof EventBatchSchema>;
  * they never gate the state/intent calls). Extension rule → trigger: unsuccessful_searches → repeated_search,
  * route_ping_pong → page_pingpong, repeated_error / form_idle unchanged.
  */
-export const StuckTriggerSchema = z.enum(["repeated_search", "page_pingpong", "form_idle", "repeated_error", "rage_click", "workflow_update"]);
+export const StuckTriggerSchema = z.enum(["repeated_search", "page_pingpong", "form_idle", "repeated_error", "rage_click", "repeated_click", "workflow_update"]);
 export type StuckTrigger = z.infer<typeof StuckTriggerSchema>;
 
 /** POST /api/lotse/decide — "should Lotse offer help now?" (Gemini Decisions API, lite-model fallback). No images. */

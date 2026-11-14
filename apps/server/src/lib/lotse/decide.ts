@@ -68,6 +68,15 @@ function compactState(req: DecideRequest, learned: string[] | undefined) {
 }
 
 function offerFor(feature: Feature | undefined, req: DecideRequest): { intent: string; offer: string } {
+  // D-30: explicit repeated-click trigger → talk about that element (e.g. a disabled button the user keeps pressing).
+  if (req.trigger === "repeated_click") {
+    const pressed = req.events.filter((e) => e.type === "repeated_click").pop();
+    const label = pressed?.elementLabel ? cleanText(pressed.elementLabel, 60) : "";
+    if (label && pressed?.detail?.includes("disabled=true")) {
+      return { intent: `Warum ist „${label}“ gesperrt und was muss ich vorher tun?`, offer: `„${label}“ ist gerade gesperrt – soll ich dir zeigen, warum?` };
+    }
+    if (label) return { intent: `Wie nutze ich „${label}“?`, offer: `„${label}“ reagiert nicht wie erwartet? Soll ich dir helfen?` };
+  }
   if (feature) {
     const offer = `Soll ich dir zeigen, wo du „${feature.name}“ findest?`;
     return { intent: feature.name, offer: offer.length <= 140 ? offer : "Soll ich dir zeigen, wo du das findest?" };
@@ -88,6 +97,11 @@ type Verdict = { p: number; feature?: Feature; tokens?: number; modelOk: boolean
 /** Applies the subject's adaptive threshold (D-22) and stores an offer when Lotse intervenes. */
 export async function decide(req: DecideRequest, features: Feature[], ctx: Ctx): Promise<{ response: DecideResponse; tokens?: number }> {
   const [verdict, threshold] = await Promise.all([decideRaw(req, features, ctx), getThreshold(ctx.caller.key)]);
+  // D-30: ≥ 5 presses on the same spot is an explicit trigger → strong evidence (the user's adaptive threshold still applies).
+  if (req.trigger === "repeated_click") {
+    verdict.p = Math.max(verdict.p, 0.9);
+    verdict.modelOk = true;
+  }
   const confidence = round(verdict.p);
   if (!verdict.modelOk || verdict.p < threshold) {
     return { response: { intervene: false, confidence, threshold }, tokens: verdict.tokens };
@@ -125,7 +139,8 @@ async function decideRaw(req: DecideRequest, features: Feature[], ctx: Ctx): Pro
           instructions:
             "The user works in a business web app. Lotse observed their current workflow: uiStates are model-inferred UI states " +
             "in order, workflow is the inferred goal, recentEvents are semantic events. trigger names a local heuristic " +
-            "(repeated_search, page_pingpong, form_idle, repeated_error, rage_click) or is workflow_update when no heuristic fired. " +
+            "(repeated_search, page_pingpong, form_idle, repeated_error, rage_click, repeated_click = pressed the same element ≥ 5 times, " +
+            "detail says if it is disabled and why) or is workflow_update when no heuristic fired. repeated_click is strong evidence. " +
             "Is the user really stuck or struggling with this workflow and would likely welcome a short, unobtrusive help offer " +
             "right now? Be conservative: normal progress, browsing or a single mistake is not stuck; with workflow_update require " +
             "clear evidence in uiStates/events/page messages. learned (if present) lists hints aggregated from many colleagues' " +
