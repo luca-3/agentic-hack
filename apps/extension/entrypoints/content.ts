@@ -1,10 +1,14 @@
-import type { ExtensionMessage, InteractiveElement, LotseEvent, ObservationSnapshot } from "@lotse/shared";
+import type { InteractiveElement, LotseEvent, ObservationSnapshot } from "@lotse/shared";
+import { findElementByLabel, hasPlaceholder, labelScore, prettyRoute, routeMatches } from "../utils/match";
+import type { LotseMessage, PlanCommand, PlanView } from "../utils/messages";
+import { LotseOverlay, type OverlayAction, type OverlayButton, type OverlayView } from "../utils/overlay";
 
 const INTERACTIVE = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
 const SIGNAL_ELEMENTS = '[role="alert"], [role="status"], .field-error, .error-message, .alert-error, .empty-state, .search-empty, .no-results, [data-empty-state], [aria-invalid="true"]';
 const EMPTY_RESULTS = /keine?\s+(?:such)?(?:ergebnisse|treffer)|nichts\s+gefunden|no\s+(?:search\s+)?results|nothing\s+found/i;
 const ERROR_MESSAGE = /fehler|ungültig|ungultig|erforderlich|fehlgeschlagen|invalid|error|failed|required/i;
 const SEARCH_LABEL = /such|search|filtern|filter/i;
+const CLICK_INPUT_TYPES = new Set(["button", "submit", "reset", "checkbox", "radio", "image", "file", "color", "range"]);
 const HOST_ID = "lotse-overlay-host";
 
 let numbered: HTMLElement[] = [];
@@ -21,32 +25,65 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined;
 let stateTimer: ReturnType<typeof setTimeout> | undefined;
 const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
 
+// Guidance state (read-only: Lotse only marks, the user acts — D-17).
+type Mode = "point" | "plan" | "say" | "offer" | "feedback" | "done" | null;
+let mode: Mode = null;
+let plan: PlanView | null = null;
+let planShown: { index: number; element: HTMLElement | null } | null = null;
+let planTimer: ReturnType<typeof setTimeout> | undefined;
+let hideTimer: ReturnType<typeof setTimeout> | undefined;
+let guidanceRoute = "";
+let pointText = "";
+let answerSay = "";
+let guidanceOfferId: string | undefined;
+let offer: { offerId: string; text: string } | null = null;
+const feedbackSent = new Set<string>();
+
+const overlay = new LotseOverlay({
+  hostId: HOST_ID,
+  onAction: (action) => onOverlayAction(action),
+  onTargetLost: () => onTargetLost(),
+  isVisible: (element) => isVisible(element),
+});
+
 export default defineContentScript({
   matches: ["http://localhost/*", "http://127.0.0.1/*"],
   main(ctx) {
-    const onMessage = (message: ExtensionMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
-      if (message.type === "lotse:snapshot") sendResponse(buildSnapshot());
-      else if (message.type === "lotse:highlight") sendResponse(highlight(message.elementNumber, message.sentence, message.snapshotId));
-      else if (message.type === "lotse:clear") sendResponse(clearOverlay());
-      else if (message.type === "lotse:start") {
-        recording = true;
-        previousRoute = route();
-        lastUserActivity = Date.now();
-        lastSearchAt = 0;
-        idleSent = false;
-        previousErrors.clear();
-        previousEmpty = false;
-        ensureOverlay();
-        showRecordingStatus();
-        const snapshot = buildSnapshot();
-        sendObservation(makeEvent("route"), snapshot);
-        emitSignals();
-        sendResponse({ ok: true, snapshot });
-      } else if (message.type === "lotse:stop") {
-        recording = false;
-        clearPendingTimers();
-        clearOverlay();
-        sendResponse({ ok: true });
+    const onMessage = (message: LotseMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
+      switch (message.type) {
+        case "lotse:snapshot": sendResponse(buildSnapshot()); break;
+        case "lotse:highlight": sendResponse(legacyHighlight(message.elementNumber, message.sentence, message.snapshotId)); break;
+        case "lotse:point": sendResponse(showPoint(message.elementNumber, message.label, message.hint, message.snapshotId, message.offerId)); break;
+        case "lotse:say": showSay(message.text, message.offerId); sendResponse({ ok: true }); break;
+        case "lotse:plan-show": startPlan(message.plan, message.resume === true); sendResponse({ ok: true }); break;
+        case "lotse:plan-control": planCommand(message.action); sendResponse({ ok: true }); break;
+        case "lotse:show-offer": sendResponse(showOffer(message.offerId, message.offer)); break;
+        case "lotse:hide-offer": if (mode === "offer") resetGuidance(); sendResponse({ ok: true }); break;
+        case "lotse:clear": resetGuidance(); sendResponse({ ok: true }); break;
+        case "lotse:voice-state": overlay.setVoiceState(message.state); sendResponse({ ok: true }); break;
+        case "lotse:start": {
+          recording = true;
+          previousRoute = route();
+          lastUserActivity = Date.now();
+          lastSearchAt = 0;
+          idleSent = false;
+          previousErrors.clear();
+          previousEmpty = false;
+          overlay.setRecording(true);
+          const snapshot = buildSnapshot();
+          sendObservation(makeEvent("route"), snapshot);
+          emitSignals();
+          sendResponse({ ok: true, snapshot });
+          break;
+        }
+        case "lotse:stop":
+          recording = false;
+          clearPendingTimers();
+          overlay.setRecording(false);
+          if (mode === "offer") resetGuidance();
+          sendResponse({ ok: true });
+          break;
+        default: break; // not for the content script
       }
     };
     browser.runtime.onMessage.addListener(onMessage);
@@ -57,12 +94,10 @@ export default defineContentScript({
       listeners.push([target, type, listener, capture]);
     };
     listen(document, "click", (event) => {
-      const clicked = interactiveTarget(event);
-      if (event.isTrusted && clicked === target) clearOverlay();
+      if (event.isTrusted && !isLotseEvent(event)) onGuidedClick(event);
       if (!observeUserEvent(event)) return;
       const element = interactiveTarget(event);
       if (element) sendObservation(makeEvent("click", element), buildSnapshot());
-      if (element && element === target) clearOverlay();
       scheduleState();
     });
     listen(document, "focusin", (event) => {
@@ -79,12 +114,14 @@ export default defineContentScript({
       }
     });
     listen(document, "change", (event) => {
+      if (event.isTrusted && !isLotseEvent(event)) onGuidedChange(event);
       if (!observeUserEvent(event)) return;
       const element = interactiveTarget(event);
       if (element && isSearch(element)) recordSearch(element);
       scheduleState();
     });
     listen(document, "keydown", (event) => {
+      if (event.isTrusted && (event as KeyboardEvent).key === "Escape" && mode !== null) onEscape();
       if (!observeUserEvent(event)) return;
       const element = interactiveTarget(event);
       if ((event as KeyboardEvent).key === "Enter" && element && isSearch(element)) recordSearch(element);
@@ -107,25 +144,33 @@ export default defineContentScript({
       const element = interactiveTarget(event);
       sendObservation(makeEvent("error", element, "Form validation error: " + (element ? accessibleName(element) : "Form")), buildSnapshot());
     });
-    listen(window, "scroll", () => render());
-    listen(window, "resize", () => render());
+    listen(window, "scroll", () => overlay.render());
+    listen(window, "resize", () => overlay.render());
     listen(document, "visibilitychange", () => {
       if (recording && document.visibilityState === "visible") { markActivity(); scheduleState(); }
     });
 
     const observer = new MutationObserver((changes) => {
-      if (recording && changes.some((change) => !isLotseNode(change.target))) scheduleState();
-      if (target && !target.isConnected) clearOverlay();
+      const external = changes.some((change) => !isLotseNode(change.target));
+      if (recording && external) scheduleState();
+      const target = overlay.currentTarget;
+      if (external && plan && (!target || !target.isConnected)) schedulePlanRefresh(400, true);
+      else if (target && !target.isConnected) onTargetLost();
     });
     observer.observe(document.documentElement, {
       subtree: true, childList: true, characterData: true, attributes: true,
       attributeFilter: ["role", "aria-label", "aria-labelledby", "aria-invalid", "aria-expanded", "aria-selected", "disabled", "hidden", "class", "style", "open"],
     });
+    guidanceRoute = route();
     const routeAndIdleTimer = setInterval(() => {
+      const now = route();
+      if (now !== guidanceRoute) {
+        guidanceRoute = now;
+        if (plan) schedulePlanRefresh(300, true);
+      }
       if (!recording || document.visibilityState !== "visible") return;
-      const nextRoute = route();
-      if (nextRoute !== previousRoute) {
-        previousRoute = nextRoute;
+      if (now !== previousRoute) {
+        previousRoute = now;
         markActivity();
         previousErrors.clear();
         previousEmpty = false;
@@ -139,16 +184,21 @@ export default defineContentScript({
       }
     }, 500);
 
+    // A multi-step plan continues across full page loads: the service worker keeps it in chrome.storage.session.
+    void browser.runtime.sendMessage({ type: "lotse:plan-resume" } satisfies LotseMessage)
+      .then((result: { plan?: PlanView | null } | undefined) => { if (result?.plan && !plan) startPlan(result.plan, true); })
+      .catch(() => undefined);
+
     ctx.onInvalidated(() => {
       recording = false;
       clearPendingTimers();
+      clearTimeout(planTimer);
+      clearTimeout(hideTimer);
       clearInterval(routeAndIdleTimer);
       observer.disconnect();
       browser.runtime.onMessage.removeListener(onMessage);
       for (const [target, type, listener, capture] of listeners) target.removeEventListener(type, listener, capture);
-      host?.remove();
-      host = null;
-      target = null;
+      overlay.destroy();
     });
   },
 });
@@ -202,7 +252,11 @@ function makeEvent(type: LotseEvent["type"], element?: HTMLElement, label?: stri
 function sendObservation(event?: LotseEvent, snapshot?: ObservationSnapshot) {
   if (!recording) return;
   if (event && snapshot) event.snapshotId = snapshot.id;
-  void browser.runtime.sendMessage({ type: "lotse:observe", event, snapshot } satisfies ExtensionMessage).catch(() => undefined);
+  send({ type: "lotse:observe", event, snapshot });
+}
+
+function send(message: LotseMessage) {
+  void browser.runtime.sendMessage(message).catch(() => undefined);
 }
 
 function after(delay: number, action: () => void) {
@@ -239,7 +293,7 @@ function captureState(repeatErrors = false, repeatEmpty = false) {
   const snapshot = buildSnapshot();
   if (snapshot.id !== before) sendObservation(makeEvent("dom_change"), snapshot);
   emitSignals(repeatErrors, repeatEmpty);
-  render();
+  overlay.render();
 }
 
 function signals() {
@@ -351,79 +405,331 @@ function accessibleName(element: HTMLElement) {
   return uiText(element.innerText || element.getAttribute("title") || element.getAttribute("name"), 120);
 }
 
-let host: HTMLDivElement | null = null;
-let frame: HTMLDivElement | null = null;
-let bubble: HTMLDivElement | null = null;
-let recordingStatus: HTMLDivElement | null = null;
-let target: HTMLElement | null = null;
+// ---------------------------------------------------------------------------
+// Guidance: point, say, multi-step plan, proactive offer, feedback
+// ---------------------------------------------------------------------------
 
-function highlight(elementNumber: number, sentence: string, snapshotId?: string) {
+function usable(element: HTMLElement | undefined): element is HTMLElement {
+  return Boolean(element && element.isConnected && isVisible(element) && !element.matches(":disabled") && element.getAttribute("aria-disabled") !== "true");
+}
+
+/** Text entry targets advance on `change` (value committed), everything else on click. */
+function isEntry(element: HTMLElement) {
+  if (element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement || element.isContentEditable) return true;
+  return element instanceof HTMLInputElement && !CLICK_INPUT_TYPES.has(element.type);
+}
+
+function viewport() {
+  return { width: innerWidth, height: innerHeight };
+}
+
+function byLabel(label: string, snapshot: ObservationSnapshot): HTMLElement | undefined {
+  const match = findElementByLabel(label, snapshot.elements, viewport());
+  return match ? numbered[match.number] : undefined;
+}
+
+function thumbs(): OverlayButton[] {
+  if (!guidanceOfferId || feedbackSent.has(guidanceOfferId)) return [];
+  return [{ action: "up", label: "👍", title: "Hilfreich" }, { action: "down", label: "👎", title: "Nicht hilfreich" }];
+}
+
+function feedbackNote() {
+  return guidanceOfferId && feedbackSent.has(guidanceOfferId) ? "Danke für dein Feedback!" : undefined;
+}
+
+function autoHide(ms: number) {
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    hideTimer = undefined;
+    if (mode === "say" || mode === "offer" || mode === "feedback" || mode === "done") resetGuidance();
+  }, ms);
+}
+
+function resetGuidance() {
+  clearTimeout(planTimer);
+  clearTimeout(hideTimer);
+  mode = null;
+  plan = null;
+  planShown = null;
+  offer = null;
+  pointText = "";
+  answerSay = "";
+  guidanceOfferId = undefined;
+  overlay.clear();
+}
+
+function pointView(): OverlayView {
+  return { text: pointText, detail: answerSay || undefined, note: feedbackNote(), buttons: [...thumbs(), { action: "close", label: "✕", title: "Hinweis schließen (Esc)" }] };
+}
+
+function sayView(): OverlayView {
+  return { title: "Lotse", text: answerSay, note: feedbackNote(), buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen (Esc)" }] };
+}
+
+function legacyHighlight(elementNumber: number, sentence: string, snapshotId?: string) {
   const previous = currentSnapshot?.id;
   const snapshot = buildSnapshot();
   if ((snapshotId && snapshotId !== snapshot.id) || (!snapshotId && previous !== snapshot.id)) return { ok: false, error: "Der Seitenzustand hat sich geändert." };
   const element = numbered[elementNumber];
-  if (!element || !isVisible(element) || element.matches(":disabled") || element.getAttribute("aria-disabled") === "true") return { ok: false, error: "Das Ziel ist nicht verfügbar." };
-  ensureOverlay();
-  target = element;
-  const dialog = element.closest("dialog[open]");
-  (dialog ?? document.documentElement).append(host!);
-  bubble!.textContent = sentence.slice(0, 1_000);
-  element.scrollIntoView({ block: "center", behavior: "smooth" });
-  render();
+  if (!usable(element)) return { ok: false, error: "Das Ziel ist nicht verfügbar." };
+  clearTimeout(hideTimer);
+  mode = "point";
+  pointText = sentence.slice(0, 600);
+  overlay.show(pointView(), element);
   return { ok: true };
 }
 
-function clearOverlay() {
-  target = null;
-  if (frame) frame.style.display = "none";
-  if (bubble) bubble.style.display = "none";
-  showRecordingStatus();
+/** `point` numbers refer to the request snapshot; if the page changed meanwhile, fall back to the label. */
+function showPoint(elementNumber: number, label: string, hint: string | undefined, snapshotId: string, offerId?: string) {
+  if (plan) return { ok: true }; // the plan of the same answer already marks this step
+  const snapshot = buildSnapshot();
+  let element: HTMLElement | undefined = snapshot.id === snapshotId ? numbered[elementNumber] : undefined;
+  if (!usable(element)) element = byLabel(label, snapshot);
+  if (!usable(element)) return { ok: false, error: "Das Ziel ist auf der Seite nicht mehr verfügbar." };
+  clearTimeout(hideTimer);
+  if (offerId) guidanceOfferId = offerId;
+  offer = null;
+  mode = "point";
+  pointText = (hint || label).slice(0, 600);
+  overlay.show(pointView(), element);
   return { ok: true };
 }
 
-function showRecordingStatus() {
-  if (host) host.style.display = recording || target ? "block" : "none";
-  if (recordingStatus) recordingStatus.style.display = recording ? "block" : "none";
+function showSay(text: string, offerId?: string) {
+  answerSay = text.slice(0, 200);
+  if (offerId) guidanceOfferId = offerId;
+  if (mode === "point" && overlay.visible) { overlay.update(pointView()); return; }
+  if (mode === "plan" && plan) { if (planShown) overlay.update(planView(Boolean(planShown.element))); return; }
+  offer = null;
+  mode = "say";
+  overlay.show(sayView(), null);
+  autoHide(guidanceOfferId ? 30_000 : 20_000);
 }
 
-function ensureOverlay() {
-  if (host) {
-    host.style.display = "block";
-    return;
-  }
-  host = document.createElement("div");
-  host.id = HOST_ID;
-  Object.assign(host.style, { position: "fixed", inset: "0", pointerEvents: "none", zIndex: "2147483647" });
-  const shadow = host.attachShadow({ mode: "open" });
-  const style = document.createElement("style");
-  style.textContent = '.frame { position:fixed; border:3px solid #2563eb; border-radius:10px; box-shadow:0 0 0 4px rgb(37 99 235 / 0.25); }' +
-    '.bubble { position:fixed; box-sizing:border-box; max-width:320px; padding:10px 14px; border-radius:12px; background:#1e3a8a; color:white; font:500 14px/1.4 system-ui,sans-serif; box-shadow:0 8px 24px rgb(0 0 0 / 0.2); }' +
-    '.bubble::before { content:"▲"; position:absolute; top:-14px; left:16px; color:#1e3a8a; font-size:14px; }' +
-    '.recording { position:fixed; right:12px; bottom:12px; padding:6px 10px; border-radius:20px; background:#1e3a8a; color:white; font:12px system-ui,sans-serif; }';
-  frame = document.createElement("div");
-  frame.className = "frame";
-  frame.style.display = "none";
-  bubble = document.createElement("div");
-  bubble.className = "bubble";
-  bubble.style.display = "none";
-  bubble.setAttribute("role", "status");
-  recordingStatus = document.createElement("div");
-  recordingStatus.className = "recording";
-  recordingStatus.textContent = "● Lotse zeichnet lokal auf";
-  shadow.append(style, frame, bubble, recordingStatus);
-  document.documentElement.append(host);
-  showRecordingStatus();
+function completePoint() {
+  overlay.clear();
+  pointText = "";
+  answerSay = "";
+  if (guidanceOfferId && !feedbackSent.has(guidanceOfferId)) showFeedbackCard();
+  else resetGuidance();
 }
 
-function render() {
-  if (!target || !frame || !bubble) return;
-  if (!target.isConnected || !isVisible(target)) {
-    clearOverlay();
-    return;
+function showFeedbackCard() {
+  mode = "feedback";
+  overlay.show({ title: "Lotse", text: "War der Hinweis hilfreich?", buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen" }] }, null);
+  autoHide(12_000);
+}
+
+function showOffer(offerId: string, text: string) {
+  if (mode === "point" || mode === "plan") return { ok: false, error: "Lotse zeigt gerade schon einen Hinweis." };
+  clearTimeout(hideTimer);
+  offer = { offerId, text };
+  mode = "offer";
+  overlay.show({
+    title: "Lotse", text, tone: "offer",
+    buttons: [{ action: "yes", label: "Ja, zeig's mir", primary: true }, { action: "no", label: "Nein" }],
+  }, null);
+  autoHide(60_000);
+  return { ok: true };
+}
+
+// --- multi-step plan --------------------------------------------------------
+
+function startPlan(view: PlanView, resume: boolean) {
+  if (!view.steps.length) return;
+  clearTimeout(hideTimer);
+  clearTimeout(planTimer);
+  offer = null;
+  pointText = "";
+  plan = { ...view, index: Math.min(Math.max(view.index, 0), view.steps.length - 1) };
+  planShown = null;
+  if (view.offerId) guidanceOfferId = view.offerId;
+  mode = "plan";
+  // After a full page load the app may still be rendering; look ahead in case the last advance was not stored.
+  if (resume) schedulePlanRefresh(350, true);
+  else showPlanStep(false);
+}
+
+function schedulePlanRefresh(delay: number, lookahead: boolean) {
+  if (!plan) return;
+  clearTimeout(planTimer);
+  planTimer = setTimeout(() => { planTimer = undefined; showPlanStep(lookahead); }, delay);
+}
+
+function resolveStep(index: number, snapshot: ObservationSnapshot): HTMLElement | undefined {
+  const step = plan?.steps[index];
+  if (!plan || !step) return undefined;
+  if (step.elementNumber !== undefined && plan.snapshotId === snapshot.id) {
+    const element = numbered[step.elementNumber];
+    if (usable(element)) return element;
   }
-  const rect = target.getBoundingClientRect();
-  const left = Math.max(8, Math.min(rect.left, window.innerWidth - 328));
-  const top = Math.max(8, Math.min(rect.bottom + 16, window.innerHeight - 110));
-  Object.assign(frame.style, { display: "block", left: rect.left - 6 + "px", top: rect.top - 6 + "px", width: rect.width + 12 + "px", height: rect.height + 12 + "px" });
-  Object.assign(bubble.style, { display: "block", left: left + "px", top: top + "px", maxWidth: Math.max(140, Math.min(320, window.innerWidth - 16)) + "px" });
+  // "Zeile ‹Kundenname›" is the user's choice — show the hint and wait for the next step's label to appear.
+  if (hasPlaceholder(step.label)) return undefined;
+  const element = byLabel(step.label, snapshot);
+  return usable(element) ? element : undefined;
+}
+
+function showPlanStep(lookahead: boolean) {
+  if (!plan) return;
+  const snapshot = buildSnapshot();
+  const here = route();
+  let index = plan.index;
+  let element = resolveStep(index, snapshot);
+  if (!element && lookahead) {
+    for (let next = index + 1; next < plan.steps.length; next++) {
+      const step = plan.steps[next];
+      if (!step || (step.route && !routeMatches(step.route, here))) continue;
+      const candidate = resolveStep(next, snapshot);
+      if (candidate) { index = next; element = candidate; break; }
+    }
+  }
+  if (index !== plan.index) setPlanIndex(index);
+  const shown = element ?? null;
+  if (planShown && planShown.index === plan.index && planShown.element === shown && overlay.visible) { overlay.render(); return; }
+  planShown = { index: plan.index, element: shown };
+  overlay.show(planView(Boolean(element)), shown);
+}
+
+function planView(found: boolean): OverlayView {
+  const current = plan!;
+  const step = current.steps[current.index]!;
+  const position = current.index + 1;
+  const total = current.steps.length;
+  const here = route();
+  let detail: string | undefined;
+  if (!found) {
+    if (step.route && !routeMatches(step.route, here)) detail = `Dieser Schritt ist auf der Seite „${prettyRoute(step.route)}“.`;
+    else if (hasPlaceholder(step.label)) detail = "Wähle den passenden Eintrag aus – dann geht es weiter.";
+    else detail = `„${step.label}“ ist hier gerade nicht sichtbar.`;
+  } else if (position === 1 && answerSay) detail = answerSay;
+  const buttons: OverlayButton[] = [];
+  if (position > 1) buttons.push({ action: "back", label: "Zurück" });
+  buttons.push({ action: "next", label: position === total ? "Fertig" : "Weiter", primary: !found });
+  buttons.push(...thumbs(), { action: "end", label: "✕", title: "Anleitung beenden (Esc)" });
+  return {
+    title: `Schritt ${position}/${total}`,
+    text: (step.hint?.trim() || (found ? step.label : `Nächster Schritt: „${step.label}“`)).slice(0, 300),
+    detail, note: feedbackNote(), buttons,
+  };
+}
+
+function setPlanIndex(index: number) {
+  if (!plan) return;
+  plan.index = Math.min(Math.max(index, 0), plan.steps.length - 1);
+  // Sent before a link click unloads the page, so the next document resumes at the right step.
+  send({ type: "lotse:plan-update", planId: plan.id, index: plan.index });
+}
+
+function advancePlan() {
+  if (!plan) return;
+  if (plan.index >= plan.steps.length - 1) { finishPlan(); return; }
+  setPlanIndex(plan.index + 1);
+  planShown = null;
+  overlay.clear(true);
+  schedulePlanRefresh(450, false);
+}
+
+function finishPlan() {
+  if (!plan) return;
+  send({ type: "lotse:plan-end", planId: plan.id, reason: "done" });
+  plan = null;
+  planShown = null;
+  clearTimeout(planTimer);
+  mode = "done";
+  const feedbackOpen = thumbs().length > 0;
+  overlay.show({ title: "Fertig", text: "Alle Schritte erledigt.", detail: feedbackOpen ? "War die Anleitung hilfreich?" : undefined, buttons: [...thumbs(), { action: "close", label: "✕", title: "Schließen" }] }, null);
+  autoHide(feedbackOpen ? 15_000 : 3_000);
+}
+
+function endPlan() {
+  if (plan) send({ type: "lotse:plan-end", planId: plan.id, reason: "closed" });
+  resetGuidance();
+}
+
+function planCommand(action: PlanCommand) {
+  if (!plan) return;
+  if (action === "end") { endPlan(); return; }
+  if (action === "next") {
+    if (plan.index >= plan.steps.length - 1) { finishPlan(); return; }
+    setPlanIndex(plan.index + 1);
+  } else {
+    if (plan.index === 0) return;
+    setPlanIndex(plan.index - 1);
+  }
+  planShown = null;
+  showPlanStep(false);
+}
+
+// --- user interaction ---------------------------------------------------------
+
+function onGuidedClick(event: Event) {
+  const target = overlay.currentTarget;
+  const onTarget = Boolean(target && event.composedPath().includes(target));
+  if (mode === "point" && onTarget && target && !isEntry(target)) { completePoint(); return; }
+  if (mode !== "plan" || !plan) return;
+  if (onTarget && target) { if (!isEntry(target)) advancePlan(); return; }
+  // The user did the current step even though it was not (yet) highlighted, e.g. right after a field was committed.
+  const clicked = interactiveTarget(event);
+  const step = plan.steps[plan.index];
+  if (clicked && step && !isEntry(clicked) && !hasPlaceholder(step.label) && labelScore(step.label, accessibleName(clicked)) >= 85) advancePlan();
+}
+
+function onGuidedChange(event: Event) {
+  const target = overlay.currentTarget;
+  if (!target || !isEntry(target) || !event.composedPath().includes(target)) return;
+  if (mode === "plan") advancePlan();
+  else if (mode === "point") completePoint();
+}
+
+function onEscape() {
+  if (mode === "plan") endPlan();
+  else resetGuidance();
+}
+
+function onTargetLost() {
+  if (mode === "plan" && plan) {
+    planShown = null;
+    overlay.clear(true);
+    schedulePlanRefresh(300, true);
+  } else if (mode === "point") resetGuidance();
+}
+
+function onOverlayAction(action: OverlayAction) {
+  switch (action) {
+    case "next": planCommand("next"); break;
+    case "back": planCommand("back"); break;
+    case "end": endPlan(); break;
+    case "yes": {
+      if (!offer) return;
+      send({ type: "lotse:offer-accept", offerId: offer.offerId });
+      guidanceOfferId = offer.offerId;
+      offer = null;
+      mode = null;
+      clearTimeout(hideTimer);
+      overlay.clear(true);
+      break;
+    }
+    case "no": {
+      if (!offer) return;
+      send({ type: "lotse:offer-feedback", offerId: offer.offerId, feedback: "declined" });
+      resetGuidance();
+      break;
+    }
+    case "up":
+    case "down": {
+      const offerId = guidanceOfferId;
+      if (!offerId || feedbackSent.has(offerId)) return;
+      feedbackSent.add(offerId);
+      send({ type: "lotse:offer-feedback", offerId, feedback: action });
+      if (mode === "plan" && planShown) overlay.update(planView(Boolean(planShown.element)));
+      else if (mode === "point") overlay.update(pointView());
+      else if (mode === "say") overlay.update(sayView());
+      else if (mode === "feedback" || mode === "done") {
+        overlay.update({ title: "Lotse", text: "Danke für dein Feedback!", buttons: [{ action: "close", label: "✕", title: "Schließen" }] });
+        autoHide(1_500);
+      }
+      break;
+    }
+    case "close": if (mode === "plan") endPlan(); else resetGuidance(); break;
+  }
 }

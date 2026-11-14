@@ -7,38 +7,60 @@
     <style>
       :root { color-scheme: light; font: 14px/1.5 system-ui, sans-serif; color: #172554; background: #f5f7fb; }
       * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
       body { margin: 0; padding: 18px; }
-      header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+      header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 18px; }
       h1 { margin: 0; font-size: 24px; letter-spacing: -.6px; }
       h2 { margin: 0 0 8px; font-size: 15px; }
       p { margin: 8px 0; }
+      .chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
       .activity { padding: 4px 9px; border-radius: 999px; background: #e2e8f0; color: #475569; font-size: 12px; }
       .activity.active { background: #dcfce7; color: #166534; }
+      .activity.voice { background: #ccfbf1; color: #115e59; }
       section, details { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 14px; }
       .muted { color: #64748b; font-size: 12px; }
-      .actions { display: flex; gap: 8px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 8px; }
       button { padding: 9px 12px; border: 0; border-radius: 9px; background: #1e3a8a; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
       button.secondary { background: #e2e8f0; color: #334155; }
+      button.small { padding: 5px 9px; font-size: 12px; }
       button:disabled { opacity: .45; cursor: default; }
       label { display: block; margin: 10px 0 5px; font-weight: 500; }
       input[type="text"], textarea { width: 100%; padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; color: #172554; font: inherit; }
+      input[type="range"] { flex: 1; }
       textarea { resize: vertical; }
-      #ask-button { width: 100%; margin-top: 8px; }
+      #ask-button { flex: 1; }
+      #ask .row { margin-top: 8px; }
       .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
       .stats div { padding: 9px; border-radius: 9px; background: #f1f5f9; text-align: center; color: #64748b; font-size: 11px; }
       .stats strong { display: block; color: #172554; font-size: 20px; }
       #status { white-space: pre-wrap; }
       #notice, #image-status { color: #9a3412; }
-      #notice:empty, #image-status:empty, #decision:empty { display: none; }
+      #notice:empty, #image-status:empty, #decision:empty, #prefs-message:empty, #last-question:empty { display: none; }
       #events { padding-left: 18px; margin: 8px 0 0; font-size: 12px; overflow-wrap: anywhere; }
       #events li { margin: 5px 0; color: #475569; }
       summary { font-weight: 600; cursor: pointer; }
-      .toggle { display: flex; align-items: center; gap: 8px; font-weight: 400; }
+      .toggle { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 6px 0; }
+      .row { display: flex; align-items: center; gap: 8px; }
+      .callout { border-color: #bfdbfe; background: #eff6ff; }
+      .callout p { margin: 0 0 8px; }
       :focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
     </style>
   </head>
   <body>
-    <header><h1>Lotse</h1><span id="activity" class="activity">Lotse pausiert</span></header>
+    <header>
+      <h1>Lotse</h1>
+      <div class="chips"><span id="voice-state" class="activity voice" hidden></span><span id="activity" class="activity">Lotse pausiert</span></div>
+    </header>
+    <section id="offer-box" class="callout" aria-labelledby="offer-title" hidden>
+      <h2 id="offer-title">Lotse bietet Hilfe an</h2>
+      <p id="offer-text"></p>
+      <div class="actions"><button id="offer-yes" type="button">Ja, zeig's mir</button><button id="offer-no" class="secondary" type="button">Nein</button></div>
+    </section>
+    <section id="plan-box" class="callout" aria-labelledby="plan-title" hidden>
+      <h2 id="plan-title">Anleitung</h2>
+      <p id="plan-step"></p>
+      <div class="actions"><button id="plan-back" class="secondary small" type="button">Zurück</button><button id="plan-next" class="small" type="button">Weiter</button><button id="plan-end" class="secondary small" type="button">Beenden</button></div>
+    </section>
     <section aria-labelledby="observe-title">
       <h2 id="observe-title">Hilfe während der Arbeit</h2>
       <p class="muted">Starte Lotse im aktiven App-Tab. Aktionen und Bildverlauf bleiben zunächst in deinem Browser.</p>
@@ -55,18 +77,31 @@
       <form id="ask">
         <label for="question">Was möchtest du tun?</label>
         <textarea id="question" rows="3" maxlength="500" placeholder="Wie ändere ich die IBAN?"></textarea>
-        <button id="ask-button" type="submit">Nächsten Schritt zeigen</button>
+        <div class="row"><button id="ask-button" type="submit">Nächsten Schritt zeigen</button><button id="listen" class="secondary" type="button" title="Frage sprechen" aria-label="Frage sprechen">🎙</button></div>
       </form>
-      <p class="muted">Alt+L öffnet Lotse. Fragen funktionieren auch ohne laufende Beobachtung.</p>
+      <p id="last-question" class="muted"></p>
+      <p class="muted">Alt+L öffnet Lotse. Fragen funktionieren auch ohne laufende Beobachtung. Lotse markiert nur – klicken und tippen machst du.</p>
     </section>
     <p id="status" role="status">Lotse ist bereit.</p>
     <p id="notice" role="alert"></p>
     <p id="image-status" class="muted"></p>
+    <section aria-labelledby="behaviour-title">
+      <h2 id="behaviour-title">Lotse-Verhalten</h2>
+      <label class="toggle"><input id="proactive" type="checkbox" />Proaktiv Hilfe anbieten</label>
+      <label class="toggle"><input id="voice" type="checkbox" />Sprache: Wake Word &amp; Hotkey</label>
+      <label class="toggle"><input id="speak" type="checkbox" />Antworten vorlesen (nur bei Sprachfragen)</label>
+      <p id="snooze-line" class="muted"></p>
+      <div class="actions"><button id="snooze" class="secondary small" type="button">10 Min. Ruhe</button><button id="resume" class="secondary small" type="button" hidden>Wieder anbieten</button></div>
+      <label for="threshold">Schwelle für Angebote: <strong id="threshold-value">–</strong></label>
+      <div class="row"><input id="threshold" type="range" min="0.6" max="0.95" step="0.01" value="0.8" aria-describedby="threshold-help" /><button id="threshold-save" class="secondary small" type="button">Übernehmen</button></div>
+      <p id="threshold-help" class="muted">Höher = Lotse bietet seltener Hilfe an. 👍/👎 auf Angebote passen die Schwelle automatisch an.</p>
+      <p id="prefs-message" class="muted"></p>
+    </section>
     <section aria-labelledby="workflow">
       <h2 id="workflow">Noch kein Workflow</h2>
       <p id="intent" class="muted">Das Ziel wird bei einem möglichen Hilfebedarf eingeordnet.</p>
       <p id="decision" class="muted"></p>
-      <details><summary>Letzte Aktionen</summary><ul id="events"></ul></details>
+      <details><summary>Letzte Aktionen</summary><ul id="events"></ul><p id="analytics" class="muted"></p></details>
     </section>
     <details>
       <summary>Demo-Kontext</summary>
