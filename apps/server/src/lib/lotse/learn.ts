@@ -105,16 +105,21 @@ async function refreshInsights(db: Db, orgId: string, app: AppRow, events: Row[]
   const questions = asks.filter((r) => r.tier !== "classify");
   if (questions.length) rows.push({ metric: "question_count", feature: GENERAL_QUESTIONS, value: questions.length, persons: distinct(questions, subjectOf) });
 
-  const { error: delErr } = await db
-    .from("insights")
-    .delete()
-    .eq("org_id", orgId)
-    .eq("app_id", app.id)
-    .eq("period", period)
-    .in("metric", ["stuck_rate", "still_stuck_after_hint", "question_count"]);
-  if (delErr) throw new Error(`insights delete failed: ${delErr.message}`);
   const insert = rows.filter((r) => r.persons >= 1).map((r) => ({ org_id: orgId, app_id: app.id, role: null, period, ...r }));
-  if (!insert.length) return 0;
+  if (!insert.length) return 0; // no fresh numbers → keep what is there (e.g. seeded demo insights)
+  // Replace only the (feature, metric) pairs we have fresh numbers for — other features keep their rows.
+  for (const metric of new Set(insert.map((r) => r.metric))) {
+    const { error: delErr } = await db
+      .from("insights")
+      .delete()
+      .eq("org_id", orgId)
+      .eq("app_id", app.id)
+      .eq("period", period)
+      .eq("metric", metric)
+      .is("role", null)
+      .in("feature", insert.filter((r) => r.metric === metric).map((r) => r.feature));
+    if (delErr) throw new Error(`insights delete failed: ${delErr.message}`);
+  }
   const { error } = await db.from("insights").insert(insert);
   if (error) throw new Error(`insights insert failed: ${error.message}`);
   return insert.length;
