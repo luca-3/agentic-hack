@@ -126,30 +126,20 @@ We started with openWakeWord's pre-trained **"Hey Jarvis"** model. No model exis
 
 ## Demo
 
+Everything runs **hosted**: dashboard and runtime on Codesphere, data on Supabase Cloud (EU). Nothing runs on localhost in the demo.
+
 What we show live:
 
-1. **Demo CRM "Kundenwerk"** (`demo-crm`, localhost:4000): a scripted app where we get stuck on purpose. Valo offers help on its own, puts a spotlight on the right field, walks a multi-step plan, and answers "Hey Valo, …" by voice.
-2. **CORPUS** on Fuller's dev system (dev.fuller.de, sample data only, *Fuller GmbH (Demo)*): the same extension on a real business app, without touching its code.
-3. **Dashboard**: the exploration result, the learning review (approve or reject agent memory), insights ("fix the app" vs "training"), the knowledge base and trainings.
-
-The dashboard and server are hosted on Codesphere. The extension is loaded unpacked in Chrome.
+1. **CORPUS** on Fuller's dev system (`dev.fuller.de`, sample data only, *Fuller GmbH (Demo)*): the extension on a real business app, without touching its code. Valo notices when someone is stuck, puts a spotlight on the right control, walks a multi-step plan, and answers "Hey Valo, …" by voice, in the language of the question.
+2. **Dashboard** (https://691180.1.cloud.codesphere.com): install the extension, the exploration result, the learning review (approve or reject agent memory), insights ("fix the app" vs "training"), the knowledge base and trainings.
 
 ### How to try
 
-You need Node ≥ 22, Docker, the Supabase CLI, Python 3, Chrome and a Gemini API key.
+1. Open the hosted dashboard **https://691180.1.cloud.codesphere.com/install** and download the extension (it is built during deployment and already points to the hosted runtime).
+2. Unzip it, open `chrome://extensions`, switch on **Developer mode**, click **Load unpacked** and pick the unzipped folder. Chrome does not allow one-click installs from websites; for company-wide rollout IT can force-install Valo via Chrome policy.
+3. Pin Valo, reload the app tab and sign in with your Valo account in the side panel (**⌘⇧L** / **Alt+L** opens Valo, **⌘⇧K** asks by voice).
 
-```bash
-npm install
-npm run db:start        # local Supabase in Docker
-npm run db:env          # writes .env.local, then add GEMINI_API_KEY to it
-npm run dev:server      # runtime   → http://localhost:3001
-npm run dev:dashboard   # dashboard → http://localhost:3000 (demo login is shown on the local login page)
-npm run demo:crm        # demo app  → http://localhost:4000
-npm run build -w @lotse/extension
-# chrome://extensions → Developer mode → "Load unpacked" → apps/extension/.output/chrome-mv3
-```
-
-The hosted version (https://691180.1.cloud.codesphere.com) is invite-only: **access on request**.
+The hosted version is invite-only (no self sign-up): **access on request**. To run everything on your own machine, see [Local development](#local-development).
 
 ## Team
 
@@ -176,6 +166,9 @@ The starter template (Next.js + local Supabase, team setup docs) was committed o
 | 15:44 | Learning loop: agent memory review, knowledge gaps, helpful-offer stats (≥ 5 people) |
 | 16:37 | Our own "Hey Valo" wake word model |
 | 17:01 | Hosting: Supabase Cloud + Codesphere |
+| 17:40 | Hosted voice: access token on Live and TTS calls |
+| 17:51 | Extension download in the hosted dashboard (`/install`) |
+| 17:59 | Answers pinned to the language of the question; spoken questions get spoken answers |
 
 ## Development
 
@@ -194,25 +187,110 @@ The starter template (Next.js + local Supabase, team setup docs) was committed o
 
 Internal package names keep the old project name `lotse` ([D-32](docs/decisions.md)).
 
-### Scripts (repo root)
+### Local development
+
+You need Node ≥ 22, Docker, the Supabase CLI, Python 3, Chrome and a Gemini API key.
 
 ```bash
-npm run doctor          # checks tools, Docker, Supabase, .env.local, Gemini key
-npm run dev:server      # agent runtime → http://localhost:3001 (status page, /chat playground)
-npm run dev:dashboard   # dashboard     → http://localhost:3000
-npm run dev:extension   # WXT dev (port 3002), opens Chrome with the extension loaded
-npm run demo:crm        # demo CRM      → http://localhost:4000
-npm run typecheck       # all workspaces
-npm run lint            # all workspaces
-npm run build           # all workspaces
-npm run db:start | db:stop | db:status
-npm run db:env          # writes the root .env.local with the local Supabase keys
-npm run db:migration <name>   # new SQL migration
-npm run db:reset        # rebuild DB from migrations + seed (deletes local data)
-npm run db:types        # regenerate packages/shared/src/database.types.ts
+npm install
+npm run db:start        # local Supabase in Docker
+npm run db:env          # writes .env.local, then add GEMINI_API_KEY to it
+npm run dev:server      # runtime   → http://localhost:3001
+npm run dev:dashboard   # dashboard → http://localhost:3000 (the demo login is shown on the local login page only)
+npm run demo:crm        # optional: static demo CRM for development → http://localhost:4000
+npm run build -w @lotse/extension
+# chrome://extensions → Developer mode → "Load unpacked" → apps/extension/.output/chrome-mv3
 ```
 
+The extension talks to `http://localhost:3001` by default. For a hosted build: `WXT_LOTSE_SERVER_URL=https://<workspace> npm run build -w @lotse/extension`.
+
+### Scripts (repo root)
+
+<!-- AUTO-GENERATED from package.json -->
+| Command | What it does |
+| --- | --- |
+| `npm run dev:server` | Agent runtime → http://localhost:3001 |
+| `npm run dev:dashboard` | Dashboard → http://localhost:3000 |
+| `npm run dev:extension` | WXT dev (port 3002), opens Chrome with the extension |
+| `npm run build` | Build all workspaces |
+| `npm run lint` | Lint all workspaces |
+| `npm run typecheck` | Typecheck all workspaces |
+| `npm run demo:crm` | Static demo CRM for development → http://localhost:4000 |
+| `npm run db:start` | Start the local Supabase (Docker) |
+| `npm run db:stop` | Stop the local Supabase (data is kept) |
+| `npm run db:status` | Show local Supabase URLs and keys |
+| `npm run db:env` | Write the root .env.local with the local Supabase keys |
+| `npm run db:reset` | Rebuild the local DB from migrations + seed (deletes local data) |
+| `npm run db:migration` | New SQL migration: npm run db:migration <name> |
+| `npm run db:types` | Regenerate packages/shared/src/database.types.ts |
+| `npm run ai:check` | Smoke-test the Gemini key (text, JSON, embeddings) |
+| `npm run doctor` | Check tools, Docker, Supabase, .env.local, Gemini key |
+<!-- /AUTO-GENERATED -->
+
 One workspace only: `npm run <script> -w @lotse/server` (or `@lotse/dashboard`, `@lotse/extension`, `@lotse/shared`).
+
+### Environment variables
+
+Local: one `.env.local` at the repo root (`npm run db:env` writes the Supabase part). Hosted: Codesphere workspace variables (see [Hosting](#hosting)).
+
+<!-- AUTO-GENERATED from .env.example -->
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | yes | Copy to .env.local, or generate it with `npm run db:env` while local Supabase runs. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | – |
+| `SUPABASE_SECRET_KEY` | yes | Server-only. Bypasses RLS — never expose to the browser. |
+| `GEMINI_API_KEY` | yes | Google Gemini — server-only. Get a key at https://aistudio.google.com/apikey |
+| `LOTSE_DISABLED` | no | Kill switch: 1 = every /api/lotse/* call answers 503. |
+| `LOTSE_DEV_AUTH` | no | Allow anonymous calls (identity = x-lotse-session) even when NODE_ENV=production. Always allowed in dev. |
+| `LOTSE_KNOWLEDGE_SOURCE` | no | Feature knowledge: "auto" (default: dashboard tables apps/app_features, bundled demo-CRM fixture as fallback), "db" (same, warns when the app is missing) or "fi… |
+| `LOTSE_TIER_CLASSIFIER` | no | 0 = never call the Decisions API to break ties in tier selection (heuristic only). |
+| `LOTSE_LIMIT_ASK_PER_MIN` | no | Requests per minute per caller (user id, else x-lotse-session). Defaults: ask 20, state 60, intent 60, decide 60, events 6, prefs 20. state/intent/decide run on… |
+| `LOTSE_LIMIT_STATE_PER_MIN` | no | – |
+| `LOTSE_LIMIT_INTENT_PER_MIN` | no | – |
+| `LOTSE_LIMIT_DECIDE_PER_MIN` | no | – |
+| `LOTSE_LIMIT_EVENTS_PER_MIN` | no | – |
+| `LOTSE_LIMIT_PREFS_PER_MIN` | no | – |
+| `LOTSE_TIMEOUT_STATE_MS` | no | Model timeouts (ms) for /state and /intent. Defaults 6000 / 8000 (the extension aborts after 20 s). |
+| `LOTSE_TIMEOUT_INTENT_MS` | no | – |
+| `LOTSE_LIMIT_LIVE_TOKENS_PER_MIN` | no | Voice sessions per minute (one Live token = one spoken question, NOT LLM tokens). Defaults: 8 per session, 60 global. |
+| `LOTSE_LIMIT_LIVE_TOKENS_GLOBAL_PER_MIN` | no | – |
+| `LOTSE_LIMIT_GLOBAL_PER_MIN` | no | Global cap per minute for ask/state/intent/decide/events/prefs across all callers (per kind). Default 300. |
+| `LOTSE_CORPUS_HOSTS` | no | Hosts treated as CORPUS: its vehicle/fleet pages hold real data. Default: localhost:3100,127.0.0.1:3100 (plus any dashboard app named "CORPUS…"). |
+| `LOTSE_FLEET_ROUTES` | no | Route patterns blocked on CORPUS hosts (`*` = anything, case-insensitive, matched against path + query + hash). Default: *fahrzeug*,*vehicle*,*fleet*,*fuhrpark* |
+| `LOTSE_BLOCKED_ROUTES` | no | Extra blocked patterns per app host: "host=pattern\|pattern;host2=pattern", e.g. "localhost:3100=/admin/*\|/export*" |
+| `LOTSE_ALLOW_UNKNOWN_APPS` | no | Hosts that are no org's app: 1 = allowed (empty blocklist), 0 = refused. Default: allowed in dev, refused in production. |
+| `LOTSE_LIMIT_POLICY_PER_MIN` | no | GET /policy calls per minute per caller (the extension caches per host for 60 s). Default 60. |
+| `LOTSE_DAILY_TOKEN_BUDGET` | no | LLM tokens (input+output; state+intent+decide+ask) per caller per UTC day. Default 2000000 (~8k per observation cycle). |
+| `LOTSE_MEMORY` | no | 0 = don't learn from /ask answers (no topic call, no gaps, no memory evidence). Reading active memories stays on. |
+| `LOTSE_MEMORY_TTL_DAYS` | no | Days without new supporting evidence before a learned memory expires (admin-written ones never expire). Default 60. |
+| `LOTSE_PSEUDONYM_SALT` | no | Salt for hashing pseudonymous subject keys in agent_memory_evidence / knowledge_gap_subjects. Default "lotse-memory-v1". |
+<!-- /AUTO-GENERATED -->
+
+### Hosting
+
+<!-- AUTO-GENERATED from ci.valo.yml + docs/hosting-codesphere.md -->
+One Codesphere workspace (https://691180.1.cloud.codesphere.com), CI profile `ci.valo.yml`, path routing:
+
+| Path | Service | Start script |
+| --- | --- | --- |
+| `/` | dashboard (Next.js, also serves `/valo-extension.zip`) | `infra/codesphere/start-dashboard.sh` |
+| `/api` | runtime (Next.js, `/api/lotse/*`, `/api/knowledge/*`) | `infra/codesphere/start-server.sh` |
+
+Database, auth and vector search: **Supabase Cloud** (eu-central-1). Migrations are pushed with the Supabase CLI (`supabase link --project-ref <ref>` then `supabase db push`), not by the pipeline. The prepare step builds the extension as a ZIP pointed at `LOTSE_SERVER_URL`, then builds dashboard and server; it fails if `LOTSE_SERVER_URL` is empty.
+
+Workspace variables (nothing else is needed):
+
+| Variable | Value |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_…` (Supabase → Settings → API Keys) |
+| `SUPABASE_SECRET_KEY` | `sb_secret_…` (full key: `supabase projects api-keys --reveal`) |
+| `GEMINI_API_KEY` | Gemini API key |
+| `LOTSE_SERVER_URL` | `https://<workspace>` |
+| `LOTSE_PSEUDONYM_SALT` | random, ≥ 32 characters (the code default is public) |
+
+Never set `LOTSE_DEV_AUTH` on the hosted version. Supabase Auth: sign-up off, email confirmation off, Site URL = workspace URL. Deploy: Prepare → Test → Run (new workspace once: `fnm install 24.22.1`). Details: [docs/hosting-codesphere.md](docs/hosting-codesphere.md).
+<!-- /AUTO-GENERATED -->
 
 ### More docs
 

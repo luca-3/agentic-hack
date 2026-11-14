@@ -23,7 +23,7 @@
    | `LOTSE_PSEUDONYM_SALT` | neuer Zufallswert, z. B. `openssl rand -hex 32` |
 
    **Nie** `LOTSE_DEV_AUTH` setzen (der Server startet dann nicht; sonst gingen Gemini-Aufrufe ohne Login durch). `NODE_ENV=production` setzt das Startskript.
-4. **Node** im Workspace einmal: `fnm install 24.22.1`. Dann die **Pipeline** starten (prepare = `npm ci` + Build beider Apps, test = typecheck, run = dashboard + server). Die `NEXT_PUBLIC_*`-Werte werden beim Build eingebaut, deshalb Schritt 3 vorher.
+4. **Node** im Workspace einmal: `fnm install 24.22.1`. Dann die **Pipeline** starten (prepare = `npm ci`, Erweiterung als ZIP mit `WXT_LOTSE_SERVER_URL=$LOTSE_SERVER_URL` → `apps/dashboard/public/valo-extension.zip` (Download unter `/install`; bricht ab, wenn `LOTSE_SERVER_URL` leer ist), dann Build beider Apps; test = typecheck; run = dashboard + server). Die `NEXT_PUBLIC_*`-Werte werden beim Build eingebaut, deshalb Schritt 3 vorher.
 5. **Testdaten** (lokal, die lokale Supabase muss laufen):
    ```bash
    bash infra/codesphere/copy-local-data.sh          # → infra/codesphere/dump.sql (gitignored)
