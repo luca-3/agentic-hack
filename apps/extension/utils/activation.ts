@@ -44,8 +44,10 @@ let running = false;
 let again = false;
 
 const isLocalApp = (url: string | undefined) => {
-  try { const u = new URL(url ?? ""); return u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname); }
-  catch { return false; }
+  try {
+    const u = new URL(url ?? "");
+    return (u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname)) || (u.protocol === "https:" && u.hostname === "dev.fuller.de");
+  } catch { return false; }
 };
 /** Older servers have no `autoStart`: a known, allowed app counts. */
 const autoStartOf = (policy: PolicyResponse) => policy.autoStart ?? (policy.allowed && policy.known);

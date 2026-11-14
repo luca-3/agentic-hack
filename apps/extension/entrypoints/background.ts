@@ -130,7 +130,11 @@ let lastShown = { message: "", screenshotMessage: "", prefsMessage: "" };
 const STORE = "lotse-observation-session";
 const localUrl = (url?: string): boolean => {
   if (!url) return false;
-  try { const u = new URL(url); return u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname); }
+  try {
+    const u = new URL(url);
+    // Same hosts as host_permissions in wxt.config.ts: local apps + CORPUS dev (example data).
+    return (u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname)) || (u.protocol === "https:" && u.hostname === "dev.fuller.de");
+  }
   catch { return false; }
 };
 
