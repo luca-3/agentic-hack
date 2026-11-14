@@ -1,4 +1,4 @@
-import { LOTSE_DEFAULTS, type VoiceState } from "@lotse/shared";
+import type { VoiceState } from "@lotse/shared";
 import type { LotseResult, LotseStatus, PageStatus } from "../background";
 import type { LotseMessage } from "../../utils/messages";
 import { applyShortcutLabels, shortcutLabels } from "../../utils/shortcuts";
@@ -30,8 +30,6 @@ const exploreStop = get<HTMLButtonElement>("#explore-stop");
 const exploreBarWrap = get<HTMLDivElement>("#explore-bar-wrap");
 const exploreBar = get<HTMLDivElement>("#explore-bar");
 const exploreSpinner = get<HTMLSpanElement>("#explore-spinner");
-const exploreDashboardLink = get<HTMLAnchorElement>("#explore-dashboard-link");
-exploreDashboardLink.href = `${LOTSE_DEFAULTS.dashboardUrl}/lernen`;
 const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 bereit", listening: "🎙 hört zu …", thinking: "… denkt nach", speaking: "🔊 spricht" };
 let settingsLoaded = false;
 let thresholdDirty = false;
@@ -82,25 +80,17 @@ function renderAccount(status: LotseStatus) {
       exploreBar.style.width = `${pct}%`;
       const routeInfo = exp.currentRoute ? ` · ${exp.currentRoute}` : "";
       get("#explore-progress").textContent = `Seite ${shownCount} von max. ${exp.maxPages}${routeInfo} (${elapsedSec} s)`;
-      get("#explore-result").textContent = "";
-      exploreDashboardLink.hidden = true;
     } else if (exp.phase === "analyzing") {
       exploreBar.style.width = "";
-      get("#explore-progress").textContent = `Auswertung läuft (${elapsedSec} s) – Gemini analysiert ${exp.pageCount} erfasste Seiten …`;
-      get("#explore-result").textContent = "";
-      exploreDashboardLink.hidden = true;
+      get("#explore-progress").textContent = `Auswertung läuft (${elapsedSec} s) …`;
     } else if (exp.phase === "done" && exp.result) {
-      get("#explore-progress").textContent = `${exp.pageCount} von max. ${exp.maxPages} Seiten untersucht.`;
-      get("#explore-result").textContent = `${exp.result.features} Funktionen und ${exp.result.findings} Design-Befunde gefunden – im Dashboard unter ‚Lernen‘ prüfen`;
-      exploreDashboardLink.hidden = false;
+      get("#explore-progress").textContent = exp.result.features === 1
+        ? "1 neue Funktion angelegt."
+        : `${exp.result.features} neue Funktionen angelegt.`;
     } else if (exp.phase === "stopped" || exp.phase === "error") {
       get("#explore-progress").textContent = exp.summary;
-      get("#explore-result").textContent = "";
-      exploreDashboardLink.hidden = true;
     } else {
       get("#explore-progress").textContent = "";
-      get("#explore-result").textContent = "";
-      exploreDashboardLink.hidden = true;
     }
     get("#explore-status-row").hidden = !activePhase && !get("#explore-progress").textContent;
   }

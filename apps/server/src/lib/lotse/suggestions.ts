@@ -13,6 +13,8 @@ export interface SuggestionInput {
   persons?: number;
   /** Absolute count (learn detectors). Absent → existing occurrences + 1. */
   occurrences?: number;
+  /** Optional initial/explicit status (e.g. 'accepted' when auto-applied during exploration). */
+  status?: "open" | "accepted" | "dismissed";
 }
 
 /**
@@ -44,6 +46,7 @@ export async function upsertSuggestions(orgId: string, items: SuggestionInput[])
     fingerprint,
     persons: i.persons ?? 0,
     occurrences: i.occurrences ?? (prev.get(fingerprint) ?? 0) + 1,
+    ...(i.status ? { status: i.status } : {}),
     updated_at: now,
   }));
   const { error } = await db.from("lotse_suggestions").upsert(rows, { onConflict: "org_id,fingerprint" });

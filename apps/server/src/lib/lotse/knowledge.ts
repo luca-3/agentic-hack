@@ -128,6 +128,11 @@ export function knowledgeSource(): KnowledgeSource {
   return mode === "fixture" ? sources.fixture : mode === "db" ? sources.db : sources.auto;
 }
 
+/** Invalidates the in-memory app_features cache so newly explored features are active immediately. */
+export function clearKnowledgeCache() {
+  cache.clear();
+}
+
 /** App id = explicit appId, else x-lotse-app header, else the snapshot URL's host. */
 export function resolveAppId(explicit: string | undefined, header: string | null, url: string | undefined) {
   if (explicit) return explicit.slice(0, 200);
