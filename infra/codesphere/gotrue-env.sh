@@ -1,9 +1,11 @@
 # Sourced by migrate.sh and start-gotrue.sh: maps the Codesphere workspace variables to GoTrue's names.
-# Required workspace variables: GOTRUE_DB_URL, JWT_SECRET, API_EXTERNAL_URL, SITE_URL.
+# Required workspace variables: GOTRUE_DB_URL, JWT_SECRET, NEXT_PUBLIC_SUPABASE_URL (= https://<workspace>).
+# SITE_URL / API_EXTERNAL_URL are derived from it (override only if the domain differs).
 : "${GOTRUE_DB_URL:?set GOTRUE_DB_URL (postgres://supabase_auth_admin:…@…/valo)}"
 : "${JWT_SECRET:?set JWT_SECRET}"
-: "${API_EXTERNAL_URL:?set API_EXTERNAL_URL (https://<workspace>/auth/v1)}"
-: "${SITE_URL:?set SITE_URL (https://<workspace>)}"
+SITE_URL="${SITE_URL:-${NEXT_PUBLIC_SUPABASE_URL:?set NEXT_PUBLIC_SUPABASE_URL (https://<workspace>)}}"
+SITE_URL="${SITE_URL%/}"
+API_EXTERNAL_URL="${API_EXTERNAL_URL:-$SITE_URL/auth/v1}"
 
 GOTRUE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/bin/gotrue"
 export GOTRUE_DB_DRIVER=postgres
@@ -26,4 +28,4 @@ export GOTRUE_EXTERNAL_EMAIL_ENABLED=true
 export GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED=false
 # No SMTP on Codesphere: sign-ups are confirmed immediately (same as local, enable_confirmations = false).
 export GOTRUE_MAILER_AUTOCONFIRM="${GOTRUE_MAILER_AUTOCONFIRM:-true}"
-export GOTRUE_PASSWORD_MIN_LENGTH=6
+export GOTRUE_PASSWORD_MIN_LENGTH=8
