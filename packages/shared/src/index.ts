@@ -155,6 +155,7 @@ export const LiveTokenResponseSchema = z.object({
   token: z.string(),
   model: z.string(),
   expiresAt: z.string(), // ISO timestamp
+  wsUrl: z.string().optional(), // Gemini Live WebSocket endpoint to open with the token (see apps/server/VOICE.md)
 });
 export type LiveTokenResponse = z.infer<typeof LiveTokenResponseSchema>;
 
