@@ -56,7 +56,7 @@ Listed but untested: lite (`gemini-3.5-flash-lite`, `gemini-3.1-flash-lite`), Li
 
 ## Competitors (2026-11-14)
 
-Three parallel research passes (digital adoption platforms · AI screen agents · friction analytics). **Caveat:** no working web search that day — all claims come from vendor pages fetched directly; several pages 404'd or timed out (tts performance suite, Tandem). Items marked *unverified* are from prior knowledge. Summary and pitch line: [README → Does this exist already?](../README.md#does-this-exist-already-competitor-check-2026-11-14).
+Three parallel research passes (digital adoption platforms · AI screen agents · friction analytics). **Caveat:** no working web search that day — all claims come from vendor pages fetched directly; several pages 404'd or timed out (tts performance suite, Tandem). Items marked *unverified* are from prior knowledge. Summary and pitch line: [README → What's different](../README.md#whats-different).
 
 | Product | Deploy | Guidance | Proactive "stuck" | Points on screen | Fades | Company analytics | Source |
 | --- | --- | --- | --- | --- | --- | --- | --- |
