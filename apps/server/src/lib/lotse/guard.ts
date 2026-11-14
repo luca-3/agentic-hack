@@ -1,14 +1,14 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { LOTSE_HEADERS, type PageSnapshot } from "@lotse/shared";
-import { LIMITS, type GuardKind } from "./config";
+import { LIMITS, type BodyKind, type GuardKind } from "./config";
 
 /**
- * Runtime guard for /api/lotse/*: auth → kill switch → rate limit → (ask) token budget, plus input caps.
+ * Runtime guard for /api/lotse/*: auth → kill switch → rate limit → (LLM routes) token budget, plus input caps.
  * State is in-memory per server process — fine for the hackathon (one instance); swap for Redis/DB when scaling out.
  */
 
-export { LIMITS, type GuardKind };
+export { LIMITS, type BodyKind, type GuardKind };
 export type ErrorCode = "bad_request" | "unauthorized" | "rate_limited" | "budget_exceeded" | "timeout" | "disabled" | "internal";
 
 export interface Caller {
@@ -115,23 +115,43 @@ export function chargeBudget(caller: Caller, tokens: number | undefined) {
 // Entry point for routes
 // ---------------------------------------------------------------------------
 
+const LLM_KINDS = new Set<GuardKind>(["ask", "state", "intent", "decide"]);
+
 /** Kill switch + auth + rate limit (+ budget for LLM routes). Throws GuardError. */
 export async function guard(request: Request, kind: GuardKind): Promise<Caller> {
   if (process.env.LOTSE_DISABLED === "1") throw new GuardError("disabled", "Lotse ist gerade deaktiviert.", 503);
   const caller = await authenticate(request);
   rateLimit(kind, caller);
-  if (kind === "ask" || kind === "decide") checkBudget(caller);
+  if (LLM_KINDS.has(kind)) checkBudget(caller);
   return caller;
 }
 
-/** Reads a JSON body with a size cap. Throws GuardError("bad_request"). */
-export async function readJson(request: Request): Promise<unknown> {
+function tooLarge(max: number) {
+  return new GuardError("bad_request", `Request body too large (max ${Math.round(max / 1024)} KB for this endpoint).`, 413);
+}
+
+/** Reads a JSON body with the route's size cap (LIMITS.maxBodyBytes[kind]); stops reading once over it. Throws GuardError. */
+export async function readJson(request: Request, kind: BodyKind = "default"): Promise<unknown> {
+  const max = LIMITS.maxBodyBytes[kind];
   const len = Number(request.headers.get("content-length") ?? 0);
-  if (len > LIMITS.maxBodyBytes) throw new GuardError("bad_request", "Request body too large.", 413);
-  const text = await request.text();
-  if (text.length > LIMITS.maxBodyBytes) throw new GuardError("bad_request", "Request body too large.", 413);
+  if (len > max) throw tooLarge(max);
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  const reader = request.body?.getReader();
+  if (reader) {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > max) {
+        await reader.cancel().catch(() => undefined);
+        throw tooLarge(max);
+      }
+      chunks.push(value);
+    }
+  }
   try {
-    return JSON.parse(text);
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
   } catch {
     throw new GuardError("bad_request", "Body must be JSON.", 400);
   }

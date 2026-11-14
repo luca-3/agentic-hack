@@ -24,6 +24,7 @@ export interface TierConfig {
  * Measured 2026-11-14 (one tool call, small prompt): flash-lite minimal ≈ 0.6 s · 3.8-flash low ≈ 2–3 s · 4-argon low ≈ 7 s.
  * Full /ask (≈ 2k input tokens): guide on 3.8-flash 6.5 s vs flash-lite 1.0 s with the same plan → guide uses flash-lite.
  * 3.8-flash and 4-argon reject thinkingLevel "minimal".
+ * Timeouts: the extension aborts after 20 s → context (≤ 2 s) + classifier (≤ 1.5 s) + tier run must stay below that.
  */
 export const TIERS: Record<Tier, TierConfig> = {
   /** "Where do I click?" — target is on the current page. One tool call, no research. */
@@ -41,7 +42,7 @@ export const TIERS: Record<Tier, TierConfig> = {
     maxSteps: 5,
     maxOutputTokens: 2_000,
     thinkingLevel: "low",
-    timeoutMs: 20_000,
+    timeoutMs: 12_000,
     tools: ["pointTo", "showPlan", "say", "searchFeatures", "searchKnowledge"],
   },
   /** Ambiguous / analytical / long questions. */
@@ -50,7 +51,7 @@ export const TIERS: Record<Tier, TierConfig> = {
     maxSteps: 8,
     maxOutputTokens: 4_000,
     thinkingLevel: "low",
-    timeoutMs: 40_000,
+    timeoutMs: 15_000,
     tools: ["pointTo", "showPlan", "say", "searchFeatures", "searchKnowledge"],
   },
 };

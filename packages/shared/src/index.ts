@@ -1,7 +1,10 @@
 /**
- * @lotse/shared — the contract between extension, server and dashboard.
+ * @lotse/shared — the ONE contract between extension, server and dashboard.
  * Change a schema here and all apps see it (typecheck catches mismatches).
- * Zod schemas validate at the boundaries (API routes, extension). Owner: orchestrator — propose changes, don't drift.
+ * Zod schemas validate at the boundaries (API routes, extension). Owner: runtime/server — propose changes, don't drift.
+ *
+ * Staged proactive pipeline (D-23): /state → /intent → /decide → (only if intervene) /ask with screenshots.
+ * Explicit question (text / voice / wake word): /ask directly. Server guide: apps/server/RUNTIME.md.
  */
 import { z } from "zod";
 
@@ -26,13 +29,13 @@ export const InteractiveElementSchema = z.object({
   number: z.number().int().nonnegative(),
   role: z.string(), // "button", "link", "textbox", "tab", …
   label: z.string(), // accessible name (aria-label, <label>, visible text)
-  route: z.string(), // location.pathname + search
+  route: z.string(), // location.pathname (+ hash route); never the query string (may contain entered data)
   rect: z.object({ x: z.number(), y: z.number(), width: z.number(), height: z.number() }).optional(),
   disabled: z.boolean().optional(),
 });
 export type InteractiveElement = z.infer<typeof InteractiveElementSchema>;
 
-/** Snapshot of the current page as seen by the extension. Server caps it (e.g. 300 elements). */
+/** Snapshot of the current page as seen by the extension (≤ 120 elements today). Server caps it (300 elements, 80-char labels). */
 export const PageSnapshotSchema = z.object({
   id: z.string().optional(), // state identity; highlights must refer to this snapshot
   url: z.string(),
@@ -56,7 +59,11 @@ export const LotseEventSchema = z.object({
 });
 export type LotseEvent = z.infer<typeof LotseEventSchema>;
 
-/** Timestamped states and frames stay in a bounded local buffer until a trigger/question. */
+// ---------------------------------------------------------------------------
+// Staged observability pipeline (D-23). Screenshots stay local until /ask.
+// ---------------------------------------------------------------------------
+
+/** Timestamped states and frames stay in a bounded local buffer (extension) until a positive decision or a question. */
 export const ObservationSnapshotSchema = PageSnapshotSchema.extend({ id: z.string().min(1) });
 export type ObservationSnapshot = z.infer<typeof ObservationSnapshotSchema>;
 export const ScreenshotFrameSchema = z.object({
@@ -73,6 +80,7 @@ export const ObservedWorkflowSchema = z.object({
   events: z.array(LotseEventSchema).max(180),
 });
 export type ObservedWorkflow = z.infer<typeof ObservedWorkflowSchema>;
+/** POST /api/lotse/state response. snapshotId/capturedAt echo the request snapshot; summary/action come from Gemini. */
 export const UIStateInferenceSchema = z.object({
   snapshotId: z.string().min(1),
   capturedAt: z.number(),
@@ -80,12 +88,13 @@ export const UIStateInferenceSchema = z.object({
   action: z.string().max(500).optional(),
 });
 export type UIStateInference = z.infer<typeof UIStateInferenceSchema>;
-/** Events/DOM only; screenshots are deliberately absent from the state-inference request. */
+/** POST /api/lotse/state — events/DOM only; screenshots are deliberately absent from the state-inference request. */
 export const UIStateRequestSchema = z.object({
   snapshot: ObservationSnapshotSchema,
   events: z.array(LotseEventSchema).max(180),
 });
 export type UIStateRequest = z.infer<typeof UIStateRequestSchema>;
+/** Bounded local history: workflow events, current + ≤ 12 earlier DOM states, ≤ 4 frames (only for /ask), inferred states. */
 export const ObservationContextSchema = z.object({
   workflow: ObservedWorkflowSchema,
   snapshot: ObservationSnapshotSchema,
@@ -94,6 +103,7 @@ export const ObservationContextSchema = z.object({
   states: z.array(UIStateInferenceSchema).max(40).optional(),
 });
 export type ObservationContext = z.infer<typeof ObservationContextSchema>;
+/** Local rule annotation inside the extension. On the wire it is sent as a StuckTrigger (see DecideRequestSchema). */
 export const StuckSignalSchema = z.object({
   type: z.enum(["repeated_error", "unsuccessful_searches", "route_ping_pong", "form_idle", "workflow_update"]),
   reason: z.string().max(500),
@@ -105,36 +115,20 @@ export const InferredIntentSchema = z.object({
   evidence: z.array(z.string().max(200)).max(8),
 });
 export type InferredIntent = z.infer<typeof InferredIntentSchema>;
+/** POST /api/lotse/intent response. */
 export const WorkflowIntentSchema = z.object({
   workflowName: z.string().max(200),
   intent: InferredIntentSchema,
 });
 export type WorkflowIntent = z.infer<typeof WorkflowIntentSchema>;
+/** POST /api/lotse/intent — inferred UI-state sequence (context.states) + app context → WorkflowIntent. No images. */
 export const IntentRequestSchema = z.object({
   context: ObservationContextSchema.extend({ states: z.array(UIStateInferenceSchema).min(1).max(40), screenshots: z.array(ScreenshotFrameSchema).max(0) }),
   role: z.string().max(100).optional(),
   appId: z.string().max(100).optional(),
-  appKnowledge: z.string().max(12_000).optional(),
+  appKnowledge: z.string().max(12_000).optional(), // client notes; the server treats them as untrusted and caps them
 });
 export type IntentRequest = z.infer<typeof IntentRequestSchema>;
-
-/** POST /api/lotse/decide — Gemini interprets the workflow and decides whether to offer help. */
-export const DecisionRequestSchema = z.object({
-  context: ObservationContextSchema.extend({ screenshots: z.array(ScreenshotFrameSchema).max(0) }),
-  trigger: StuckSignalSchema,
-  inference: WorkflowIntentSchema.optional(),
-  role: z.string().max(100).optional(),
-  appId: z.string().max(100).optional(),
-  appKnowledge: z.string().max(12_000).optional(),
-});
-export type DecisionRequest = z.infer<typeof DecisionRequestSchema>;
-export const DecisionResponseSchema = z.object({
-  workflowName: z.string().max(200).optional(),
-  intent: InferredIntentSchema.optional(),
-  intervene: z.boolean(),
-  reason: z.string().max(500),
-});
-export type DecisionResponse = z.infer<typeof DecisionResponseSchema>;
 
 /** POST /api/lotse/events — batched analytics ingest (extension pre-filters + batches; max 100 per call). → 202 */
 export const EventBatchSchema = z.object({
@@ -144,29 +138,35 @@ export const EventBatchSchema = z.object({
 export type EventBatch = z.infer<typeof EventBatchSchema>;
 
 // ---------------------------------------------------------------------------
-// Proactive help (extension rules → server decision)
+// Proactive help: intervention decision (after /state + /intent) + adaptive threshold
 // ---------------------------------------------------------------------------
 
-/** Local rule annotation, or workflow_update for the staged observability pipeline. */
+/**
+ * Wire name of the local rule that annotated the sequence, or `workflow_update` when no rule fired (D-23: rules annotate,
+ * they never gate the state/intent calls). Extension rule → trigger: unsuccessful_searches → repeated_search,
+ * route_ping_pong → page_pingpong, repeated_error / form_idle unchanged.
+ */
 export const StuckTriggerSchema = z.enum(["repeated_search", "page_pingpong", "form_idle", "repeated_error", "rage_click", "workflow_update"]);
 export type StuckTrigger = z.infer<typeof StuckTriggerSchema>;
 
-/** POST /api/lotse/decide — "should Lotse offer help now?" (cheap lite model). */
+/** POST /api/lotse/decide — "should Lotse offer help now?" (Gemini Decisions API, lite-model fallback). No images. */
 export const DecideRequestSchema = z.object({
   trigger: StuckTriggerSchema,
+  triggerReason: z.string().max(500).optional(), // the local rule's reason text (StuckSignal.reason), if any
   events: z.array(LotseEventSchema).max(50), // recent window, oldest first
   snapshot: PageSnapshotSchema.optional(),
-  role: z.string().optional(),
-  appId: z.string().optional(),
-  context: ObservationContextSchema.extend({ screenshots: z.array(ScreenshotFrameSchema).max(0) }).optional(),
-  inference: WorkflowIntentSchema.optional(),
-  appKnowledge: z.string().max(12_000).optional(),
+  role: z.string().max(100).optional(),
+  appId: z.string().max(100).optional(),
+  context: ObservationContextSchema.extend({ screenshots: z.array(ScreenshotFrameSchema).max(0) }).optional(), // incl. states
+  inference: WorkflowIntentSchema.optional(), // result of /intent
+  appKnowledge: z.string().max(12_000).optional(), // untrusted client notes
 });
 export type DecideRequest = z.infer<typeof DecideRequestSchema>;
 
+/** Final decision: intervene = model says yes AND confidence ≥ the user's threshold (server-side, D-22). */
 export const DecideResponseSchema = z.object({
   intervene: z.boolean(),
-  confidence: z.number().min(0).max(1),
+  confidence: z.number().min(0).max(1), // calibrated P(user needs help now), Decisions API
   intent: z.string().optional(), // what the user probably wants, e.g. "IBAN eines Kunden ändern" → becomes the question for /ask
   offer: z.string().max(140).optional(), // short offer text, e.g. "Soll ich dir zeigen, wie du die IBAN änderst?"
   offerId: z.string().optional(), // set when intervene=true; echo it in OfferFeedback
@@ -208,17 +208,21 @@ export type ProactivePrefs = z.infer<typeof ProactivePrefsSchema>;
 export const TierSchema = z.enum(["point", "guide", "reason"]);
 export type Tier = z.infer<typeof TierSchema>;
 
-/** POST /api/lotse/ask — response is `application/x-ndjson`: one GuidanceEvent per line, flushed as soon as known. */
+/**
+ * POST /api/lotse/ask — response is `application/x-ndjson`: one GuidanceEvent per line, flushed as soon as known
+ * (legacy JSON AskResponse without that Accept header). Used after a positive /decide (source "proactive", question =
+ * inferred goal) and directly for explicit questions (text / voice). The only call that carries screenshots.
+ */
 export const AskRequestSchema = z.object({
   question: z.string().min(1).max(500),
   source: z.enum(["text", "voice", "proactive"]).default("text"),
-  snapshot: PageSnapshotSchema,
-  role: z.string().optional(), // user's role in the org (from dashboard/login)
-  appId: z.string().optional(),
+  snapshot: PageSnapshotSchema, // current state; its id is echoed (tier event / legacy snapshotId)
+  role: z.string().max(100).optional(), // demo role; an org member's real role comes from the dashboard
+  appId: z.string().max(100).optional(),
   recentEvents: z.array(LotseEventSchema).max(50).optional(),
-  observation: ObservationContextSchema.optional(),
-  intent: InferredIntentSchema.optional(),
-  appKnowledge: z.string().max(12_000).optional(),
+  observation: ObservationContextSchema.optional(), // history, inferred states, ≤ 4 frames → Gemini image parts
+  intent: InferredIntentSchema.optional(), // from /intent, if known
+  appKnowledge: z.string().max(12_000).optional(), // untrusted client notes
 });
 export type AskRequest = z.input<typeof AskRequestSchema>;
 
@@ -240,8 +244,8 @@ export const UsageSchema = z.object({
 export type Usage = z.infer<typeof UsageSchema>;
 
 export const GuidanceEventSchema = z.discriminatedUnion("type", [
-  /** Which tier/model the orchestrator picked (for status UI + debugging). */
-  z.object({ type: z.literal("tier"), tier: TierSchema, model: z.string() }),
+  /** Which tier/model the orchestrator picked (for status UI + debugging). Always first; snapshotId echoes AskRequest.snapshot.id. */
+  z.object({ type: z.literal("tier"), tier: TierSchema, model: z.string(), snapshotId: z.string().optional() }),
   /** Move the agent cursor to this element on the CURRENT page and highlight it — render immediately. */
   z.object({ type: z.literal("point"), elementNumber: z.number().int(), label: z.string(), hint: z.string().max(120).optional() }),
   /** Multi-step path (may span pages). The extension advances locally: after each click/navigation it finds the next step's label in a fresh snapshot — no extra server call. */
@@ -257,17 +261,17 @@ export const GuidanceEventSchema = z.discriminatedUnion("type", [
 ]);
 export type GuidanceEvent = z.infer<typeof GuidanceEventSchema>;
 
-/** @deprecated walking-skeleton response — replaced by the GuidanceEvent stream. */
+/** Legacy JSON /ask response (no `Accept: application/x-ndjson`). Still served; prefer the GuidanceEvent stream. */
 export const AskResponseSchema = z.object({
   elementNumber: z.number().int().nullable(),
   sentence: z.string(),
-  snapshotId: z.string().optional(),
+  snapshotId: z.string().optional(), // echo of AskRequest.snapshot.id
 });
 /** @deprecated */
 export type AskResponse = z.infer<typeof AskResponseSchema>;
 
 // ---------------------------------------------------------------------------
-// Voice (D-16): wake word / hotkey → transcription → /ask (source "voice") → optional short TTS
+// Voice (D-16): wake word / hotkey → transcription → lotse:wake-question → /ask (source "voice") → optional short TTS
 // ---------------------------------------------------------------------------
 
 /** POST /api/lotse/live-token — ephemeral Gemini Live token, locked to transcription config. The Gemini key never reaches the extension. */
@@ -283,7 +287,8 @@ export const VoiceStateSchema = z.enum(["off", "idle", "listening", "thinking", 
 export type VoiceState = z.infer<typeof VoiceStateSchema>;
 
 // ---------------------------------------------------------------------------
-// User settings (chrome.storage.sync key `lotse:settings`)
+// User settings (chrome.storage.sync key `lotse:settings`) — planned toggles; not wired yet.
+// The side panel's current demo settings (screenshots, role, appKnowledge) travel in the `lotse:settings` message.
 // ---------------------------------------------------------------------------
 
 export const LOTSE_SETTINGS_KEY = "lotse:settings";
@@ -307,7 +312,7 @@ export type ExtensionMessage =
   | { type: "lotse:status" }
   | { type: "lotse:observe"; event?: LotseEvent; snapshot?: ObservationSnapshot }
   | { type: "lotse:settings"; settings: { screenshots: boolean; role: string; appKnowledge: string } }
-  | { type: "lotse:wake-question"; question: string } // voice adapter uses the same explicit-question path
+  | { type: "lotse:wake-question"; question: string } // voice → background: transcribed question, same explicit-question path (source "voice")
   | { type: "lotse:guide"; event: GuidanceEvent }
   | { type: "lotse:offer"; decision: DecideResponse }
   | { type: "lotse:clear" }

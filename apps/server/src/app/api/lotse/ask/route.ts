@@ -10,9 +10,10 @@ import { logUsage } from "@/lib/lotse/usage";
 export const OPTIONS = preflight;
 
 /**
- * POST /api/lotse/ask — question + page snapshot → guidance.
+ * POST /api/lotse/ask — question + page snapshot (+ observation history, inferred intent, ≤ 4 screenshots) → guidance.
+ * Last stage of the staged pipeline after a positive /decide (source "proactive"), or directly for explicit questions.
  * `Accept: application/x-ndjson` → stream of GuidanceEvents (tier → point/plan/say as they happen → done | error).
- * Otherwise → legacy JSON `{ elementNumber, sentence }` (walking-skeleton extension). Integration guide: apps/server/RUNTIME.md.
+ * Otherwise → legacy JSON `{ elementNumber, sentence, snapshotId }`. Integration guide: apps/server/RUNTIME.md.
  */
 export async function POST(request: Request) {
   const cors = corsHeaders(request.headers.get("origin"));
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
   let body: z.infer<typeof AskRequestSchema>;
   try {
     caller = await guard(request, "ask");
-    const parsed = AskRequestSchema.safeParse(await readJson(request));
+    const parsed = AskRequestSchema.safeParse(await readJson(request, "ask"));
     if (!parsed.success) throw new GuardError("bad_request", z.prettifyError(parsed.error), 400);
     body = parsed.data;
   } catch (e) {
@@ -39,8 +40,9 @@ export async function POST(request: Request) {
   }
 
   const started = Date.now();
+  const snapshotId = body.snapshot.id;
   async function* events(): AsyncGenerator<GuidanceEvent> {
-    yield { type: "tier", tier: decision.tier, model: TIERS[decision.tier].model };
+    yield { type: "tier", tier: decision.tier, model: TIERS[decision.tier].model, ...(snapshotId ? { snapshotId } : {}) };
     const gen = runGuidance({
       question: body.question,
       snapshot,
@@ -50,7 +52,10 @@ export async function POST(request: Request) {
       appName: app.appName,
       appNotes: body.appKnowledge,
       role,
-      recentEvents: body.recentEvents,
+      recentEvents: body.recentEvents ?? body.observation?.workflow.events.slice(-50),
+      source: body.source,
+      observation: body.observation,
+      intent: body.intent,
       decision,
       signal: request.signal,
     });
@@ -132,7 +137,7 @@ export async function POST(request: Request) {
   if (error?.type === "error") {
     return Response.json({ error: { code: error.code, message: error.message } }, { status: error.code === "timeout" ? 504 : 500, headers: cors });
   }
-  const res: AskResponse = { elementNumber, sentence: sentence || hint };
+  const res: AskResponse = { elementNumber, sentence: sentence || hint, ...(snapshotId ? { snapshotId } : {}) };
   return Response.json(res, { headers: { ...cors, ...contextHeader(ctx) } });
 }
 

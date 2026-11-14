@@ -5,7 +5,7 @@ import { cleanText, type Caller } from "./guard";
 
 /** One row in public.agent_usage per LLM call. Logging never breaks a request. */
 export interface UsageRecord {
-  route: "ask" | "decide";
+  route: "ask" | "state" | "intent" | "decide";
   tier?: string;
   model: string;
   inputTokens?: number;

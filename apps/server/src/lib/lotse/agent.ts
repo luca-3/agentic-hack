@@ -1,10 +1,20 @@
 import "server-only";
 import { isStepCount, streamText, tool, type LanguageModelUsage, type StopCondition, type ToolSet } from "ai";
 import { z } from "zod";
-import { GuidanceEventSchema, type Feature, type GuidanceEvent, type LotseEvent, type PageSnapshot, type Tier } from "@lotse/shared";
+import {
+  GuidanceEventSchema,
+  type Feature,
+  type GuidanceEvent,
+  type InferredIntent,
+  type LotseEvent,
+  type ObservationContext,
+  type PageSnapshot,
+  type Tier,
+} from "@lotse/shared";
 import { google } from "@/lib/ai/google";
 import { searchDocuments } from "@/lib/ai/embeddings";
 import { cleanText } from "./guard";
+import { screenshotParts } from "./images";
 import { roleAllowed, searchFeatures } from "./knowledge";
 import { TIERS, type TierDecision } from "./orchestrator";
 import { buildUserPrompt, SYSTEM_PROMPT } from "./prompt";
@@ -26,6 +36,9 @@ export interface GuidanceInput {
   appNotes?: string; // AskRequest.appKnowledge (extension settings) — untrusted, capped in the prompt
   role?: string; // resolved role (org_members, else client role in dev)
   recentEvents?: LotseEvent[];
+  source?: "text" | "voice" | "proactive";
+  observation?: ObservationContext; // history + inferred states + ≤ 4 screenshot frames (→ image parts)
+  intent?: InferredIntent; // from /intent, if known
   decision: TierDecision;
   signal?: AbortSignal; // client disconnect
 }
@@ -33,6 +46,7 @@ export interface GuidanceInput {
 export interface RunResult {
   model: string;
   tier: Tier;
+  images: number; // screenshot frames sent to the model as image parts
   latencyMs: number;
   usage?: LanguageModelUsage;
   status: "ok" | "timeout" | "error" | "aborted";
@@ -214,11 +228,15 @@ export async function* runGuidance(input: GuidanceInput): AsyncGenerator<Guidanc
   let usage: LanguageModelUsage | undefined;
   let streamError: unknown;
 
+  // Screenshots go to Gemini as real image parts after the text prompt (never as base64 text).
+  const images = screenshotParts(input.observation?.screenshots, { id: input.snapshot.id, capturedAt: input.snapshot.capturedAt });
+  const promptText = buildUserPrompt({ ...input, tier, roleHint, imageCount: images.used });
+
   try {
     const result = streamText({
       model: google(cfg.model),
       system: SYSTEM_PROMPT,
-      prompt: buildUserPrompt({ ...input, tier, roleHint }),
+      messages: [{ role: "user", content: [{ type: "text", text: promptText }, ...images.parts] }],
       tools: buildTools(input, check, cfg.tools),
       toolChoice: "required",
       stopWhen: [isStepCount(cfg.maxSteps), uiDelivered],
@@ -250,7 +268,7 @@ export async function* runGuidance(input: GuidanceInput): AsyncGenerator<Guidanc
   }
 
   const latencyMs = Date.now() - started;
-  const base = { model: cfg.model, tier, latencyMs, usage };
+  const base = { model: cfg.model, tier, images: images.used, latencyMs, usage };
   if (timeoutSignal.aborted) return { ...base, status: "timeout", error: `tier ${tier} exceeded ${cfg.timeoutMs} ms` };
   if (input.signal?.aborted) return { ...base, status: "aborted" };
   if (streamError && emitted.size === 0) {

@@ -20,21 +20,57 @@ CORS: `chrome-extension://*` and `http://localhost:*` are allowed (incl. the two
 
 | Method + path | Body → Response | Limit (default, per caller) |
 | --- | --- | --- |
-| `POST /api/lotse/ask` | `AskRequest` → NDJSON stream of `GuidanceEvent` (or legacy JSON) | 20/min + daily token budget |
-| `POST /api/lotse/decide` | `DecideRequest` → `DecideResponse` | 6/min + daily token budget |
+| `POST /api/lotse/state` | `UIStateRequest` → `UIStateInference` (no images) | 60/min + daily token budget |
+| `POST /api/lotse/intent` | `IntentRequest` → `WorkflowIntent` (no images) | 60/min + daily token budget |
+| `POST /api/lotse/decide` | `DecideRequest` → `DecideResponse` (no images) | 60/min + daily token budget |
+| `POST /api/lotse/ask` | `AskRequest` → NDJSON stream of `GuidanceEvent` (or legacy JSON); ≤ 4 screenshots | 20/min + daily token budget |
 | `POST /api/lotse/feedback` | `OfferFeedbackRequest` → `ProactivePrefs` | 20/min |
 | `GET /api/lotse/prefs` | – → `ProactivePrefs` | 20/min |
 | `PUT /api/lotse/prefs` | `ProactivePrefs` → `ProactivePrefs` (manual override, clamped 0.6–0.95) | 20/min |
 | `POST /api/lotse/events` | `EventBatch` (≤ 100 events) → `202 { accepted }` | 6 batches/min |
 | `POST /api/lotse/live-token` | – → `LiveTokenResponse` (`wsUrl` + token, see VOICE.md) | **8 voice sessions/min** per session (one token = one spoken question), 60/min global |
 
-Input caps (server trims, you don't have to): question ≤ 500 chars (longer → 400), ≤ 300 snapshot elements, labels ≤ 80 chars, body ≤ 256 KB. Send **labels only, never input values**.
+Input caps (server trims, you don't have to): question ≤ 500 chars (longer → 400), ≤ 300 snapshot elements, labels ≤ 80 chars. Send **labels only, never input values**.
+
+Body caps per route (larger → **413** `bad_request` "Request body too large (max N KB for this endpoint)"; the server stops reading at the cap): `/ask` 4 MB (≤ 4 frames × 600 k chars + history), `/intent` and `/decide` 1 MB (image-free history: ≤ 13 DOM states, ≤ 180 events, ≤ 40 states), `/state` and everything else 256 KB.
+
+Timeouts (all below the extension's 20 s abort): `/state` 6 s, `/intent` 8 s, `/decide` 2.5 s (+ 2.5 s lite fallback), `/ask` tier run 8 / 12 / 15 s (point / guide / reason) after ≤ 2 s context lookup and ≤ 1.5 s tier classifier. A model timeout answers **504** `timeout`, a model error **502** `internal` (`/state`, `/intent`); `/decide` never fails on model errors (falls back, then `intervene: false`).
+
+## Staged proactive pipeline (D-23)
+
+The extension runs one cycle per relevant change (coalesced ~1 s), sequentially, never with images:
+
+```
+events + DOM ─▶ /state ─▶ (local state buffer) ─▶ /intent ─▶ /decide ─▶ intervene? ─▶ /ask (+ ≤ 4 screenshots, source "proactive")
+explicit question (text / voice / lotse:wake-question) ───────────────────────────────▶ /ask (direct, no state/intent/decide)
+```
+
+### `/state` — UI-state inference
+
+`UIStateRequest { snapshot (ObservationSnapshot, id required), events (≤ 180) }` → `UIStateInference { snapshotId, capturedAt, summary, action? }`.
+
+- `snapshotId` and `capturedAt` are **echoed from the request snapshot** (the extension rejects a mismatch); `summary` (≤ 300 chars requested, ≤ 1 200 allowed) and `action` (omitted when there is none, never `null`) come from `gemini-3.5-flash-lite` (structured output, minimal thinking).
+- The model sees the numbered elements (with `(disabled)`), visible `messages`, the last 20 events and the app name.
+- Identical `(caller, app, snapshot.id, last event id/ts)` requests within 3 min are answered from an in-memory cache (header `x-lotse-cache: hit|miss`, no tokens charged).
+
+### `/intent` — workflow + intent
+
+`IntentRequest { context { workflow, snapshot, history (≤ 12), states (1–40), screenshots: [] }, role?, appId?, appKnowledge? }` → `WorkflowIntent { workflowName, intent { goal, confidence, evidence[] } }`.
+
+- Uses the inferred states (last 20, with `t+Ns` offsets), route sequence, deduplicated page history (title + path), current page (top 60 elements + messages), last 20 events.
+- App knowledge comes from the **org context** (`context.ts`: app → org → `app_features`, role from `org_members` for members, app name); the client's `appKnowledge` goes in as untrusted `<app_notes>` (≤ 2 000 chars). The model is told to use the exact feature name as `workflowName` when one matches.
+- `confidence` is the model's own estimate (clamped 0–1). The calibrated help decision is `/decide`.
+- `gemini-3.5-flash-lite`, structured output, low thinking.
+
+### `/decide` input in the staged pipeline
+
+`DecideRequest { trigger, triggerReason?, events (≤ 50), snapshot?, context? (screenshots: [], incl. states), inference? (the /intent result), role?, appId?, appKnowledge? }`. `trigger` is the local rule (`repeated_search`, `page_pingpong`, `form_idle`, `repeated_error`, `rage_click`) or `workflow_update` when none fired — then the model needs clear evidence. The Decisions API state contains the inferred workflow/goal/evidence, the last 8 UI states, route sequence, workflow duration, page title/path/labels/messages, recent events and ≤ 600 chars of client notes. Missing `snapshot`/`events` fall back to `context.snapshot` / `context.workflow.events`. When no feature matches but `/intent` was reasonably sure (confidence ≥ 0.5), `intent`/`offer` use the inferred goal.
 
 ## `/ask` — NDJSON stream
 
 Request with `Accept: application/x-ndjson`. Each line is one `GuidanceEvent` (parse with `GuidanceEventSchema`), flushed as soon as known:
 
-1. `{"type":"tier","tier":"point|guide|reason","model":"…"}` — always first (status UI: "Lotse sucht …").
+1. `{"type":"tier","tier":"point|guide|reason","model":"…","snapshotId":"…"}` — always first (status UI: "Lotse sucht …"). `snapshotId` echoes `AskRequest.snapshot.id` (omitted when the request snapshot had no id) — drop the answer if it no longer matches the page.
 2. Zero or more, **in arrival order — render immediately**:
    - `point` `{ elementNumber, label, hint? }` → move the cursor/highlight to that element on the **current** page. `elementNumber` is always one you sent.
    - `plan` `{ steps: [{ label, route?, elementNumber?, hint? }] }` → step tour. Steps with `elementNumber` are on the current page (step 1 usually has one). Advance locally: after each click/navigation, find the next step's `label` in a fresh snapshot (placeholders like `‹Kundenname›` may appear → match loosely or show the hint).
@@ -65,7 +101,14 @@ for (;;) {
 
 Errors before the stream starts (bad body, auth, rate limit, kill switch) come back with an HTTP status (400/401/413/429/503) **and** the same single NDJSON `error` line, so one parser handles both.
 
-**Legacy JSON** (walking skeleton): without `Accept: application/x-ndjson` the response is `AskResponse` `{ elementNumber, sentence }` (first `point` or first current-page plan step; `say` text, else the point hint / plan summary). `source` may be omitted (defaults to `"text"`). Errors: `{ error: { code, message } }`.
+**Legacy JSON**: without `Accept: application/x-ndjson` the response is `AskResponse` `{ elementNumber, sentence, snapshotId? }` (first `point` or first current-page plan step; `say` text, else the point hint / plan summary; `snapshotId` = echo). `source` may be omitted (defaults to `"text"`). Errors: `{ error: { code, message } }`.
+
+**What `/ask` uses besides the question and snapshot:**
+
+- `observation` (optional): route sequence, the last 10 inferred UI states, earlier pages (title + path) → `<observation>` block; `observation.workflow.events` replace a missing `recentEvents`.
+- `intent` (optional, from `/intent`): goal + evidence → `<inferred_intent>`; helps with vague questions.
+- `observation.screenshots` (≤ 4): sent to Gemini as **real image parts** (AI SDK `FilePart`, media type from the data URL), chronological, each with a caption ("current/earlier page state, N s before the current snapshot"). Malformed frames, frames > 600 k chars and frames over a 2.4 M-char total (oldest first) are dropped. Element numbers still come only from the current snapshot.
+- `source: "proactive"` → the question is the inferred goal, the model shows only the next step; `"voice"` → any `say` stays short and speakable.
 
 ## Tiers (server-side orchestrator)
 
@@ -74,15 +117,15 @@ A heuristic (no LLM) picks the tier from question cues, the current page labels 
 | Tier | When | Model | Steps | Max output tokens | Thinking | Timeout |
 | --- | --- | --- | --- | --- | --- | --- |
 | `point` | target on this page ("wo ist …") | `gemini-3.5-flash-lite` | 3 | 600 | minimal | 8 s |
-| `guide` | multi-step ("wie lege ich … an"), other page, role restriction | `gemini-3.5-flash-lite` | 5 | 2 000 | low | 20 s |
-| `reason` | long / analytical / ambiguous | `gemini-4-argon` | 8 | 4 000 | low | 40 s |
+| `guide` | multi-step ("wie lege ich … an"), other page, role restriction | `gemini-3.5-flash-lite` | 5 | 2 000 | low | 12 s |
+| `reason` | long / analytical / ambiguous | `gemini-4-argon` | 8 | 4 000 | low | 15 s |
 
 ## Proactive help: `/decide` + feedback (adaptive threshold, D-22)
 
-1. A local stuck rule fires in the content script → background calls `POST /api/lotse/decide` with `{ trigger, events (recent, oldest first), snapshot?, role? }`.
+1. After `/state` and `/intent` (see the staged pipeline above), the background calls `POST /api/lotse/decide` with `{ trigger, events (recent, oldest first), snapshot, context, inference, role?, appKnowledge? }` — on every cycle; local stuck rules only annotate `trigger`.
 2. The server asks the **Gemini Decisions API** once (≈ 0.3–0.7 s): Boolean "stuck, would welcome help?" (calibrated probability) + Choice "which feature is the goal?" (the app's feature names). Fallback on error: lite model.
 3. Response: `{ intervene, confidence, threshold }` and, if `intervene`, `{ intent, offer, offerId }`. `intervene` is true only if `confidence ≥ threshold` — **the user's own threshold** (starts at 0.8).
-4. Show `offer` in the offer bubble with **Ja / Nein** and **👍 / 👎**:
+4. Target UX (the current extension still requests guidance directly after a positive decision, with a 2-min cooldown): show `offer` in the offer bubble with **Ja / Nein** and **👍 / 👎**:
    - "Ja" → `/ask` with `question = intent`, `source: "proactive"`.
    - "Nein" → `POST /api/lotse/feedback { offerId, feedback: "declined" }` (threshold +0.02).
    - 👎 → `feedback: "down"` (+0.05, fewer offers) · 👍 → `feedback: "up"` (−0.02).
@@ -110,10 +153,10 @@ Events carry no search terms (privacy), so `intent` can be generic ("Wie komme i
 
 ## Tracking & limits (server)
 
-- Every LLM / decision call → `public.agent_usage` (route, tier, model, tokens, latency, status, session/user/app id). Events → `public.lotse_events`. Offers/feedback/thresholds → `lotse_offers`, `lotse_offer_feedback`, `lotse_user_prefs`. All RLS-on, service role only.
-- Limits are in-memory per server process; all configurable via env (`.env.example`, `src/lib/lotse/config.ts`): `LOTSE_LIMIT_ASK_PER_MIN` (20), `LOTSE_LIMIT_DECIDE_PER_MIN` (6), `LOTSE_LIMIT_EVENTS_PER_MIN` (6), `LOTSE_LIMIT_PREFS_PER_MIN` (20), `LOTSE_LIMIT_LIVE_TOKENS_PER_MIN` (8 voice sessions per session), `LOTSE_LIMIT_LIVE_TOKENS_GLOBAL_PER_MIN` (60), `LOTSE_LIMIT_GLOBAL_PER_MIN` (300), `LOTSE_DAILY_TOKEN_BUDGET` (200 000 LLM tokens per caller/day). Kill switch `LOTSE_DISABLED=1`.
-- Context (`src/lib/lotse/context.ts`, per `/ask` + `/decide`): app id (`x-lotse-app` / `appId` / snapshot host, or a dashboard `apps.id` uuid) → `apps.domains` → org → `app_features`. **Role:** an authenticated member of that org gets `org_members.role`; the client `role` is ignored then and only used in dev/anonymous mode. **Knowledge base** (`searchKnowledge`, `match_documents`) is scoped to the app's org and open to its members (dev: anonymous too). Features the role may not use reach the model with name + allowed roles only (no path). `AskRequest.appKnowledge` goes into the prompt as untrusted `<app_notes>` (≤ 2 000 chars). Responses carry `x-lotse-context: knowledge=db|fixture|none;org=yes|no;role=org|client|none`.
+- Every LLM / decision call → `public.agent_usage` (route `state` / `intent` / `decide` / `ask`, tier, model, tokens, latency, status, session/user/app id). Events → `public.lotse_events`. Offers/feedback/thresholds → `lotse_offers`, `lotse_offer_feedback`, `lotse_user_prefs`. All RLS-on, service role only.
+- Limits are in-memory per server process; all configurable via env (`.env.example`, `src/lib/lotse/config.ts`): `LOTSE_LIMIT_ASK_PER_MIN` (20), `LOTSE_LIMIT_STATE_PER_MIN` (60), `LOTSE_LIMIT_INTENT_PER_MIN` (60), `LOTSE_LIMIT_DECIDE_PER_MIN` (60), `LOTSE_LIMIT_EVENTS_PER_MIN` (6), `LOTSE_LIMIT_PREFS_PER_MIN` (20), `LOTSE_LIMIT_LIVE_TOKENS_PER_MIN` (8 voice sessions per session), `LOTSE_LIMIT_LIVE_TOKENS_GLOBAL_PER_MIN` (60), `LOTSE_LIMIT_GLOBAL_PER_MIN` (300 per kind), `LOTSE_DAILY_TOKEN_BUDGET` (2 000 000 LLM tokens per caller/day across state/intent/decide/ask; one observation cycle ≈ 5–10 k), `LOTSE_TIMEOUT_STATE_MS` (6 000), `LOTSE_TIMEOUT_INTENT_MS` (8 000). Kill switch `LOTSE_DISABLED=1`.
+- Context (`src/lib/lotse/context.ts`, per `/state`, `/intent`, `/decide` + `/ask`): app id (`x-lotse-app` / `appId` / snapshot host, or a dashboard `apps.id` uuid) → `apps.domains` → org → `app_features`. **Role:** an authenticated member of that org gets `org_members.role`; the client `role` is ignored then and only used in dev/anonymous mode. **Knowledge base** (`searchKnowledge`, `match_documents`) is scoped to the app's org and open to its members (dev: anonymous too). Features the role may not use reach the model with name + allowed roles only (no path). `AskRequest.appKnowledge` goes into the prompt as untrusted `<app_notes>` (≤ 2 000 chars). Responses carry `x-lotse-context: knowledge=db|fixture|none;org=yes|no;role=org|client|none`.
 - `LOTSE_KNOWLEDGE_SOURCE=auto` (default) uses the DB and falls back to the bundled fixture `src/lib/lotse/fixtures/kundenwerk-features.json` (copy of `demo-crm/lotse-features.json`, `localhost:4000`) when the app is missing, has no features or the DB is unreachable (warning, never an error); `db` = same, but also warns on a missing app; `fixture` = never touches the DB. Lookups (incl. misses) are cached 60 s in memory (errors 15 s).
 - Empty local DB and no `db reset` allowed? `npm run seed:dev-org -w @lotse/server [-- --with-user | --with-knowledge]` adds the demo org + Kundenwerk app + features (same ids as `supabase/seeds/dashboard.sql`), optionally the test user `vertrieb@demo.test` (role Vertrieb) and the CRM FAQ as knowledge — additive, idempotent, local DB only.
 
-Code: `src/lib/lotse/` — `orchestrator.ts` (tiers), `agent.ts` (tool loop + streaming), `prompt.ts`, `knowledge.ts` + `context.ts` (app/org/role), `decide.ts`, `prefs.ts`, `guard.ts` + `config.ts` (auth/limits), `usage.ts` (tracking).
+Code: `src/lib/lotse/` — `observe.ts` (`/state` + `/intent`), `orchestrator.ts` (tiers), `agent.ts` (tool loop + streaming), `images.ts` (screenshots → image parts), `prompt.ts`, `knowledge.ts` + `context.ts` (app/org/role), `decide.ts`, `prefs.ts`, `guard.ts` + `config.ts` (auth/limits/body caps/timeouts), `usage.ts` (tracking).
