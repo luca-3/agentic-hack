@@ -25,6 +25,9 @@ const loginButton = get<HTMLButtonElement>("#login-button");
 const exploreBox = get<HTMLElement>("#explore-box");
 const exploreStart = get<HTMLButtonElement>("#explore-start");
 const exploreStop = get<HTMLButtonElement>("#explore-stop");
+const exploreBarWrap = get<HTMLDivElement>("#explore-bar-wrap");
+const exploreBar = get<HTMLDivElement>("#explore-bar");
+const exploreSpinner = get<HTMLSpanElement>("#explore-spinner");
 const exploreDashboardLink = get<HTMLAnchorElement>("#explore-dashboard-link");
 exploreDashboardLink.href = `${LOTSE_DEFAULTS.dashboardUrl}/lernen`;
 const VOICE_LABEL: Record<VoiceState, string> = { off: "", idle: "🎙 bereit", listening: "🎙 hört zu …", thinking: "… denkt nach", speaking: "🔊 spricht" };
@@ -65,14 +68,23 @@ function renderAccount(status: LotseStatus) {
     const exp = status.explore;
     exploreStart.disabled = exp.running || status.busy || Boolean(status.page?.paused);
     exploreStop.disabled = !exp.running;
+    const activePhase = exp.phase === "crawling" || exp.phase === "analyzing";
+    exploreBarWrap.hidden = !activePhase;
+    exploreSpinner.hidden = !activePhase;
+    exploreBar.classList.toggle("indeterminate", exp.phase === "analyzing");
+    const elapsedSec = exp.phaseStartedAt ? Math.max(0, Math.floor((Date.now() - exp.phaseStartedAt) / 1_000)) : 0;
+
     if (exp.phase === "crawling") {
       const shownCount = Math.min(Math.max(exp.pageCount, 1), exp.maxPages);
+      const pct = Math.min(100, Math.max(4, Math.round((shownCount / exp.maxPages) * 100)));
+      exploreBar.style.width = `${pct}%`;
       const routeInfo = exp.currentRoute ? ` · ${exp.currentRoute}` : "";
-      get("#explore-progress").textContent = `Seite ${shownCount} von max. ${exp.maxPages}${routeInfo}`;
+      get("#explore-progress").textContent = `Seite ${shownCount} von max. ${exp.maxPages}${routeInfo} (${elapsedSec} s)`;
       get("#explore-result").textContent = "";
       exploreDashboardLink.hidden = true;
     } else if (exp.phase === "analyzing") {
-      get("#explore-progress").textContent = `Seite ${exp.pageCount} von max. ${exp.maxPages} · Auswertung läuft …`;
+      exploreBar.style.width = "";
+      get("#explore-progress").textContent = `Auswertung läuft (${elapsedSec} s) – Gemini analysiert ${exp.pageCount} erfasste Seiten …`;
       get("#explore-result").textContent = "";
       exploreDashboardLink.hidden = true;
     } else if (exp.phase === "done" && exp.result) {
@@ -88,6 +100,7 @@ function renderAccount(status: LotseStatus) {
       get("#explore-result").textContent = "";
       exploreDashboardLink.hidden = true;
     }
+    get("#explore-status-row").hidden = !activePhase && !get("#explore-progress").textContent;
   }
 }
 

@@ -39,6 +39,8 @@ export type ExploreStatus = {
   currentRoute: string;
   summary: string;
   result: ExploreResponse | null;
+  startedAt: number | null;
+  phaseStartedAt: number | null;
 };
 export type LotseStatus = {
   recording: boolean; tabId: number | null; busy: boolean; settings: ExtensionSettings;
@@ -115,6 +117,7 @@ let exploreTabId: number | null = null;
 let exploreController: AbortController | null = null;
 let exploreStatus: ExploreStatus = {
   running: false, phase: "idle", pageCount: 0, maxPages: EXPLORE_LIMITS.maxPages, currentRoute: "", summary: "", result: null,
+  startedAt: null, phaseStartedAt: null,
 };
 const feedbackGiven = new Set<string>();
 const STORE = "lotse-observation-session";
@@ -219,7 +222,10 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
     case "lotse:logout":
       if (exploreRunning) await stopExplore();
       await auth.signOut();
-      exploreStatus = { running: false, phase: "idle", pageCount: 0, maxPages: EXPLORE_LIMITS.maxPages, currentRoute: "", summary: "", result: null };
+      exploreStatus = {
+        running: false, phase: "idle", pageCount: 0, maxPages: EXPLORE_LIMITS.maxPages, currentRoute: "", summary: "", result: null,
+        startedAt: null, phaseStartedAt: null,
+      };
       await afterAuthChange();
       message = "Abgemeldet. Lotse arbeitet ohne Konto mit der Demo-Rolle.";
       break;
@@ -871,6 +877,7 @@ async function startExplore() {
   if (recording) await stop();
   if (plan?.tabId === tab.id) { plan = null; await sendTab(tab.id, { type: "lotse:clear" }); }
 
+  const now = Date.now();
   exploreRunning = true;
   exploreAborted = false;
   exploreTabId = tab.id;
@@ -882,6 +889,8 @@ async function startExplore() {
     currentRoute: new URL(startUrl).pathname,
     summary: `Seite 1 von max. ${EXPLORE_LIMITS.maxPages}`,
     result: null,
+    startedAt: now,
+    phaseStartedAt: now,
   };
   message = "Lotse erkundet die App …";
   void runExploration(tab.id, startUrl, policy.blockedRoutes);
@@ -1002,8 +1011,10 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
       pageCount: pages.length,
       currentRoute: "",
       summary: `Seite ${pages.length} von max. ${EXPLORE_LIMITS.maxPages} · Auswertung läuft …`,
+      phaseStartedAt: Date.now(),
     };
     message = exploreStatus.summary;
+    await sendTab(tabId, { type: "lotse:explore-chip", text: `⏳ Lotse wertet ${pages.length} Seiten aus …` });
 
     const pseudonymizedPages = await pseudo.pseudonymizeExploredPages(pages);
     const body = ExploreRequestSchema.parse({
@@ -1018,6 +1029,7 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
       exploreAbortable: true,
       timeoutMs: 75_000,
     });
+    await sendTab(tabId, { type: "lotse:explore-chip", text: "" });
     if (exploreAborted) return;
 
     const result = ExploreResponseSchema.parse(rawResult);
@@ -1032,6 +1044,8 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
       currentRoute: "",
       summary: summaryText,
       result,
+      startedAt,
+      phaseStartedAt: null,
     };
     message = summaryText;
   } catch (error) {
