@@ -1,0 +1,1633 @@
+file,label,kind,source,voice,text
+raw/pos_valo/say_0000.wav,1,pos_valo,macos,Aman (English (India)),Hey Valo!
+raw/pos_valo/say_0001.wav,1,pos_valo,macos,Aman (English (India)),Hey Vahlo
+raw/pos_valo/say_0002.wav,1,pos_valo,macos,Aman (English (India)),Hey Valo
+raw/pos_valo/say_0003.wav,1,pos_valo,macos,Anna (German (Germany)),"Hey, Valo."
+raw/pos_valo/say_0004.wav,1,pos_valo,macos,Anna (German (Germany)),Hey Valo
+raw/pos_valo/say_0005.wav,1,pos_valo,macos,Anna (German (Germany)),Hey Valo?
+raw/pos_valo/say_0006.wav,1,pos_valo,macos,Daniel (English (UK)),Hey Valo?
+raw/pos_valo/say_0007.wav,1,pos_valo,macos,Daniel (English (UK)),Hey Valo?
+raw/pos_valo/say_0008.wav,1,pos_valo,macos,Daniel (English (UK)),Hey Valo?
+raw/pos_valo/say_0009.wav,1,pos_valo,macos,Eddy (English (UK)),Hey Valo!
+raw/pos_valo/say_0010.wav,1,pos_valo,macos,Eddy (English (UK)),Hey Valo
+raw/pos_valo/say_0011.wav,1,pos_valo,macos,Eddy (English (UK)),Hey Valo?
+raw/pos_valo/say_0012.wav,1,pos_valo,macos,Eddy (English (US)),Hey Valo
+raw/pos_valo/say_0013.wav,1,pos_valo,macos,Eddy (English (US)),Hey Valo?
+raw/pos_valo/say_0014.wav,1,pos_valo,macos,Eddy (English (US)),Hey Valo?
+raw/pos_valo/say_0015.wav,1,pos_valo,macos,Eddy (German (Germany)),Hey Vahlo
+raw/pos_valo/say_0016.wav,1,pos_valo,macos,Eddy (German (Germany)),Hey Valo
+raw/pos_valo/say_0017.wav,1,pos_valo,macos,Eddy (German (Germany)),Hey Valo?
+raw/pos_valo/say_0018.wav,1,pos_valo,macos,Flo (English (UK)),"Hey, Valo."
+raw/pos_valo/say_0019.wav,1,pos_valo,macos,Flo (English (UK)),Hey Valo!
+raw/pos_valo/say_0020.wav,1,pos_valo,macos,Flo (English (UK)),Hey Vahlo
+raw/pos_valo/say_0021.wav,1,pos_valo,macos,Flo (English (US)),Hey Valo
+raw/pos_valo/say_0022.wav,1,pos_valo,macos,Flo (English (US)),"Hey, Valo."
+raw/pos_valo/say_0023.wav,1,pos_valo,macos,Flo (English (US)),Hey Valo
+raw/pos_valo/say_0024.wav,1,pos_valo,macos,Flo (German (Germany)),Hey Valo
+raw/pos_valo/say_0025.wav,1,pos_valo,macos,Flo (German (Germany)),Hey Valo
+raw/pos_valo/say_0026.wav,1,pos_valo,macos,Flo (German (Germany)),Hey Vahlo
+raw/pos_valo/say_0027.wav,1,pos_valo,macos,Grandma (English (UK)),Hey Valo
+raw/pos_valo/say_0028.wav,1,pos_valo,macos,Grandma (English (UK)),Hey Valo?
+raw/pos_valo/say_0029.wav,1,pos_valo,macos,Grandma (English (UK)),Hey Valo!
+raw/pos_valo/say_0030.wav,1,pos_valo,macos,Grandma (English (US)),Hey Valo?
+raw/pos_valo/say_0031.wav,1,pos_valo,macos,Grandma (English (US)),Hey Valo
+raw/pos_valo/say_0032.wav,1,pos_valo,macos,Grandma (English (US)),Hey Vahlo
+raw/pos_valo/say_0033.wav,1,pos_valo,macos,Grandma (German (Germany)),Hey Valo!
+raw/pos_valo/say_0034.wav,1,pos_valo,macos,Grandma (German (Germany)),Hey Valo?
+raw/pos_valo/say_0035.wav,1,pos_valo,macos,Grandma (German (Germany)),Hey Valo?
+raw/pos_valo/say_0036.wav,1,pos_valo,macos,Grandpa (English (UK)),Hey Vahlo
+raw/pos_valo/say_0037.wav,1,pos_valo,macos,Grandpa (English (UK)),Hey Valo!
+raw/pos_valo/say_0038.wav,1,pos_valo,macos,Grandpa (English (UK)),"Hey, Valo."
+raw/pos_valo/say_0039.wav,1,pos_valo,macos,Grandpa (English (US)),Hey Valo!
+raw/pos_valo/say_0040.wav,1,pos_valo,macos,Grandpa (English (US)),Hey Valo!
+raw/pos_valo/say_0041.wav,1,pos_valo,macos,Grandpa (English (US)),Hey Valo?
+raw/pos_valo/say_0042.wav,1,pos_valo,macos,Grandpa (German (Germany)),"Hey, Valo."
+raw/pos_valo/say_0043.wav,1,pos_valo,macos,Grandpa (German (Germany)),Hey Valo
+raw/pos_valo/say_0044.wav,1,pos_valo,macos,Grandpa (German (Germany)),Hey Valo?
+raw/pos_valo/say_0045.wav,1,pos_valo,macos,Karen,Hey Vahlo
+raw/pos_valo/say_0046.wav,1,pos_valo,macos,Karen,Hey Valo
+raw/pos_valo/say_0047.wav,1,pos_valo,macos,Karen,Hey Valo!
+raw/pos_valo/say_0048.wav,1,pos_valo,macos,Moira (English (Ireland)),"Hey, Valo."
+raw/pos_valo/say_0049.wav,1,pos_valo,macos,Moira (English (Ireland)),Hey Valo
+raw/pos_valo/say_0050.wav,1,pos_valo,macos,Moira (English (Ireland)),"Hey, Valo."
+raw/pos_valo/say_0051.wav,1,pos_valo,macos,Reed (English (UK)),Hey Vahlo
+raw/pos_valo/say_0052.wav,1,pos_valo,macos,Reed (English (UK)),Hey Valo?
+raw/pos_valo/say_0053.wav,1,pos_valo,macos,Reed (English (UK)),Hey Vahlo
+raw/pos_valo/say_0054.wav,1,pos_valo,macos,Reed (English (US)),Hey Valo!
+raw/pos_valo/say_0055.wav,1,pos_valo,macos,Reed (English (US)),"Hey, Valo."
+raw/pos_valo/say_0056.wav,1,pos_valo,macos,Reed (English (US)),"Hey, Valo."
+raw/pos_valo/say_0057.wav,1,pos_valo,macos,Reed (German (Germany)),Hey Vahlo
+raw/pos_valo/say_0058.wav,1,pos_valo,macos,Reed (German (Germany)),Hey Valo?
+raw/pos_valo/say_0059.wav,1,pos_valo,macos,Reed (German (Germany)),Hey Vahlo
+raw/pos_valo/say_0060.wav,1,pos_valo,macos,Rishi (English (India)),Hey Valo?
+raw/pos_valo/say_0061.wav,1,pos_valo,macos,Rishi (English (India)),Hey Vahlo
+raw/pos_valo/say_0062.wav,1,pos_valo,macos,Rishi (English (India)),Hey Valo
+raw/pos_valo/say_0063.wav,1,pos_valo,macos,Rocko (English (UK)),Hey Valo?
+raw/pos_valo/say_0064.wav,1,pos_valo,macos,Rocko (English (UK)),Hey Valo!
+raw/pos_valo/say_0065.wav,1,pos_valo,macos,Rocko (English (UK)),Hey Valo?
+raw/pos_valo/say_0066.wav,1,pos_valo,macos,Rocko (English (US)),Hey Valo?
+raw/pos_valo/say_0067.wav,1,pos_valo,macos,Rocko (English (US)),Hey Valo!
+raw/pos_valo/say_0068.wav,1,pos_valo,macos,Rocko (English (US)),"Hey, Valo."
+raw/pos_valo/say_0069.wav,1,pos_valo,macos,Rocko (German (Germany)),Hey Vahlo
+raw/pos_valo/say_0070.wav,1,pos_valo,macos,Rocko (German (Germany)),"Hey, Valo."
+raw/pos_valo/say_0071.wav,1,pos_valo,macos,Rocko (German (Germany)),Hey Valo
+raw/pos_valo/say_0072.wav,1,pos_valo,macos,Samantha (English (US)),Hey Valo?
+raw/pos_valo/say_0073.wav,1,pos_valo,macos,Samantha (English (US)),Hey Vahlo
+raw/pos_valo/say_0074.wav,1,pos_valo,macos,Samantha (English (US)),Hey Valo
+raw/pos_valo/say_0075.wav,1,pos_valo,macos,Sandy (English (UK)),Hey Valo!
+raw/pos_valo/say_0076.wav,1,pos_valo,macos,Sandy (English (UK)),Hey Vahlo
+raw/pos_valo/say_0077.wav,1,pos_valo,macos,Sandy (English (UK)),Hey Valo?
+raw/pos_valo/say_0078.wav,1,pos_valo,macos,Sandy (English (US)),"Hey, Valo."
+raw/pos_valo/say_0079.wav,1,pos_valo,macos,Sandy (English (US)),Hey Valo?
+raw/pos_valo/say_0080.wav,1,pos_valo,macos,Sandy (English (US)),Hey Valo
+raw/pos_valo/say_0081.wav,1,pos_valo,macos,Sandy (German (Germany)),Hey Valo?
+raw/pos_valo/say_0082.wav,1,pos_valo,macos,Sandy (German (Germany)),Hey Valo
+raw/pos_valo/say_0083.wav,1,pos_valo,macos,Sandy (German (Germany)),"Hey, Valo."
+raw/pos_valo/say_0084.wav,1,pos_valo,macos,Shelley (English (UK)),Hey Vahlo
+raw/pos_valo/say_0085.wav,1,pos_valo,macos,Shelley (English (UK)),Hey Vahlo
+raw/pos_valo/say_0086.wav,1,pos_valo,macos,Shelley (English (UK)),Hey Vahlo
+raw/pos_valo/say_0087.wav,1,pos_valo,macos,Shelley (English (US)),Hey Valo?
+raw/pos_valo/say_0088.wav,1,pos_valo,macos,Shelley (English (US)),Hey Valo!
+raw/pos_valo/say_0089.wav,1,pos_valo,macos,Shelley (English (US)),Hey Valo!
+raw/pos_valo/say_0090.wav,1,pos_valo,macos,Shelley (German (Germany)),Hey Vahlo
+raw/pos_valo/say_0091.wav,1,pos_valo,macos,Shelley (German (Germany)),Hey Valo!
+raw/pos_valo/say_0092.wav,1,pos_valo,macos,Shelley (German (Germany)),Hey Valo
+raw/pos_valo/say_0093.wav,1,pos_valo,macos,Tara (English (India)),Hey Valo!
+raw/pos_valo/say_0094.wav,1,pos_valo,macos,Tara (English (India)),Hey Vahlo
+raw/pos_valo/say_0095.wav,1,pos_valo,macos,Tara (English (India)),Hey Vahlo
+raw/pos_valo/say_0096.wav,1,pos_valo,macos,Tessa (English (South Africa)),Hey Valo!
+raw/pos_valo/say_0097.wav,1,pos_valo,macos,Tessa (English (South Africa)),Hey Valo?
+raw/pos_valo/say_0098.wav,1,pos_valo,macos,Tessa (English (South Africa)),Hey Vahlo
+raw/pos_daddy/say_0099.wav,1,pos_daddy,macos,Aman (English (India)),"Hey, Daddy."
+raw/pos_daddy/say_0100.wav,1,pos_daddy,macos,Aman (English (India)),"Hey, Daddy."
+raw/pos_daddy/say_0101.wav,1,pos_daddy,macos,Aman (English (India)),Hey Daddy?
+raw/pos_daddy/say_0102.wav,1,pos_daddy,macos,Anna (German (Germany)),"Hey, Daddy."
+raw/pos_daddy/say_0103.wav,1,pos_daddy,macos,Anna (German (Germany)),Hey Daddy
+raw/pos_daddy/say_0104.wav,1,pos_daddy,macos,Anna (German (Germany)),Hey Daddy?
+raw/pos_daddy/say_0105.wav,1,pos_daddy,macos,Daniel (English (UK)),Hey Daddy!
+raw/pos_daddy/say_0106.wav,1,pos_daddy,macos,Daniel (English (UK)),Hey Daddy!
+raw/pos_daddy/say_0107.wav,1,pos_daddy,macos,Daniel (English (UK)),Hey Daddy?
+raw/pos_daddy/say_0108.wav,1,pos_daddy,macos,Eddy (English (UK)),Hey Daddy
+raw/pos_daddy/say_0109.wav,1,pos_daddy,macos,Eddy (English (UK)),Hey Daddy?
+raw/pos_daddy/say_0110.wav,1,pos_daddy,macos,Eddy (English (UK)),"Hey, Daddy."
+raw/pos_daddy/say_0111.wav,1,pos_daddy,macos,Eddy (English (US)),Hey Daddy!
+raw/pos_daddy/say_0112.wav,1,pos_daddy,macos,Eddy (English (US)),Hey Daddy?
+raw/pos_daddy/say_0113.wav,1,pos_daddy,macos,Eddy (English (US)),Hey Daddy?
+raw/pos_daddy/say_0114.wav,1,pos_daddy,macos,Eddy (German (Germany)),"Hey, Daddy."
+raw/pos_daddy/say_0115.wav,1,pos_daddy,macos,Eddy (German (Germany)),Hey Daddy?
+raw/pos_daddy/say_0116.wav,1,pos_daddy,macos,Eddy (German (Germany)),"Hey, Daddy."
+raw/pos_daddy/say_0117.wav,1,pos_daddy,macos,Flo (English (UK)),Hey Daddy
+raw/pos_daddy/say_0118.wav,1,pos_daddy,macos,Flo (English (UK)),"Hey, Daddy."
+raw/pos_daddy/say_0119.wav,1,pos_daddy,macos,Flo (English (UK)),Hey Daddy?
+raw/pos_daddy/say_0120.wav,1,pos_daddy,macos,Flo (English (US)),Hey Daddy
+raw/pos_daddy/say_0121.wav,1,pos_daddy,macos,Flo (English (US)),Hey Daddy!
+raw/pos_daddy/say_0122.wav,1,pos_daddy,macos,Flo (English (US)),Hey Daddy!
+raw/pos_daddy/say_0123.wav,1,pos_daddy,macos,Flo (German (Germany)),Hey Daddy!
+raw/pos_daddy/say_0124.wav,1,pos_daddy,macos,Flo (German (Germany)),Hey Daddy
+raw/pos_daddy/say_0125.wav,1,pos_daddy,macos,Flo (German (Germany)),"Hey, Daddy."
+raw/pos_daddy/say_0126.wav,1,pos_daddy,macos,Grandma (English (UK)),Hey Daddy
+raw/pos_daddy/say_0127.wav,1,pos_daddy,macos,Grandma (English (UK)),Hey Daddy
+raw/pos_daddy/say_0128.wav,1,pos_daddy,macos,Grandma (English (UK)),Hey Daddy
+raw/pos_daddy/say_0129.wav,1,pos_daddy,macos,Grandma (English (US)),Hey Daddy
+raw/pos_daddy/say_0130.wav,1,pos_daddy,macos,Grandma (English (US)),Hey Daddy?
+raw/pos_daddy/say_0131.wav,1,pos_daddy,macos,Grandma (English (US)),Hey Daddy
+raw/pos_daddy/say_0132.wav,1,pos_daddy,macos,Grandma (German (Germany)),"Hey, Daddy."
+raw/pos_daddy/say_0133.wav,1,pos_daddy,macos,Grandma (German (Germany)),Hey Daddy!
+raw/pos_daddy/say_0134.wav,1,pos_daddy,macos,Grandma (German (Germany)),"Hey, Daddy."
+raw/pos_daddy/say_0135.wav,1,pos_daddy,macos,Grandpa (English (UK)),Hey Daddy
+raw/pos_daddy/say_0136.wav,1,pos_daddy,macos,Grandpa (English (UK)),Hey Daddy!
+raw/pos_daddy/say_0137.wav,1,pos_daddy,macos,Grandpa (English (UK)),"Hey, Daddy."
+raw/pos_daddy/say_0138.wav,1,pos_daddy,macos,Grandpa (English (US)),"Hey, Daddy."
+raw/pos_daddy/say_0139.wav,1,pos_daddy,macos,Grandpa (English (US)),Hey Daddy
+raw/pos_daddy/say_0140.wav,1,pos_daddy,macos,Grandpa (English (US)),Hey Daddy!
+raw/pos_daddy/say_0141.wav,1,pos_daddy,macos,Grandpa (German (Germany)),Hey Daddy!
+raw/pos_daddy/say_0142.wav,1,pos_daddy,macos,Grandpa (German (Germany)),"Hey, Daddy."
+raw/pos_daddy/say_0143.wav,1,pos_daddy,macos,Grandpa (German (Germany)),Hey Daddy!
+raw/pos_daddy/say_0144.wav,1,pos_daddy,macos,Karen,"Hey, Daddy."
+raw/pos_daddy/say_0145.wav,1,pos_daddy,macos,Karen,"Hey, Daddy."
+raw/pos_daddy/say_0146.wav,1,pos_daddy,macos,Karen,Hey Daddy?
+raw/pos_daddy/say_0147.wav,1,pos_daddy,macos,Moira (English (Ireland)),"Hey, Daddy."
+raw/pos_daddy/say_0148.wav,1,pos_daddy,macos,Moira (English (Ireland)),Hey Daddy?
+raw/pos_daddy/say_0149.wav,1,pos_daddy,macos,Moira (English (Ireland)),Hey Daddy?
+raw/pos_daddy/say_0150.wav,1,pos_daddy,macos,Reed (English (UK)),Hey Daddy
+raw/pos_daddy/say_0151.wav,1,pos_daddy,macos,Reed (English (UK)),Hey Daddy
+raw/pos_daddy/say_0152.wav,1,pos_daddy,macos,Reed (English (UK)),"Hey, Daddy."
+raw/pos_daddy/say_0153.wav,1,pos_daddy,macos,Reed (English (US)),Hey Daddy?
+raw/pos_daddy/say_0154.wav,1,pos_daddy,macos,Reed (English (US)),"Hey, Daddy."
+raw/pos_daddy/say_0155.wav,1,pos_daddy,macos,Reed (English (US)),Hey Daddy?
+raw/pos_daddy/say_0156.wav,1,pos_daddy,macos,Reed (German (Germany)),Hey Daddy!
+raw/pos_daddy/say_0157.wav,1,pos_daddy,macos,Reed (German (Germany)),"Hey, Daddy."
+raw/pos_daddy/say_0158.wav,1,pos_daddy,macos,Reed (German (Germany)),Hey Daddy
+raw/pos_daddy/say_0159.wav,1,pos_daddy,macos,Rishi (English (India)),"Hey, Daddy."
+raw/pos_daddy/say_0160.wav,1,pos_daddy,macos,Rishi (English (India)),Hey Daddy!
+raw/pos_daddy/say_0161.wav,1,pos_daddy,macos,Rishi (English (India)),Hey Daddy?
+raw/pos_daddy/say_0162.wav,1,pos_daddy,macos,Rocko (English (UK)),Hey Daddy
+raw/pos_daddy/say_0163.wav,1,pos_daddy,macos,Rocko (English (UK)),Hey Daddy!
+raw/pos_daddy/say_0164.wav,1,pos_daddy,macos,Rocko (English (UK)),Hey Daddy
+raw/pos_daddy/say_0165.wav,1,pos_daddy,macos,Rocko (English (US)),Hey Daddy?
+raw/pos_daddy/say_0166.wav,1,pos_daddy,macos,Rocko (English (US)),Hey Daddy!
+raw/pos_daddy/say_0167.wav,1,pos_daddy,macos,Rocko (English (US)),Hey Daddy
+raw/pos_daddy/say_0168.wav,1,pos_daddy,macos,Rocko (German (Germany)),Hey Daddy!
+raw/pos_daddy/say_0169.wav,1,pos_daddy,macos,Rocko (German (Germany)),Hey Daddy?
+raw/pos_daddy/say_0170.wav,1,pos_daddy,macos,Rocko (German (Germany)),Hey Daddy?
+raw/pos_daddy/say_0171.wav,1,pos_daddy,macos,Samantha (English (US)),Hey Daddy!
+raw/pos_daddy/say_0172.wav,1,pos_daddy,macos,Samantha (English (US)),Hey Daddy?
+raw/pos_daddy/say_0173.wav,1,pos_daddy,macos,Samantha (English (US)),Hey Daddy!
+raw/pos_daddy/say_0174.wav,1,pos_daddy,macos,Sandy (English (UK)),Hey Daddy
+raw/pos_daddy/say_0175.wav,1,pos_daddy,macos,Sandy (English (UK)),Hey Daddy?
+raw/pos_daddy/say_0176.wav,1,pos_daddy,macos,Sandy (English (UK)),"Hey, Daddy."
+raw/pos_daddy/say_0177.wav,1,pos_daddy,macos,Sandy (English (US)),Hey Daddy?
+raw/pos_daddy/say_0178.wav,1,pos_daddy,macos,Sandy (English (US)),Hey Daddy
+raw/pos_daddy/say_0179.wav,1,pos_daddy,macos,Sandy (English (US)),"Hey, Daddy."
+raw/pos_daddy/say_0180.wav,1,pos_daddy,macos,Sandy (German (Germany)),Hey Daddy!
+raw/pos_daddy/say_0181.wav,1,pos_daddy,macos,Sandy (German (Germany)),Hey Daddy!
+raw/pos_daddy/say_0182.wav,1,pos_daddy,macos,Sandy (German (Germany)),Hey Daddy
+raw/pos_daddy/say_0183.wav,1,pos_daddy,macos,Shelley (English (UK)),"Hey, Daddy."
+raw/pos_daddy/say_0184.wav,1,pos_daddy,macos,Shelley (English (UK)),Hey Daddy
+raw/pos_daddy/say_0185.wav,1,pos_daddy,macos,Shelley (English (UK)),Hey Daddy
+raw/pos_daddy/say_0186.wav,1,pos_daddy,macos,Shelley (English (US)),"Hey, Daddy."
+raw/pos_daddy/say_0187.wav,1,pos_daddy,macos,Shelley (English (US)),"Hey, Daddy."
+raw/pos_daddy/say_0188.wav,1,pos_daddy,macos,Shelley (English (US)),Hey Daddy!
+raw/pos_daddy/say_0189.wav,1,pos_daddy,macos,Shelley (German (Germany)),Hey Daddy?
+raw/pos_daddy/say_0190.wav,1,pos_daddy,macos,Shelley (German (Germany)),"Hey, Daddy."
+raw/pos_daddy/say_0191.wav,1,pos_daddy,macos,Shelley (German (Germany)),Hey Daddy!
+raw/pos_daddy/say_0192.wav,1,pos_daddy,macos,Tara (English (India)),Hey Daddy
+raw/pos_daddy/say_0193.wav,1,pos_daddy,macos,Tara (English (India)),Hey Daddy
+raw/pos_daddy/say_0194.wav,1,pos_daddy,macos,Tara (English (India)),Hey Daddy!
+raw/pos_daddy/say_0195.wav,1,pos_daddy,macos,Tessa (English (South Africa)),Hey Daddy?
+raw/pos_daddy/say_0196.wav,1,pos_daddy,macos,Tessa (English (South Africa)),Hey Daddy!
+raw/pos_daddy/say_0197.wav,1,pos_daddy,macos,Tessa (English (South Africa)),Hey Daddy
+raw/neg/say_0198.wav,0,adversarial,macos,Albert,Okay
+raw/neg/say_0199.wav,0,adversarial,macos,Albert,Hey buddy
+raw/neg/say_0200.wav,0,adversarial,macos,Albert,Alexa
+raw/neg/say_0201.wav,0,adversarial,macos,Albert,Hello
+raw/neg/say_0202.wav,0,adversarial,macos,Albert,Valo
+raw/neg/say_0203.wav,0,adversarial,macos,Albert,Hey there
+raw/neg/say_0204.wav,0,sentence,macos,Albert,Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0205.wav,0,sentence,macos,Albert,Let's look at the insights dashboard together.
+raw/neg/say_0206.wav,0,sentence,macos,Albert,"Hey everyone, welcome to our pitch."
+raw/neg/say_0207.wav,0,sentence,macos,Albert,The daily standup starts at nine.
+raw/neg/say_0208.wav,0,sentence,macos,Albert,Valo shows you where to click in web apps.
+raw/neg/say_0209.wav,0,sentence,macos,Albert,The trainings are generated from employee questions.
+raw/neg/say_0210.wav,0,adversarial,macos,Aman (English (India)),Valo
+raw/neg/say_0211.wav,0,adversarial,macos,Aman (English (India)),Hey Siri
+raw/neg/say_0212.wav,0,adversarial,macos,Aman (English (India)),Halloween
+raw/neg/say_0213.wav,0,adversarial,macos,Aman (English (India)),Hey there
+raw/neg/say_0214.wav,0,adversarial,macos,Aman (English (India)),Hey Teddy
+raw/neg/say_0215.wav,0,adversarial,macos,Aman (English (India)),Ciao
+raw/neg/say_0216.wav,0,sentence,macos,Aman (English (India)),Das Dashboard zeigt die wichtigsten Kennzahlen.
+raw/neg/say_0217.wav,0,sentence,macos,Aman (English (India)),"Hey, did you push the latest changes?"
+raw/neg/say_0218.wav,0,sentence,macos,Aman (English (India)),Please open the customer list and search for Müller.
+raw/neg/say_0219.wav,0,sentence,macos,Aman (English (India)),"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0220.wav,0,sentence,macos,Aman (English (India)),Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0221.wav,0,sentence,macos,Aman (English (India)),Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0222.wav,0,adversarial,macos,Anna (German (Germany)),Hey Carlo
+raw/neg/say_0223.wav,0,adversarial,macos,Anna (German (Germany)),Hey Teddy
+raw/neg/say_0224.wav,0,adversarial,macos,Anna (German (Germany)),Hey Danny
+raw/neg/say_0225.wav,0,adversarial,macos,Anna (German (Germany)),Daddy
+raw/neg/say_0226.wav,0,adversarial,macos,Anna (German (Germany)),Hey Daniel
+raw/neg/say_0227.wav,0,adversarial,macos,Anna (German (Germany)),Hey buddy
+raw/neg/say_0228.wav,0,sentence,macos,Anna (German (Germany)),Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0229.wav,0,sentence,macos,Anna (German (Germany)),The trainings are generated from employee questions.
+raw/neg/say_0230.wav,0,sentence,macos,Anna (German (Germany)),Our product Valo listens for a wake word.
+raw/neg/say_0231.wav,0,sentence,macos,Anna (German (Germany)),Let's look at the insights dashboard together.
+raw/neg/say_0232.wav,0,sentence,macos,Anna (German (Germany)),I can't find the button to cancel the contract.
+raw/neg/say_0233.wav,0,sentence,macos,Anna (German (Germany)),"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0234.wav,0,adversarial,macos,Bad News,Hey Siri
+raw/neg/say_0235.wav,0,adversarial,macos,Bad News,Hey Waldo
+raw/neg/say_0236.wav,0,adversarial,macos,Bad News,"Hey Vallo, no"
+raw/neg/say_0237.wav,0,adversarial,macos,Bad News,Hey Carlo
+raw/neg/say_0238.wav,0,adversarial,macos,Bad News,Okay
+raw/neg/say_0239.wav,0,adversarial,macos,Bad News,Hey Teddy
+raw/neg/say_0240.wav,0,sentence,macos,Bad News,Where can I change the bank details of a customer?
+raw/neg/say_0241.wav,0,sentence,macos,Bad News,"Zeig mir bitte, wie ich ein Angebot erstelle."
+raw/neg/say_0242.wav,0,sentence,macos,Bad News,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0243.wav,0,sentence,macos,Bad News,I can't find the button to cancel the contract.
+raw/neg/say_0244.wav,0,sentence,macos,Bad News,"Hey, wie geht's dir?"
+raw/neg/say_0245.wav,0,sentence,macos,Bad News,"Valo never clicks for you, it only points."
+raw/neg/say_0246.wav,0,adversarial,macos,Bahh,Hey Lara
+raw/neg/say_0247.wav,0,adversarial,macos,Bahh,Halo
+raw/neg/say_0248.wav,0,adversarial,macos,Bahh,Hello
+raw/neg/say_0249.wav,0,adversarial,macos,Bahh,Halloween
+raw/neg/say_0250.wav,0,adversarial,macos,Bahh,Hey Waldo
+raw/neg/say_0251.wav,0,adversarial,macos,Bahh,Hey Google
+raw/neg/say_0252.wav,0,sentence,macos,Bahh,I can't find the button to cancel the contract.
+raw/neg/say_0253.wav,0,sentence,macos,Bahh,"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0254.wav,0,sentence,macos,Bahh,Please open the customer list and search for Müller.
+raw/neg/say_0255.wav,0,sentence,macos,Bahh,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/say_0256.wav,0,sentence,macos,Bahh,"With Valo, employees find features faster."
+raw/neg/say_0257.wav,0,sentence,macos,Bahh,How do I submit the offer for approval?
+raw/neg/say_0258.wav,0,adversarial,macos,Bells,Hey Danny
+raw/neg/say_0259.wav,0,adversarial,macos,Bells,Hey Paula
+raw/neg/say_0260.wav,0,adversarial,macos,Bells,Hey baby
+raw/neg/say_0261.wav,0,adversarial,macos,Bells,Ciao
+raw/neg/say_0262.wav,0,adversarial,macos,Bells,Valentina
+raw/neg/say_0263.wav,0,adversarial,macos,Bells,Hello
+raw/neg/say_0264.wav,0,sentence,macos,Bells,"Hey, wie geht's dir?"
+raw/neg/say_0265.wav,0,sentence,macos,Bells,The trainings are generated from employee questions.
+raw/neg/say_0266.wav,0,sentence,macos,Bells,Our product Valo listens for a wake word.
+raw/neg/say_0267.wav,0,sentence,macos,Bells,How do I submit the offer for approval?
+raw/neg/say_0268.wav,0,sentence,macos,Bells,"Hallo zusammen, schön dass ihr da seid."
+raw/neg/say_0269.wav,0,sentence,macos,Bells,"Valo, Valo, Valo."
+raw/neg/say_0270.wav,0,adversarial,macos,Boing,Hey Siri
+raw/neg/say_0271.wav,0,adversarial,macos,Boing,Hey Lara
+raw/neg/say_0272.wav,0,adversarial,macos,Boing,Okay
+raw/neg/say_0273.wav,0,adversarial,macos,Boing,Ciao
+raw/neg/say_0274.wav,0,adversarial,macos,Boing,Daddy
+raw/neg/say_0275.wav,0,adversarial,macos,Boing,Hey Carlo
+raw/neg/say_0276.wav,0,sentence,macos,Boing,"Thanks a lot, that was really helpful."
+raw/neg/say_0277.wav,0,sentence,macos,Boing,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/say_0278.wav,0,sentence,macos,Boing,"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0279.wav,0,sentence,macos,Boing,Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0280.wav,0,sentence,macos,Boing,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0281.wav,0,sentence,macos,Boing,Das Dashboard zeigt die wichtigsten Kennzahlen.
+raw/neg/say_0282.wav,0,adversarial,macos,Bubbles,Hey buddy
+raw/neg/say_0283.wav,0,adversarial,macos,Bubbles,Hey Google
+raw/neg/say_0284.wav,0,adversarial,macos,Bubbles,Ciao
+raw/neg/say_0285.wav,0,adversarial,macos,Bubbles,Hey baby
+raw/neg/say_0286.wav,0,adversarial,macos,Bubbles,Alexa
+raw/neg/say_0287.wav,0,adversarial,macos,Bubbles,Hey Carlo
+raw/neg/say_0288.wav,0,sentence,macos,Bubbles,Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0289.wav,0,sentence,macos,Bubbles,"Hey, wie geht's dir?"
+raw/neg/say_0290.wav,0,sentence,macos,Bubbles,I can't find the button to cancel the contract.
+raw/neg/say_0291.wav,0,sentence,macos,Bubbles,This is the demo of our hackathon project.
+raw/neg/say_0292.wav,0,sentence,macos,Bubbles,Let's look at the insights dashboard together.
+raw/neg/say_0293.wav,0,sentence,macos,Bubbles,"With Valo, employees find features faster."
+raw/neg/say_0294.wav,0,adversarial,macos,Cellos,Hey Siri
+raw/neg/say_0295.wav,0,adversarial,macos,Cellos,Hello
+raw/neg/say_0296.wav,0,adversarial,macos,Cellos,Hey Daniel
+raw/neg/say_0297.wav,0,adversarial,macos,Cellos,Hey you
+raw/neg/say_0298.wav,0,adversarial,macos,Cellos,Hey there
+raw/neg/say_0299.wav,0,adversarial,macos,Cellos,Halloween
+raw/neg/say_0300.wav,0,sentence,macos,Cellos,Where can I change the bank details of a customer?
+raw/neg/say_0301.wav,0,sentence,macos,Cellos,Can you help me with the payment terms?
+raw/neg/say_0302.wav,0,sentence,macos,Cellos,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0303.wav,0,sentence,macos,Cellos,The weather in Karlsruhe is quite nice today.
+raw/neg/say_0304.wav,0,sentence,macos,Cellos,"Valo never clicks for you, it only points."
+raw/neg/say_0305.wav,0,sentence,macos,Cellos,Mein Papa hat gestern angerufen.
+raw/neg/say_0306.wav,0,adversarial,macos,Daniel (English (UK)),Hey Daisy
+raw/neg/say_0307.wav,0,adversarial,macos,Daniel (English (UK)),Ciao
+raw/neg/say_0308.wav,0,adversarial,macos,Daniel (English (UK)),Hey Teddy
+raw/neg/say_0309.wav,0,adversarial,macos,Daniel (English (UK)),Hello
+raw/neg/say_0310.wav,0,adversarial,macos,Daniel (English (UK)),Hey Betty
+raw/neg/say_0311.wav,0,adversarial,macos,Daniel (English (UK)),Hey Siri
+raw/neg/say_0312.wav,0,sentence,macos,Daniel (English (UK)),Let's look at the insights dashboard together.
+raw/neg/say_0313.wav,0,sentence,macos,Daniel (English (UK)),"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0314.wav,0,sentence,macos,Daniel (English (UK)),The weather in Karlsruhe is quite nice today.
+raw/neg/say_0315.wav,0,sentence,macos,Daniel (English (UK)),The trainings are generated from employee questions.
+raw/neg/say_0316.wav,0,sentence,macos,Daniel (English (UK)),"Valo, Valo, Valo."
+raw/neg/say_0317.wav,0,sentence,macos,Daniel (English (UK)),Our product Valo listens for a wake word.
+raw/neg/say_0318.wav,0,adversarial,macos,Eddy (English (UK)),Hey Teddy
+raw/neg/say_0319.wav,0,adversarial,macos,Eddy (English (UK)),Hey Daniel
+raw/neg/say_0320.wav,0,adversarial,macos,Eddy (English (UK)),Valentina
+raw/neg/say_0321.wav,0,adversarial,macos,Eddy (English (UK)),Hey Waldo
+raw/neg/say_0322.wav,0,adversarial,macos,Eddy (English (UK)),Vale
+raw/neg/say_0323.wav,0,adversarial,macos,Eddy (English (UK)),Hey Siri
+raw/neg/say_0324.wav,0,sentence,macos,Eddy (English (UK)),Fifty two people asked about the payment flow.
+raw/neg/say_0325.wav,0,sentence,macos,Eddy (English (UK)),Let's look at the insights dashboard together.
+raw/neg/say_0326.wav,0,sentence,macos,Eddy (English (UK)),"Thanks a lot, that was really helpful."
+raw/neg/say_0327.wav,0,sentence,macos,Eddy (English (UK)),Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0328.wav,0,sentence,macos,Eddy (English (UK)),Show me how to create an offer with a discount.
+raw/neg/say_0329.wav,0,sentence,macos,Eddy (English (UK)),"With Valo, employees find features faster."
+raw/neg/say_0330.wav,0,adversarial,macos,Eddy (English (US)),Hey Lara
+raw/neg/say_0331.wav,0,adversarial,macos,Eddy (English (US)),Halloween
+raw/neg/say_0332.wav,0,adversarial,macos,Eddy (English (US)),"Hey Vallo, no"
+raw/neg/say_0333.wav,0,adversarial,macos,Eddy (English (US)),Hey Daniel
+raw/neg/say_0334.wav,0,adversarial,macos,Eddy (English (US)),Halo
+raw/neg/say_0335.wav,0,adversarial,macos,Eddy (English (US)),Valo
+raw/neg/say_0336.wav,0,sentence,macos,Eddy (English (US)),The trainings are generated from employee questions.
+raw/neg/say_0337.wav,0,sentence,macos,Eddy (English (US)),Can you help me with the payment terms?
+raw/neg/say_0338.wav,0,sentence,macos,Eddy (English (US)),The daily standup starts at nine.
+raw/neg/say_0339.wav,0,sentence,macos,Eddy (English (US)),Valo shows you where to click in web apps.
+raw/neg/say_0340.wav,0,sentence,macos,Eddy (English (US)),Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/say_0341.wav,0,sentence,macos,Eddy (English (US)),"Hallo zusammen, schön dass ihr da seid."
+raw/neg/say_0342.wav,0,adversarial,macos,Eddy (German (Germany)),Hey there
+raw/neg/say_0343.wav,0,adversarial,macos,Eddy (German (Germany)),Hey Teddy
+raw/neg/say_0344.wav,0,adversarial,macos,Eddy (German (Germany)),Ciao
+raw/neg/say_0345.wav,0,adversarial,macos,Eddy (German (Germany)),Valo
+raw/neg/say_0346.wav,0,adversarial,macos,Eddy (German (Germany)),Halloween
+raw/neg/say_0347.wav,0,adversarial,macos,Eddy (German (Germany)),Halo
+raw/neg/say_0348.wav,0,sentence,macos,Eddy (German (Germany)),Show me how to create an offer with a discount.
+raw/neg/say_0349.wav,0,sentence,macos,Eddy (German (Germany)),I can't find the button to cancel the contract.
+raw/neg/say_0350.wav,0,sentence,macos,Eddy (German (Germany)),The daily standup starts at nine.
+raw/neg/say_0351.wav,0,sentence,macos,Eddy (German (Germany)),Valo shows you where to click in web apps.
+raw/neg/say_0352.wav,0,sentence,macos,Eddy (German (Germany)),"Valo, Valo, Valo."
+raw/neg/say_0353.wav,0,sentence,macos,Eddy (German (Germany)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0354.wav,0,adversarial,macos,Flo (English (UK)),Valentina
+raw/neg/say_0355.wav,0,adversarial,macos,Flo (English (UK)),Hey baby
+raw/neg/say_0356.wav,0,adversarial,macos,Flo (English (UK)),Valo
+raw/neg/say_0357.wav,0,adversarial,macos,Flo (English (UK)),Hey Siri
+raw/neg/say_0358.wav,0,adversarial,macos,Flo (English (UK)),Hey Daisy
+raw/neg/say_0359.wav,0,adversarial,macos,Flo (English (UK)),Hey Paula
+raw/neg/say_0360.wav,0,sentence,macos,Flo (English (UK)),Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0361.wav,0,sentence,macos,Flo (English (UK)),"Hallo zusammen, schön dass ihr da seid."
+raw/neg/say_0362.wav,0,sentence,macos,Flo (English (UK)),I can't find the button to cancel the contract.
+raw/neg/say_0363.wav,0,sentence,macos,Flo (English (UK)),"With Valo, employees find features faster."
+raw/neg/say_0364.wav,0,sentence,macos,Flo (English (UK)),"Valo never clicks for you, it only points."
+raw/neg/say_0365.wav,0,sentence,macos,Flo (English (UK)),Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0366.wav,0,adversarial,macos,Flo (English (US)),Hey Google
+raw/neg/say_0367.wav,0,adversarial,macos,Flo (English (US)),Ciao
+raw/neg/say_0368.wav,0,adversarial,macos,Flo (English (US)),Hey Willow
+raw/neg/say_0369.wav,0,adversarial,macos,Flo (English (US)),Valo
+raw/neg/say_0370.wav,0,adversarial,macos,Flo (English (US)),Hey Daniel
+raw/neg/say_0371.wav,0,adversarial,macos,Flo (English (US)),Alexa
+raw/neg/say_0372.wav,0,sentence,macos,Flo (English (US)),Show me how to create an offer with a discount.
+raw/neg/say_0373.wav,0,sentence,macos,Flo (English (US)),The weather in Karlsruhe is quite nice today.
+raw/neg/say_0374.wav,0,sentence,macos,Flo (English (US)),Our product Valo listens for a wake word.
+raw/neg/say_0375.wav,0,sentence,macos,Flo (English (US)),Please open the customer list and search for Müller.
+raw/neg/say_0376.wav,0,sentence,macos,Flo (English (US)),"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0377.wav,0,sentence,macos,Flo (English (US)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0378.wav,0,adversarial,macos,Flo (German (Germany)),Hey buddy
+raw/neg/say_0379.wav,0,adversarial,macos,Flo (German (Germany)),Hey there
+raw/neg/say_0380.wav,0,adversarial,macos,Flo (German (Germany)),Valentina
+raw/neg/say_0381.wav,0,adversarial,macos,Flo (German (Germany)),Vale
+raw/neg/say_0382.wav,0,adversarial,macos,Flo (German (Germany)),Hey Waldo
+raw/neg/say_0383.wav,0,adversarial,macos,Flo (German (Germany)),Hey Daisy
+raw/neg/say_0384.wav,0,sentence,macos,Flo (German (Germany)),The trainings are generated from employee questions.
+raw/neg/say_0385.wav,0,sentence,macos,Flo (German (Germany)),Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0386.wav,0,sentence,macos,Flo (German (Germany)),Mein Papa hat gestern angerufen.
+raw/neg/say_0387.wav,0,sentence,macos,Flo (German (Germany)),"With Valo, employees find features faster."
+raw/neg/say_0388.wav,0,sentence,macos,Flo (German (Germany)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0389.wav,0,sentence,macos,Flo (German (Germany)),"Valo never clicks for you, it only points."
+raw/neg/say_0390.wav,0,adversarial,macos,Fred,Hey Teddy
+raw/neg/say_0391.wav,0,adversarial,macos,Fred,Vale
+raw/neg/say_0392.wav,0,adversarial,macos,Fred,Hey you
+raw/neg/say_0393.wav,0,adversarial,macos,Fred,Hey Paula
+raw/neg/say_0394.wav,0,adversarial,macos,Fred,Halloween
+raw/neg/say_0395.wav,0,adversarial,macos,Fred,Hey Willow
+raw/neg/say_0396.wav,0,sentence,macos,Fred,The trainings are generated from employee questions.
+raw/neg/say_0397.wav,0,sentence,macos,Fred,"Hey, did you push the latest changes?"
+raw/neg/say_0398.wav,0,sentence,macos,Fred,"Valo, Valo, Valo."
+raw/neg/say_0399.wav,0,sentence,macos,Fred,My dad always says the same thing.
+raw/neg/say_0400.wav,0,sentence,macos,Fred,Where can I change the bank details of a customer?
+raw/neg/say_0401.wav,0,sentence,macos,Fred,"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0402.wav,0,adversarial,macos,Good News,"Hey Vallo, no"
+raw/neg/say_0403.wav,0,adversarial,macos,Good News,Hello
+raw/neg/say_0404.wav,0,adversarial,macos,Good News,Hey Paula
+raw/neg/say_0405.wav,0,adversarial,macos,Good News,Hey Google
+raw/neg/say_0406.wav,0,adversarial,macos,Good News,Halo
+raw/neg/say_0407.wav,0,adversarial,macos,Good News,Hey baby
+raw/neg/say_0408.wav,0,sentence,macos,Good News,Please open the customer list and search for Müller.
+raw/neg/say_0409.wav,0,sentence,macos,Good News,"Zeig mir bitte, wie ich ein Angebot erstelle."
+raw/neg/say_0410.wav,0,sentence,macos,Good News,Valo shows you where to click in web apps.
+raw/neg/say_0411.wav,0,sentence,macos,Good News,"Hey, did you push the latest changes?"
+raw/neg/say_0412.wav,0,sentence,macos,Good News,"Hallo zusammen, schön dass ihr da seid."
+raw/neg/say_0413.wav,0,sentence,macos,Good News,"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0414.wav,0,adversarial,macos,Grandma (English (UK)),Hey Daniel
+raw/neg/say_0415.wav,0,adversarial,macos,Grandma (English (UK)),Hey buddy
+raw/neg/say_0416.wav,0,adversarial,macos,Grandma (English (UK)),Halo
+raw/neg/say_0417.wav,0,adversarial,macos,Grandma (English (UK)),Hey Google
+raw/neg/say_0418.wav,0,adversarial,macos,Grandma (English (UK)),Hey there
+raw/neg/say_0419.wav,0,adversarial,macos,Grandma (English (UK)),Daddy
+raw/neg/say_0420.wav,0,sentence,macos,Grandma (English (UK)),"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0421.wav,0,sentence,macos,Grandma (English (UK)),The weather in Karlsruhe is quite nice today.
+raw/neg/say_0422.wav,0,sentence,macos,Grandma (English (UK)),Our product Valo listens for a wake word.
+raw/neg/say_0423.wav,0,sentence,macos,Grandma (English (UK)),Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0424.wav,0,sentence,macos,Grandma (English (UK)),How do I submit the offer for approval?
+raw/neg/say_0425.wav,0,sentence,macos,Grandma (English (UK)),"Zeig mir bitte, wie ich ein Angebot erstelle."
+raw/neg/say_0426.wav,0,adversarial,macos,Grandma (English (US)),Hey there
+raw/neg/say_0427.wav,0,adversarial,macos,Grandma (English (US)),Valentina
+raw/neg/say_0428.wav,0,adversarial,macos,Grandma (English (US)),Hey Paolo
+raw/neg/say_0429.wav,0,adversarial,macos,Grandma (English (US)),Hey Daniel
+raw/neg/say_0430.wav,0,adversarial,macos,Grandma (English (US)),Hey Google
+raw/neg/say_0431.wav,0,adversarial,macos,Grandma (English (US)),Hey Paula
+raw/neg/say_0432.wav,0,sentence,macos,Grandma (English (US)),"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0433.wav,0,sentence,macos,Grandma (English (US)),"Thanks a lot, that was really helpful."
+raw/neg/say_0434.wav,0,sentence,macos,Grandma (English (US)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0435.wav,0,sentence,macos,Grandma (English (US)),Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0436.wav,0,sentence,macos,Grandma (English (US)),Fifty two people asked about the payment flow.
+raw/neg/say_0437.wav,0,sentence,macos,Grandma (English (US)),Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0438.wav,0,adversarial,macos,Grandma (German (Germany)),Hey Lara
+raw/neg/say_0439.wav,0,adversarial,macos,Grandma (German (Germany)),Alexa
+raw/neg/say_0440.wav,0,adversarial,macos,Grandma (German (Germany)),Hey Google
+raw/neg/say_0441.wav,0,adversarial,macos,Grandma (German (Germany)),Hey Daniel
+raw/neg/say_0442.wav,0,adversarial,macos,Grandma (German (Germany)),Okay
+raw/neg/say_0443.wav,0,adversarial,macos,Grandma (German (Germany)),Hey Siri
+raw/neg/say_0444.wav,0,sentence,macos,Grandma (German (Germany)),Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0445.wav,0,sentence,macos,Grandma (German (Germany)),This is the demo of our hackathon project.
+raw/neg/say_0446.wav,0,sentence,macos,Grandma (German (Germany)),How do I submit the offer for approval?
+raw/neg/say_0447.wav,0,sentence,macos,Grandma (German (Germany)),Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0448.wav,0,sentence,macos,Grandma (German (Germany)),Valo shows you where to click in web apps.
+raw/neg/say_0449.wav,0,sentence,macos,Grandma (German (Germany)),Can you help me with the payment terms?
+raw/neg/say_0450.wav,0,adversarial,macos,Grandpa (English (UK)),Hey buddy
+raw/neg/say_0451.wav,0,adversarial,macos,Grandpa (English (UK)),Hey Lara
+raw/neg/say_0452.wav,0,adversarial,macos,Grandpa (English (UK)),Hey you
+raw/neg/say_0453.wav,0,adversarial,macos,Grandpa (English (UK)),Hey Betty
+raw/neg/say_0454.wav,0,adversarial,macos,Grandpa (English (UK)),"Hey Vallo, no"
+raw/neg/say_0455.wav,0,adversarial,macos,Grandpa (English (UK)),Valentina
+raw/neg/say_0456.wav,0,sentence,macos,Grandpa (English (UK)),This is the demo of our hackathon project.
+raw/neg/say_0457.wav,0,sentence,macos,Grandpa (English (UK)),Fifty two people asked about the payment flow.
+raw/neg/say_0458.wav,0,sentence,macos,Grandpa (English (UK)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0459.wav,0,sentence,macos,Grandpa (English (UK)),Valo shows you where to click in web apps.
+raw/neg/say_0460.wav,0,sentence,macos,Grandpa (English (UK)),Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0461.wav,0,sentence,macos,Grandpa (English (UK)),"Valo, Valo, Valo."
+raw/neg/say_0462.wav,0,adversarial,macos,Grandpa (English (US)),Valentina
+raw/neg/say_0463.wav,0,adversarial,macos,Grandpa (English (US)),Hey Willow
+raw/neg/say_0464.wav,0,adversarial,macos,Grandpa (English (US)),Ciao
+raw/neg/say_0465.wav,0,adversarial,macos,Grandpa (English (US)),Hey Carlo
+raw/neg/say_0466.wav,0,adversarial,macos,Grandpa (English (US)),Hey Daisy
+raw/neg/say_0467.wav,0,adversarial,macos,Grandpa (English (US)),Daddy
+raw/neg/say_0468.wav,0,sentence,macos,Grandpa (English (US)),"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0469.wav,0,sentence,macos,Grandpa (English (US)),Mein Papa hat gestern angerufen.
+raw/neg/say_0470.wav,0,sentence,macos,Grandpa (English (US)),"Hallo zusammen, schön dass ihr da seid."
+raw/neg/say_0471.wav,0,sentence,macos,Grandpa (English (US)),Where can I change the bank details of a customer?
+raw/neg/say_0472.wav,0,sentence,macos,Grandpa (English (US)),"Hey, did you push the latest changes?"
+raw/neg/say_0473.wav,0,sentence,macos,Grandpa (English (US)),Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0474.wav,0,adversarial,macos,Grandpa (German (Germany)),Alexa
+raw/neg/say_0475.wav,0,adversarial,macos,Grandpa (German (Germany)),Halo
+raw/neg/say_0476.wav,0,adversarial,macos,Grandpa (German (Germany)),Halloween
+raw/neg/say_0477.wav,0,adversarial,macos,Grandpa (German (Germany)),Hey Willow
+raw/neg/say_0478.wav,0,adversarial,macos,Grandpa (German (Germany)),"Hey Vallo, no"
+raw/neg/say_0479.wav,0,adversarial,macos,Grandpa (German (Germany)),Hey Paula
+raw/neg/say_0480.wav,0,sentence,macos,Grandpa (German (Germany)),The trainings are generated from employee questions.
+raw/neg/say_0481.wav,0,sentence,macos,Grandpa (German (Germany)),My dad always says the same thing.
+raw/neg/say_0482.wav,0,sentence,macos,Grandpa (German (Germany)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0483.wav,0,sentence,macos,Grandpa (German (Germany)),"With Valo, employees find features faster."
+raw/neg/say_0484.wav,0,sentence,macos,Grandpa (German (Germany)),Can you help me with the payment terms?
+raw/neg/say_0485.wav,0,sentence,macos,Grandpa (German (Germany)),"Hey, did you push the latest changes?"
+raw/neg/say_0486.wav,0,adversarial,macos,Jester,Hey Carlo
+raw/neg/say_0487.wav,0,adversarial,macos,Jester,Hey Paula
+raw/neg/say_0488.wav,0,adversarial,macos,Jester,Hey Lara
+raw/neg/say_0489.wav,0,adversarial,macos,Jester,Hey Paolo
+raw/neg/say_0490.wav,0,adversarial,macos,Jester,Hey Danny
+raw/neg/say_0491.wav,0,adversarial,macos,Jester,Hey Betty
+raw/neg/say_0492.wav,0,sentence,macos,Jester,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0493.wav,0,sentence,macos,Jester,"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0494.wav,0,sentence,macos,Jester,Let's look at the insights dashboard together.
+raw/neg/say_0495.wav,0,sentence,macos,Jester,How do I submit the offer for approval?
+raw/neg/say_0496.wav,0,sentence,macos,Jester,"Hey everyone, welcome to our pitch."
+raw/neg/say_0497.wav,0,sentence,macos,Jester,Please open the customer list and search for Müller.
+raw/neg/say_0498.wav,0,adversarial,macos,Junior,Daddy
+raw/neg/say_0499.wav,0,adversarial,macos,Junior,Hey Betty
+raw/neg/say_0500.wav,0,adversarial,macos,Junior,Hey Paula
+raw/neg/say_0501.wav,0,adversarial,macos,Junior,Alexa
+raw/neg/say_0502.wav,0,adversarial,macos,Junior,Hey Lara
+raw/neg/say_0503.wav,0,adversarial,macos,Junior,Valo
+raw/neg/say_0504.wav,0,sentence,macos,Junior,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0505.wav,0,sentence,macos,Junior,Fifty two people asked about the payment flow.
+raw/neg/say_0506.wav,0,sentence,macos,Junior,"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0507.wav,0,sentence,macos,Junior,Mein Papa hat gestern angerufen.
+raw/neg/say_0508.wav,0,sentence,macos,Junior,I can't find the button to cancel the contract.
+raw/neg/say_0509.wav,0,sentence,macos,Junior,This is the demo of our hackathon project.
+raw/neg/say_0510.wav,0,adversarial,macos,Karen,Hey Siri
+raw/neg/say_0511.wav,0,adversarial,macos,Karen,Hey Willow
+raw/neg/say_0512.wav,0,adversarial,macos,Karen,Hey baby
+raw/neg/say_0513.wav,0,adversarial,macos,Karen,Halo
+raw/neg/say_0514.wav,0,adversarial,macos,Karen,Hey you
+raw/neg/say_0515.wav,0,adversarial,macos,Karen,Valo
+raw/neg/say_0516.wav,0,sentence,macos,Karen,The weather in Karlsruhe is quite nice today.
+raw/neg/say_0517.wav,0,sentence,macos,Karen,"Hey, did you push the latest changes?"
+raw/neg/say_0518.wav,0,sentence,macos,Karen,Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0519.wav,0,sentence,macos,Karen,I can't find the button to cancel the contract.
+raw/neg/say_0520.wav,0,sentence,macos,Karen,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/say_0521.wav,0,sentence,macos,Karen,Can you help me with the payment terms?
+raw/neg/say_0522.wav,0,adversarial,macos,Kathy,Hey Lara
+raw/neg/say_0523.wav,0,adversarial,macos,Kathy,Hey there
+raw/neg/say_0524.wav,0,adversarial,macos,Kathy,Valentina
+raw/neg/say_0525.wav,0,adversarial,macos,Kathy,Hey Teddy
+raw/neg/say_0526.wav,0,adversarial,macos,Kathy,Hey you
+raw/neg/say_0527.wav,0,adversarial,macos,Kathy,Halo
+raw/neg/say_0528.wav,0,sentence,macos,Kathy,Please open the customer list and search for Müller.
+raw/neg/say_0529.wav,0,sentence,macos,Kathy,Fifty two people asked about the payment flow.
+raw/neg/say_0530.wav,0,sentence,macos,Kathy,Let's look at the insights dashboard together.
+raw/neg/say_0531.wav,0,sentence,macos,Kathy,Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0532.wav,0,sentence,macos,Kathy,This is the demo of our hackathon project.
+raw/neg/say_0533.wav,0,sentence,macos,Kathy,I can't find the button to cancel the contract.
+raw/neg/say_0534.wav,0,adversarial,macos,Moira (English (Ireland)),Hey Carlo
+raw/neg/say_0535.wav,0,adversarial,macos,Moira (English (Ireland)),Hello
+raw/neg/say_0536.wav,0,adversarial,macos,Moira (English (Ireland)),Hey baby
+raw/neg/say_0537.wav,0,adversarial,macos,Moira (English (Ireland)),Okay
+raw/neg/say_0538.wav,0,adversarial,macos,Moira (English (Ireland)),Hey Siri
+raw/neg/say_0539.wav,0,adversarial,macos,Moira (English (Ireland)),Hey Daisy
+raw/neg/say_0540.wav,0,sentence,macos,Moira (English (Ireland)),"Thanks a lot, that was really helpful."
+raw/neg/say_0541.wav,0,sentence,macos,Moira (English (Ireland)),Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0542.wav,0,sentence,macos,Moira (English (Ireland)),"With Valo, employees find features faster."
+raw/neg/say_0543.wav,0,sentence,macos,Moira (English (Ireland)),The daily standup starts at nine.
+raw/neg/say_0544.wav,0,sentence,macos,Moira (English (Ireland)),Das Dashboard zeigt die wichtigsten Kennzahlen.
+raw/neg/say_0545.wav,0,sentence,macos,Moira (English (Ireland)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0546.wav,0,adversarial,macos,Organ,Hello
+raw/neg/say_0547.wav,0,adversarial,macos,Organ,Hey you
+raw/neg/say_0548.wav,0,adversarial,macos,Organ,Hey Willow
+raw/neg/say_0549.wav,0,adversarial,macos,Organ,Hey Danny
+raw/neg/say_0550.wav,0,adversarial,macos,Organ,Ciao
+raw/neg/say_0551.wav,0,adversarial,macos,Organ,Hey baby
+raw/neg/say_0552.wav,0,sentence,macos,Organ,My dad always says the same thing.
+raw/neg/say_0553.wav,0,sentence,macos,Organ,I can't find the button to cancel the contract.
+raw/neg/say_0554.wav,0,sentence,macos,Organ,"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0555.wav,0,sentence,macos,Organ,Let's look at the insights dashboard together.
+raw/neg/say_0556.wav,0,sentence,macos,Organ,"Valo, Valo, Valo."
+raw/neg/say_0557.wav,0,sentence,macos,Organ,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0558.wav,0,adversarial,macos,Ralph,Hey Siri
+raw/neg/say_0559.wav,0,adversarial,macos,Ralph,Hey Daisy
+raw/neg/say_0560.wav,0,adversarial,macos,Ralph,Hey there
+raw/neg/say_0561.wav,0,adversarial,macos,Ralph,Hello
+raw/neg/say_0562.wav,0,adversarial,macos,Ralph,Hey buddy
+raw/neg/say_0563.wav,0,adversarial,macos,Ralph,Hey Carlo
+raw/neg/say_0564.wav,0,sentence,macos,Ralph,"Zeig mir bitte, wie ich ein Angebot erstelle."
+raw/neg/say_0565.wav,0,sentence,macos,Ralph,"Hey, did you push the latest changes?"
+raw/neg/say_0566.wav,0,sentence,macos,Ralph,How do I submit the offer for approval?
+raw/neg/say_0567.wav,0,sentence,macos,Ralph,This is the demo of our hackathon project.
+raw/neg/say_0568.wav,0,sentence,macos,Ralph,Show me how to create an offer with a discount.
+raw/neg/say_0569.wav,0,sentence,macos,Ralph,"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0570.wav,0,adversarial,macos,Reed (English (UK)),Ciao
+raw/neg/say_0571.wav,0,adversarial,macos,Reed (English (UK)),Hey Paula
+raw/neg/say_0572.wav,0,adversarial,macos,Reed (English (UK)),Hey Daniel
+raw/neg/say_0573.wav,0,adversarial,macos,Reed (English (UK)),Hey Waldo
+raw/neg/say_0574.wav,0,adversarial,macos,Reed (English (UK)),Hey there
+raw/neg/say_0575.wav,0,adversarial,macos,Reed (English (UK)),Okay
+raw/neg/say_0576.wav,0,sentence,macos,Reed (English (UK)),Valo shows you where to click in web apps.
+raw/neg/say_0577.wav,0,sentence,macos,Reed (English (UK)),"With Valo, employees find features faster."
+raw/neg/say_0578.wav,0,sentence,macos,Reed (English (UK)),Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0579.wav,0,sentence,macos,Reed (English (UK)),"Hey, wie geht's dir?"
+raw/neg/say_0580.wav,0,sentence,macos,Reed (English (UK)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0581.wav,0,sentence,macos,Reed (English (UK)),"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0582.wav,0,adversarial,macos,Reed (English (US)),Hey buddy
+raw/neg/say_0583.wav,0,adversarial,macos,Reed (English (US)),Hey Paolo
+raw/neg/say_0584.wav,0,adversarial,macos,Reed (English (US)),Hey Daisy
+raw/neg/say_0585.wav,0,adversarial,macos,Reed (English (US)),Hallo
+raw/neg/say_0586.wav,0,adversarial,macos,Reed (English (US)),Hey Teddy
+raw/neg/say_0587.wav,0,adversarial,macos,Reed (English (US)),Valentina
+raw/neg/say_0588.wav,0,sentence,macos,Reed (English (US)),Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0589.wav,0,sentence,macos,Reed (English (US)),"Hallo zusammen, schön dass ihr da seid."
+raw/neg/say_0590.wav,0,sentence,macos,Reed (English (US)),Can you help me with the payment terms?
+raw/neg/say_0591.wav,0,sentence,macos,Reed (English (US)),"Hey, did you push the latest changes?"
+raw/neg/say_0592.wav,0,sentence,macos,Reed (English (US)),"Hey, wie geht's dir?"
+raw/neg/say_0593.wav,0,sentence,macos,Reed (English (US)),The weather in Karlsruhe is quite nice today.
+raw/neg/say_0594.wav,0,adversarial,macos,Reed (German (Germany)),Alexa
+raw/neg/say_0595.wav,0,adversarial,macos,Reed (German (Germany)),"Hey Vallo, no"
+raw/neg/say_0596.wav,0,adversarial,macos,Reed (German (Germany)),Hey you
+raw/neg/say_0597.wav,0,adversarial,macos,Reed (German (Germany)),Hey Willow
+raw/neg/say_0598.wav,0,adversarial,macos,Reed (German (Germany)),Hey Daniel
+raw/neg/say_0599.wav,0,adversarial,macos,Reed (German (Germany)),Hallo
+raw/neg/say_0600.wav,0,sentence,macos,Reed (German (Germany)),This is the demo of our hackathon project.
+raw/neg/say_0601.wav,0,sentence,macos,Reed (German (Germany)),Das Dashboard zeigt die wichtigsten Kennzahlen.
+raw/neg/say_0602.wav,0,sentence,macos,Reed (German (Germany)),Please open the customer list and search for Müller.
+raw/neg/say_0603.wav,0,sentence,macos,Reed (German (Germany)),Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0604.wav,0,sentence,macos,Reed (German (Germany)),"Thanks a lot, that was really helpful."
+raw/neg/say_0605.wav,0,sentence,macos,Reed (German (Germany)),Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0606.wav,0,adversarial,macos,Rishi (English (India)),Vale
+raw/neg/say_0607.wav,0,adversarial,macos,Rishi (English (India)),Hey Carlo
+raw/neg/say_0608.wav,0,adversarial,macos,Rishi (English (India)),Halo
+raw/neg/say_0609.wav,0,adversarial,macos,Rishi (English (India)),Hey Danny
+raw/neg/say_0610.wav,0,adversarial,macos,Rishi (English (India)),Hello
+raw/neg/say_0611.wav,0,adversarial,macos,Rishi (English (India)),Hey Teddy
+raw/neg/say_0612.wav,0,sentence,macos,Rishi (English (India)),Show me how to create an offer with a discount.
+raw/neg/say_0613.wav,0,sentence,macos,Rishi (English (India)),"Hey, did you push the latest changes?"
+raw/neg/say_0614.wav,0,sentence,macos,Rishi (English (India)),"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0615.wav,0,sentence,macos,Rishi (English (India)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0616.wav,0,sentence,macos,Rishi (English (India)),The daily standup starts at nine.
+raw/neg/say_0617.wav,0,sentence,macos,Rishi (English (India)),Please open the customer list and search for Müller.
+raw/neg/say_0618.wav,0,adversarial,macos,Rocko (English (UK)),Hey Waldo
+raw/neg/say_0619.wav,0,adversarial,macos,Rocko (English (UK)),Hey Lara
+raw/neg/say_0620.wav,0,adversarial,macos,Rocko (English (UK)),Hey Paula
+raw/neg/say_0621.wav,0,adversarial,macos,Rocko (English (UK)),Hey Teddy
+raw/neg/say_0622.wav,0,adversarial,macos,Rocko (English (UK)),Okay
+raw/neg/say_0623.wav,0,adversarial,macos,Rocko (English (UK)),Hey Willow
+raw/neg/say_0624.wav,0,sentence,macos,Rocko (English (UK)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0625.wav,0,sentence,macos,Rocko (English (UK)),Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/say_0626.wav,0,sentence,macos,Rocko (English (UK)),The trainings are generated from employee questions.
+raw/neg/say_0627.wav,0,sentence,macos,Rocko (English (UK)),"Valo never clicks for you, it only points."
+raw/neg/say_0628.wav,0,sentence,macos,Rocko (English (UK)),Let's look at the insights dashboard together.
+raw/neg/say_0629.wav,0,sentence,macos,Rocko (English (UK)),"With Valo, employees find features faster."
+raw/neg/say_0630.wav,0,adversarial,macos,Rocko (English (US)),Hey Teddy
+raw/neg/say_0631.wav,0,adversarial,macos,Rocko (English (US)),Halo
+raw/neg/say_0632.wav,0,adversarial,macos,Rocko (English (US)),Halloween
+raw/neg/say_0633.wav,0,adversarial,macos,Rocko (English (US)),Okay
+raw/neg/say_0634.wav,0,adversarial,macos,Rocko (English (US)),Hello
+raw/neg/say_0635.wav,0,adversarial,macos,Rocko (English (US)),Hey Paula
+raw/neg/say_0636.wav,0,sentence,macos,Rocko (English (US)),"Thanks a lot, that was really helpful."
+raw/neg/say_0637.wav,0,sentence,macos,Rocko (English (US)),The trainings are generated from employee questions.
+raw/neg/say_0638.wav,0,sentence,macos,Rocko (English (US)),"Hey, did you push the latest changes?"
+raw/neg/say_0639.wav,0,sentence,macos,Rocko (English (US)),"Hey, wie geht's dir?"
+raw/neg/say_0640.wav,0,sentence,macos,Rocko (English (US)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0641.wav,0,sentence,macos,Rocko (English (US)),Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/say_0642.wav,0,adversarial,macos,Rocko (German (Germany)),Daddy
+raw/neg/say_0643.wav,0,adversarial,macos,Rocko (German (Germany)),Hey Lara
+raw/neg/say_0644.wav,0,adversarial,macos,Rocko (German (Germany)),Hey Betty
+raw/neg/say_0645.wav,0,adversarial,macos,Rocko (German (Germany)),Hey Daniel
+raw/neg/say_0646.wav,0,adversarial,macos,Rocko (German (Germany)),Valentina
+raw/neg/say_0647.wav,0,adversarial,macos,Rocko (German (Germany)),Hey there
+raw/neg/say_0648.wav,0,sentence,macos,Rocko (German (Germany)),The trainings are generated from employee questions.
+raw/neg/say_0649.wav,0,sentence,macos,Rocko (German (Germany)),How do I submit the offer for approval?
+raw/neg/say_0650.wav,0,sentence,macos,Rocko (German (Germany)),Fifty two people asked about the payment flow.
+raw/neg/say_0651.wav,0,sentence,macos,Rocko (German (Germany)),This is the demo of our hackathon project.
+raw/neg/say_0652.wav,0,sentence,macos,Rocko (German (Germany)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0653.wav,0,sentence,macos,Rocko (German (Germany)),"Valo, Valo, Valo."
+raw/neg/say_0654.wav,0,adversarial,macos,Samantha (English (US)),Hey Waldo
+raw/neg/say_0655.wav,0,adversarial,macos,Samantha (English (US)),Hey Google
+raw/neg/say_0656.wav,0,adversarial,macos,Samantha (English (US)),Daddy
+raw/neg/say_0657.wav,0,adversarial,macos,Samantha (English (US)),Halloween
+raw/neg/say_0658.wav,0,adversarial,macos,Samantha (English (US)),Hallo
+raw/neg/say_0659.wav,0,adversarial,macos,Samantha (English (US)),Hey Daniel
+raw/neg/say_0660.wav,0,sentence,macos,Samantha (English (US)),"Hallo zusammen, schön dass ihr da seid."
+raw/neg/say_0661.wav,0,sentence,macos,Samantha (English (US)),Mein Papa hat gestern angerufen.
+raw/neg/say_0662.wav,0,sentence,macos,Samantha (English (US)),"Hey, wie geht's dir?"
+raw/neg/say_0663.wav,0,sentence,macos,Samantha (English (US)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0664.wav,0,sentence,macos,Samantha (English (US)),Please open the customer list and search for Müller.
+raw/neg/say_0665.wav,0,sentence,macos,Samantha (English (US)),Valo shows you where to click in web apps.
+raw/neg/say_0666.wav,0,adversarial,macos,Sandy (English (UK)),Halloween
+raw/neg/say_0667.wav,0,adversarial,macos,Sandy (English (UK)),Hey Siri
+raw/neg/say_0668.wav,0,adversarial,macos,Sandy (English (UK)),Hey there
+raw/neg/say_0669.wav,0,adversarial,macos,Sandy (English (UK)),Hey Carlo
+raw/neg/say_0670.wav,0,adversarial,macos,Sandy (English (UK)),Hey Lara
+raw/neg/say_0671.wav,0,adversarial,macos,Sandy (English (UK)),Halo
+raw/neg/say_0672.wav,0,sentence,macos,Sandy (English (UK)),Our product Valo listens for a wake word.
+raw/neg/say_0673.wav,0,sentence,macos,Sandy (English (UK)),Where can I change the bank details of a customer?
+raw/neg/say_0674.wav,0,sentence,macos,Sandy (English (UK)),"With Valo, employees find features faster."
+raw/neg/say_0675.wav,0,sentence,macos,Sandy (English (UK)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0676.wav,0,sentence,macos,Sandy (English (UK)),The daily standup starts at nine.
+raw/neg/say_0677.wav,0,sentence,macos,Sandy (English (UK)),"Zeig mir bitte, wie ich ein Angebot erstelle."
+raw/neg/say_0678.wav,0,adversarial,macos,Sandy (English (US)),Alexa
+raw/neg/say_0679.wav,0,adversarial,macos,Sandy (English (US)),Halloween
+raw/neg/say_0680.wav,0,adversarial,macos,Sandy (English (US)),Hallo
+raw/neg/say_0681.wav,0,adversarial,macos,Sandy (English (US)),Ciao
+raw/neg/say_0682.wav,0,adversarial,macos,Sandy (English (US)),Okay
+raw/neg/say_0683.wav,0,adversarial,macos,Sandy (English (US)),Hey Google
+raw/neg/say_0684.wav,0,sentence,macos,Sandy (English (US)),"With Valo, employees find features faster."
+raw/neg/say_0685.wav,0,sentence,macos,Sandy (English (US)),Where can I change the bank details of a customer?
+raw/neg/say_0686.wav,0,sentence,macos,Sandy (English (US)),Can you help me with the payment terms?
+raw/neg/say_0687.wav,0,sentence,macos,Sandy (English (US)),Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0688.wav,0,sentence,macos,Sandy (English (US)),I can't find the button to cancel the contract.
+raw/neg/say_0689.wav,0,sentence,macos,Sandy (English (US)),"Zeig mir bitte, wie ich ein Angebot erstelle."
+raw/neg/say_0690.wav,0,adversarial,macos,Sandy (German (Germany)),Hey Waldo
+raw/neg/say_0691.wav,0,adversarial,macos,Sandy (German (Germany)),Halloween
+raw/neg/say_0692.wav,0,adversarial,macos,Sandy (German (Germany)),Hello
+raw/neg/say_0693.wav,0,adversarial,macos,Sandy (German (Germany)),Hey Daniel
+raw/neg/say_0694.wav,0,adversarial,macos,Sandy (German (Germany)),Hey Paula
+raw/neg/say_0695.wav,0,adversarial,macos,Sandy (German (Germany)),Halo
+raw/neg/say_0696.wav,0,sentence,macos,Sandy (German (Germany)),Show me how to create an offer with a discount.
+raw/neg/say_0697.wav,0,sentence,macos,Sandy (German (Germany)),The weather in Karlsruhe is quite nice today.
+raw/neg/say_0698.wav,0,sentence,macos,Sandy (German (Germany)),"Valo never clicks for you, it only points."
+raw/neg/say_0699.wav,0,sentence,macos,Sandy (German (Germany)),Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/say_0700.wav,0,sentence,macos,Sandy (German (Germany)),"Hey, wie geht's dir?"
+raw/neg/say_0701.wav,0,sentence,macos,Sandy (German (Germany)),How do I submit the offer for approval?
+raw/neg/say_0702.wav,0,adversarial,macos,Shelley (English (UK)),Alexa
+raw/neg/say_0703.wav,0,adversarial,macos,Shelley (English (UK)),Valo
+raw/neg/say_0704.wav,0,adversarial,macos,Shelley (English (UK)),Hey Daisy
+raw/neg/say_0705.wav,0,adversarial,macos,Shelley (English (UK)),Hey Willow
+raw/neg/say_0706.wav,0,adversarial,macos,Shelley (English (UK)),Hey Google
+raw/neg/say_0707.wav,0,adversarial,macos,Shelley (English (UK)),Hey baby
+raw/neg/say_0708.wav,0,sentence,macos,Shelley (English (UK)),Mein Papa hat gestern angerufen.
+raw/neg/say_0709.wav,0,sentence,macos,Shelley (English (UK)),Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0710.wav,0,sentence,macos,Shelley (English (UK)),"Hey, did you push the latest changes?"
+raw/neg/say_0711.wav,0,sentence,macos,Shelley (English (UK)),How do I submit the offer for approval?
+raw/neg/say_0712.wav,0,sentence,macos,Shelley (English (UK)),Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/say_0713.wav,0,sentence,macos,Shelley (English (UK)),The daily standup starts at nine.
+raw/neg/say_0714.wav,0,adversarial,macos,Shelley (English (US)),Valentina
+raw/neg/say_0715.wav,0,adversarial,macos,Shelley (English (US)),Hey Daniel
+raw/neg/say_0716.wav,0,adversarial,macos,Shelley (English (US)),Vale
+raw/neg/say_0717.wav,0,adversarial,macos,Shelley (English (US)),Okay
+raw/neg/say_0718.wav,0,adversarial,macos,Shelley (English (US)),Hey Betty
+raw/neg/say_0719.wav,0,adversarial,macos,Shelley (English (US)),Hey Daisy
+raw/neg/say_0720.wav,0,sentence,macos,Shelley (English (US)),The weather in Karlsruhe is quite nice today.
+raw/neg/say_0721.wav,0,sentence,macos,Shelley (English (US)),"With Valo, employees find features faster."
+raw/neg/say_0722.wav,0,sentence,macos,Shelley (English (US)),Fifty two people asked about the payment flow.
+raw/neg/say_0723.wav,0,sentence,macos,Shelley (English (US)),"Valo, Valo, Valo."
+raw/neg/say_0724.wav,0,sentence,macos,Shelley (English (US)),My dad always says the same thing.
+raw/neg/say_0725.wav,0,sentence,macos,Shelley (English (US)),Valo shows you where to click in web apps.
+raw/neg/say_0726.wav,0,adversarial,macos,Shelley (German (Germany)),Hey Daniel
+raw/neg/say_0727.wav,0,adversarial,macos,Shelley (German (Germany)),Hello
+raw/neg/say_0728.wav,0,adversarial,macos,Shelley (German (Germany)),Daddy
+raw/neg/say_0729.wav,0,adversarial,macos,Shelley (German (Germany)),Hey Google
+raw/neg/say_0730.wav,0,adversarial,macos,Shelley (German (Germany)),Hey Betty
+raw/neg/say_0731.wav,0,adversarial,macos,Shelley (German (Germany)),Valentina
+raw/neg/say_0732.wav,0,sentence,macos,Shelley (German (Germany)),"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0733.wav,0,sentence,macos,Shelley (German (Germany)),Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0734.wav,0,sentence,macos,Shelley (German (Germany)),"Valo, Valo, Valo."
+raw/neg/say_0735.wav,0,sentence,macos,Shelley (German (Germany)),"Hey everyone, welcome to our pitch."
+raw/neg/say_0736.wav,0,sentence,macos,Shelley (German (Germany)),"Thanks a lot, that was really helpful."
+raw/neg/say_0737.wav,0,sentence,macos,Shelley (German (Germany)),"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0738.wav,0,adversarial,macos,Superstar,Hey Betty
+raw/neg/say_0739.wav,0,adversarial,macos,Superstar,Hey Lara
+raw/neg/say_0740.wav,0,adversarial,macos,Superstar,Hey there
+raw/neg/say_0741.wav,0,adversarial,macos,Superstar,Hey Teddy
+raw/neg/say_0742.wav,0,adversarial,macos,Superstar,Hey Daniel
+raw/neg/say_0743.wav,0,adversarial,macos,Superstar,Hey Danny
+raw/neg/say_0744.wav,0,sentence,macos,Superstar,"Valo never clicks for you, it only points."
+raw/neg/say_0745.wav,0,sentence,macos,Superstar,Fifty two people asked about the payment flow.
+raw/neg/say_0746.wav,0,sentence,macos,Superstar,"Thanks a lot, that was really helpful."
+raw/neg/say_0747.wav,0,sentence,macos,Superstar,This is the demo of our hackathon project.
+raw/neg/say_0748.wav,0,sentence,macos,Superstar,Let's look at the insights dashboard together.
+raw/neg/say_0749.wav,0,sentence,macos,Superstar,Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0750.wav,0,adversarial,macos,Tara (English (India)),Halo
+raw/neg/say_0751.wav,0,adversarial,macos,Tara (English (India)),Hey Lara
+raw/neg/say_0752.wav,0,adversarial,macos,Tara (English (India)),Ciao
+raw/neg/say_0753.wav,0,adversarial,macos,Tara (English (India)),Halloween
+raw/neg/say_0754.wav,0,adversarial,macos,Tara (English (India)),Alexa
+raw/neg/say_0755.wav,0,adversarial,macos,Tara (English (India)),Hallo
+raw/neg/say_0756.wav,0,sentence,macos,Tara (English (India)),"Hey, wie geht's dir?"
+raw/neg/say_0757.wav,0,sentence,macos,Tara (English (India)),Fifty two people asked about the payment flow.
+raw/neg/say_0758.wav,0,sentence,macos,Tara (English (India)),Where can I change the bank details of a customer?
+raw/neg/say_0759.wav,0,sentence,macos,Tara (English (India)),"Thanks a lot, that was really helpful."
+raw/neg/say_0760.wav,0,sentence,macos,Tara (English (India)),"Hey, did you push the latest changes?"
+raw/neg/say_0761.wav,0,sentence,macos,Tara (English (India)),Valo shows you where to click in web apps.
+raw/neg/say_0762.wav,0,adversarial,macos,Tessa (English (South Africa)),"Hey Vallo, no"
+raw/neg/say_0763.wav,0,adversarial,macos,Tessa (English (South Africa)),Halo
+raw/neg/say_0764.wav,0,adversarial,macos,Tessa (English (South Africa)),Hey Betty
+raw/neg/say_0765.wav,0,adversarial,macos,Tessa (English (South Africa)),Hey Google
+raw/neg/say_0766.wav,0,adversarial,macos,Tessa (English (South Africa)),Valentina
+raw/neg/say_0767.wav,0,adversarial,macos,Tessa (English (South Africa)),Ciao
+raw/neg/say_0768.wav,0,sentence,macos,Tessa (English (South Africa)),"Valo, Valo, Valo."
+raw/neg/say_0769.wav,0,sentence,macos,Tessa (English (South Africa)),"Hey, wie geht's dir?"
+raw/neg/say_0770.wav,0,sentence,macos,Tessa (English (South Africa)),This is the demo of our hackathon project.
+raw/neg/say_0771.wav,0,sentence,macos,Tessa (English (South Africa)),Das Dashboard zeigt die wichtigsten Kennzahlen.
+raw/neg/say_0772.wav,0,sentence,macos,Tessa (English (South Africa)),"Thanks a lot, that was really helpful."
+raw/neg/say_0773.wav,0,sentence,macos,Tessa (English (South Africa)),"Valo never clicks for you, it only points."
+raw/neg/say_0774.wav,0,adversarial,macos,Trinoids,Hey Paolo
+raw/neg/say_0775.wav,0,adversarial,macos,Trinoids,Hello
+raw/neg/say_0776.wav,0,adversarial,macos,Trinoids,Halo
+raw/neg/say_0777.wav,0,adversarial,macos,Trinoids,Hey Teddy
+raw/neg/say_0778.wav,0,adversarial,macos,Trinoids,Hey Daisy
+raw/neg/say_0779.wav,0,adversarial,macos,Trinoids,Valo
+raw/neg/say_0780.wav,0,sentence,macos,Trinoids,The weather in Karlsruhe is quite nice today.
+raw/neg/say_0781.wav,0,sentence,macos,Trinoids,"Valo zeigt dir, wo du klicken musst."
+raw/neg/say_0782.wav,0,sentence,macos,Trinoids,"With Valo, employees find features faster."
+raw/neg/say_0783.wav,0,sentence,macos,Trinoids,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0784.wav,0,sentence,macos,Trinoids,How do I submit the offer for approval?
+raw/neg/say_0785.wav,0,sentence,macos,Trinoids,Please open the customer list and search for Müller.
+raw/neg/say_0786.wav,0,adversarial,macos,Whisper,Hey Daniel
+raw/neg/say_0787.wav,0,adversarial,macos,Whisper,Hey Paula
+raw/neg/say_0788.wav,0,adversarial,macos,Whisper,"Hey Vallo, no"
+raw/neg/say_0789.wav,0,adversarial,macos,Whisper,Valo
+raw/neg/say_0790.wav,0,adversarial,macos,Whisper,Valentina
+raw/neg/say_0791.wav,0,adversarial,macos,Whisper,Hello
+raw/neg/say_0792.wav,0,sentence,macos,Whisper,Our product Valo listens for a wake word.
+raw/neg/say_0793.wav,0,sentence,macos,Whisper,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/say_0794.wav,0,sentence,macos,Whisper,How do I submit the offer for approval?
+raw/neg/say_0795.wav,0,sentence,macos,Whisper,Ich finde den Knopf zum Kündigen nicht.
+raw/neg/say_0796.wav,0,sentence,macos,Whisper,"Hallo zusammen, schön dass ihr da seid."
+raw/neg/say_0797.wav,0,sentence,macos,Whisper,"Valo never clicks for you, it only points."
+raw/neg/say_0798.wav,0,adversarial,macos,Wobble,Hey Betty
+raw/neg/say_0799.wav,0,adversarial,macos,Wobble,Hey Daisy
+raw/neg/say_0800.wav,0,adversarial,macos,Wobble,Okay
+raw/neg/say_0801.wav,0,adversarial,macos,Wobble,Hello
+raw/neg/say_0802.wav,0,adversarial,macos,Wobble,Hey you
+raw/neg/say_0803.wav,0,adversarial,macos,Wobble,Valo
+raw/neg/say_0804.wav,0,sentence,macos,Wobble,The trainings are generated from employee questions.
+raw/neg/say_0805.wav,0,sentence,macos,Wobble,"Hey everyone, welcome to our pitch."
+raw/neg/say_0806.wav,0,sentence,macos,Wobble,Can you help me with the payment terms?
+raw/neg/say_0807.wav,0,sentence,macos,Wobble,"Thanks a lot, that was really helpful."
+raw/neg/say_0808.wav,0,sentence,macos,Wobble,Mein Papa hat gestern angerufen.
+raw/neg/say_0809.wav,0,sentence,macos,Wobble,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/say_0810.wav,0,adversarial,macos,Zarvox,Hey Siri
+raw/neg/say_0811.wav,0,adversarial,macos,Zarvox,Valo
+raw/neg/say_0812.wav,0,adversarial,macos,Zarvox,Hey Daisy
+raw/neg/say_0813.wav,0,adversarial,macos,Zarvox,Hello
+raw/neg/say_0814.wav,0,adversarial,macos,Zarvox,Hey Paolo
+raw/neg/say_0815.wav,0,adversarial,macos,Zarvox,Valentina
+raw/neg/say_0816.wav,0,sentence,macos,Zarvox,Please open the customer list and search for Müller.
+raw/neg/say_0817.wav,0,sentence,macos,Zarvox,Let's look at the insights dashboard together.
+raw/neg/say_0818.wav,0,sentence,macos,Zarvox,Wir haben heute den ganzen Tag programmiert.
+raw/neg/say_0819.wav,0,sentence,macos,Zarvox,"Valo, Valo, Valo."
+raw/neg/say_0820.wav,0,sentence,macos,Zarvox,"Okay, dann machen wir weiter mit der Demo."
+raw/neg/say_0821.wav,0,sentence,macos,Zarvox,Our product Valo listens for a wake word.
+raw/neg/gem_0010.wav,0,adversarial,gemini,Zephyr,Say slowly and clearly: Valo
+raw/neg/gem_0011.wav,0,adversarial,gemini,Zephyr,Say slowly and clearly: Hey Paolo
+raw/neg/gem_0012.wav,0,adversarial,gemini,Zephyr,Say casually: Alexa
+raw/neg/gem_0013.wav,0,adversarial,gemini,Zephyr,Say casually: Hey Lara
+raw/neg/gem_0014.wav,0,adversarial,gemini,Zephyr,Say casually: Hey Siri
+raw/neg/gem_0015.wav,0,sentence,gemini,Zephyr,My dad always says the same thing.
+raw/neg/gem_0016.wav,0,sentence,gemini,Zephyr,"With Valo, employees find features faster."
+raw/neg/gem_0017.wav,0,sentence,gemini,Zephyr,Fifty two people asked about the payment flow.
+raw/neg/gem_0018.wav,0,sentence,gemini,Zephyr,"Hallo zusammen, schön dass ihr da seid."
+raw/neg/gem_0019.wav,0,sentence,gemini,Zephyr,Can you help me with the payment terms?
+raw/neg/gem_0030.wav,0,adversarial,gemini,Puck,Say slowly and clearly: Hey Betty
+raw/neg/gem_0031.wav,0,adversarial,gemini,Puck,Say slowly and clearly: Daddy
+raw/neg/gem_0032.wav,0,adversarial,gemini,Puck,Say quickly: Halloween
+raw/neg/gem_0033.wav,0,adversarial,gemini,Puck,Say slowly and clearly: Alexa
+raw/neg/gem_0034.wav,0,adversarial,gemini,Puck,Say slowly and clearly: Hey Paula
+raw/neg/gem_0035.wav,0,sentence,gemini,Puck,My dad always says the same thing.
+raw/neg/gem_0036.wav,0,sentence,gemini,Puck,"Hallo zusammen, schön dass ihr da seid."
+raw/neg/gem_0037.wav,0,sentence,gemini,Puck,The trainings are generated from employee questions.
+raw/neg/gem_0038.wav,0,sentence,gemini,Puck,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/gem_0039.wav,0,sentence,gemini,Puck,"Hey, wie geht's dir?"
+raw/neg/gem_0050.wav,0,adversarial,gemini,Charon,Say casually: Hey Paula
+raw/neg/gem_0051.wav,0,adversarial,gemini,Charon,Say quickly: Ciao
+raw/neg/gem_0052.wav,0,adversarial,gemini,Charon,Say casually: Hello
+raw/neg/gem_0053.wav,0,adversarial,gemini,Charon,Say casually: Vale
+raw/neg/gem_0054.wav,0,adversarial,gemini,Charon,Hey Betty
+raw/neg/gem_0055.wav,0,sentence,gemini,Charon,The weather in Karlsruhe is quite nice today.
+raw/neg/gem_0056.wav,0,sentence,gemini,Charon,"Valo never clicks for you, it only points."
+raw/neg/gem_0057.wav,0,sentence,gemini,Charon,Our product Valo listens for a wake word.
+raw/neg/gem_0058.wav,0,sentence,gemini,Charon,Mein Papa hat gestern angerufen.
+raw/neg/gem_0059.wav,0,sentence,gemini,Charon,Fifty two people asked about the payment flow.
+raw/neg/gem_0070.wav,0,adversarial,gemini,Kore,Hey Paolo
+raw/neg/gem_0071.wav,0,adversarial,gemini,Kore,Say quickly: Alexa
+raw/neg/gem_0072.wav,0,adversarial,gemini,Kore,Say quickly: Hey you
+raw/neg/gem_0073.wav,0,adversarial,gemini,Kore,Say slowly and clearly: Hallo
+raw/neg/gem_0074.wav,0,adversarial,gemini,Kore,Valentina
+raw/neg/gem_0075.wav,0,sentence,gemini,Kore,"Valo zeigt dir, wo du klicken musst."
+raw/neg/gem_0076.wav,0,sentence,gemini,Kore,Please open the customer list and search for Müller.
+raw/neg/gem_0077.wav,0,sentence,gemini,Kore,"Valo never clicks for you, it only points."
+raw/neg/gem_0078.wav,0,sentence,gemini,Kore,"Hey everyone, welcome to our pitch."
+raw/neg/gem_0079.wav,0,sentence,gemini,Kore,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/gem_0090.wav,0,adversarial,gemini,Fenrir,Say quickly: Hey Willow
+raw/neg/gem_0091.wav,0,adversarial,gemini,Fenrir,Hey Daniel
+raw/neg/gem_0092.wav,0,adversarial,gemini,Fenrir,Say casually: Hey Teddy
+raw/neg/gem_0093.wav,0,adversarial,gemini,Fenrir,Say casually: Hey Paula
+raw/neg/gem_0094.wav,0,adversarial,gemini,Fenrir,Say casually: Hey Waldo
+raw/neg/gem_0095.wav,0,sentence,gemini,Fenrir,How do I submit the offer for approval?
+raw/neg/gem_0096.wav,0,sentence,gemini,Fenrir,"Hey, did you push the latest changes?"
+raw/neg/gem_0097.wav,0,sentence,gemini,Fenrir,My dad always says the same thing.
+raw/neg/gem_0098.wav,0,sentence,gemini,Fenrir,"Valo never clicks for you, it only points."
+raw/neg/gem_0099.wav,0,sentence,gemini,Fenrir,The daily standup starts at nine.
+raw/neg/gem_0110.wav,0,adversarial,gemini,Leda,Say casually: Hey Danny
+raw/neg/gem_0111.wav,0,adversarial,gemini,Leda,Hello
+raw/neg/gem_0112.wav,0,adversarial,gemini,Leda,Hey Betty
+raw/neg/gem_0113.wav,0,adversarial,gemini,Leda,Valentina
+raw/neg/gem_0114.wav,0,adversarial,gemini,Leda,Say casually: Hey Carlo
+raw/neg/gem_0115.wav,0,sentence,gemini,Leda,My dad always says the same thing.
+raw/neg/gem_0116.wav,0,sentence,gemini,Leda,How do I submit the offer for approval?
+raw/neg/gem_0117.wav,0,sentence,gemini,Leda,"Thanks a lot, that was really helpful."
+raw/neg/gem_0118.wav,0,sentence,gemini,Leda,"With Valo, employees find features faster."
+raw/neg/gem_0119.wav,0,sentence,gemini,Leda,"Hey, did you push the latest changes?"
+raw/neg/gem_0130.wav,0,adversarial,gemini,Orus,Say slowly and clearly: Hey you
+raw/neg/gem_0131.wav,0,adversarial,gemini,Orus,Alexa
+raw/neg/gem_0132.wav,0,adversarial,gemini,Orus,Hey Google
+raw/neg/gem_0133.wav,0,adversarial,gemini,Orus,Say quickly: Hey Willow
+raw/neg/gem_0134.wav,0,adversarial,gemini,Orus,Say casually: Hey Paolo
+raw/neg/gem_0135.wav,0,sentence,gemini,Orus,"With Valo, employees find features faster."
+raw/neg/gem_0136.wav,0,sentence,gemini,Orus,Please open the customer list and search for Müller.
+raw/neg/gem_0137.wav,0,sentence,gemini,Orus,Our product Valo listens for a wake word.
+raw/neg/gem_0138.wav,0,sentence,gemini,Orus,"Okay, dann machen wir weiter mit der Demo."
+raw/neg/gem_0139.wav,0,sentence,gemini,Orus,"Valo, Valo, Valo."
+raw/neg/gem_0150.wav,0,adversarial,gemini,Aoede,Say quickly: Okay
+raw/neg/gem_0151.wav,0,adversarial,gemini,Aoede,Say slowly and clearly: Ciao
+raw/neg/gem_0152.wav,0,adversarial,gemini,Aoede,Say casually: Hello
+raw/neg/gem_0153.wav,0,adversarial,gemini,Aoede,Halo
+raw/neg/gem_0154.wav,0,adversarial,gemini,Aoede,Hey Carlo
+raw/neg/gem_0155.wav,0,sentence,gemini,Aoede,"Hey, wie geht's dir?"
+raw/neg/gem_0156.wav,0,sentence,gemini,Aoede,"Valo never clicks for you, it only points."
+raw/neg/gem_0157.wav,0,sentence,gemini,Aoede,"Valo, Valo, Valo."
+raw/neg/gem_0158.wav,0,sentence,gemini,Aoede,"Zeig mir bitte, wie ich ein Angebot erstelle."
+raw/neg/gem_0159.wav,0,sentence,gemini,Aoede,Das Dashboard zeigt die wichtigsten Kennzahlen.
+raw/neg/gem_0170.wav,0,adversarial,gemini,Callirrhoe,Hey Danny
+raw/neg/gem_0171.wav,0,adversarial,gemini,Callirrhoe,Hey Daniel
+raw/neg/gem_0172.wav,0,adversarial,gemini,Callirrhoe,Hey Teddy
+raw/neg/gem_0173.wav,0,adversarial,gemini,Callirrhoe,Say casually: Halloween
+raw/neg/gem_0174.wav,0,adversarial,gemini,Callirrhoe,"Say quickly: Hey Vallo, no"
+raw/neg/gem_0175.wav,0,sentence,gemini,Callirrhoe,Wir haben heute den ganzen Tag programmiert.
+raw/neg/gem_0176.wav,0,sentence,gemini,Callirrhoe,My dad always says the same thing.
+raw/neg/gem_0177.wav,0,sentence,gemini,Callirrhoe,Ich finde den Knopf zum Kündigen nicht.
+raw/neg/gem_0178.wav,0,sentence,gemini,Callirrhoe,Please open the customer list and search for Müller.
+raw/neg/gem_0179.wav,0,sentence,gemini,Callirrhoe,Fifty two people asked about the payment flow.
+raw/neg/gem_0190.wav,0,adversarial,gemini,Autonoe,Say casually: Valentina
+raw/neg/gem_0191.wav,0,adversarial,gemini,Autonoe,Say slowly and clearly: Hey Paolo
+raw/neg/gem_0192.wav,0,adversarial,gemini,Autonoe,Halloween
+raw/neg/gem_0193.wav,0,adversarial,gemini,Autonoe,Say slowly and clearly: Hey you
+raw/neg/gem_0194.wav,0,adversarial,gemini,Autonoe,Say quickly: Okay
+raw/neg/gem_0195.wav,0,sentence,gemini,Autonoe,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/gem_0196.wav,0,sentence,gemini,Autonoe,"Hey everyone, welcome to our pitch."
+raw/neg/gem_0197.wav,0,sentence,gemini,Autonoe,"Okay, dann machen wir weiter mit der Demo."
+raw/neg/gem_0198.wav,0,sentence,gemini,Autonoe,"Hey, wie geht's dir?"
+raw/neg/gem_0199.wav,0,sentence,gemini,Autonoe,Mein Papa hat gestern angerufen.
+raw/neg/gem_0210.wav,0,adversarial,gemini,Enceladus,Say casually: Valentina
+raw/neg/gem_0211.wav,0,adversarial,gemini,Enceladus,Hey there
+raw/neg/gem_0212.wav,0,adversarial,gemini,Enceladus,Say slowly and clearly: Hey you
+raw/neg/gem_0213.wav,0,adversarial,gemini,Enceladus,Say casually: Okay
+raw/neg/gem_0214.wav,0,adversarial,gemini,Enceladus,Say quickly: Ciao
+raw/neg/gem_0215.wav,0,sentence,gemini,Enceladus,This is the demo of our hackathon project.
+raw/neg/gem_0216.wav,0,sentence,gemini,Enceladus,"Valo, Valo, Valo."
+raw/neg/gem_0217.wav,0,sentence,gemini,Enceladus,Can you help me with the payment terms?
+raw/neg/gem_0218.wav,0,sentence,gemini,Enceladus,Valo shows you where to click in web apps.
+raw/neg/gem_0219.wav,0,sentence,gemini,Enceladus,The weather in Karlsruhe is quite nice today.
+raw/neg/gem_0230.wav,0,adversarial,gemini,Iapetus,Say slowly and clearly: Hey Carlo
+raw/neg/gem_0231.wav,0,adversarial,gemini,Iapetus,Say quickly: Hey you
+raw/neg/gem_0232.wav,0,adversarial,gemini,Iapetus,Say casually: Vale
+raw/neg/gem_0233.wav,0,adversarial,gemini,Iapetus,Alexa
+raw/neg/gem_0234.wav,0,adversarial,gemini,Iapetus,Say casually: Hey Danny
+raw/neg/gem_0235.wav,0,sentence,gemini,Iapetus,"Valo, Valo, Valo."
+raw/neg/gem_0236.wav,0,sentence,gemini,Iapetus,Wir haben heute den ganzen Tag programmiert.
+raw/neg/gem_0237.wav,0,sentence,gemini,Iapetus,"Hey, did you push the latest changes?"
+raw/neg/gem_0238.wav,0,sentence,gemini,Iapetus,"Zeig mir bitte, wie ich ein Angebot erstelle."
+raw/neg/gem_0239.wav,0,sentence,gemini,Iapetus,Let's look at the insights dashboard together.
+raw/neg/gem_0250.wav,0,adversarial,gemini,Umbriel,Say quickly: Daddy
+raw/neg/gem_0251.wav,0,adversarial,gemini,Umbriel,Say slowly and clearly: Hey Siri
+raw/neg/gem_0252.wav,0,adversarial,gemini,Umbriel,Hey Google
+raw/neg/gem_0253.wav,0,adversarial,gemini,Umbriel,Say casually: Hallo
+raw/neg/gem_0254.wav,0,adversarial,gemini,Umbriel,Say slowly and clearly: Halloween
+raw/neg/gem_0255.wav,0,sentence,gemini,Umbriel,Let's look at the insights dashboard together.
+raw/neg/gem_0256.wav,0,sentence,gemini,Umbriel,Show me how to create an offer with a discount.
+raw/neg/gem_0257.wav,0,sentence,gemini,Umbriel,"Valo zeigt dir, wo du klicken musst."
+raw/neg/gem_0258.wav,0,sentence,gemini,Umbriel,"Valo never clicks for you, it only points."
+raw/neg/gem_0259.wav,0,sentence,gemini,Umbriel,My dad always says the same thing.
+raw/neg/gem_0270.wav,0,adversarial,gemini,Algieba,Say slowly and clearly: Valo
+raw/neg/gem_0271.wav,0,adversarial,gemini,Algieba,Say casually: Hey Google
+raw/neg/gem_0272.wav,0,adversarial,gemini,Algieba,Say quickly: Hey Lara
+raw/neg/gem_0273.wav,0,adversarial,gemini,Algieba,Say quickly: Ciao
+raw/neg/gem_0274.wav,0,adversarial,gemini,Algieba,Say casually: Hey Teddy
+raw/neg/gem_0275.wav,0,sentence,gemini,Algieba,How do I submit the offer for approval?
+raw/neg/gem_0276.wav,0,sentence,gemini,Algieba,The daily standup starts at nine.
+raw/neg/gem_0277.wav,0,sentence,gemini,Algieba,"Hey, wie geht's dir?"
+raw/neg/gem_0278.wav,0,sentence,gemini,Algieba,This is the demo of our hackathon project.
+raw/neg/gem_0279.wav,0,sentence,gemini,Algieba,Mein Papa hat gestern angerufen.
+raw/neg/gem_0290.wav,0,adversarial,gemini,Despina,Say quickly: Okay
+raw/neg/gem_0291.wav,0,adversarial,gemini,Despina,Say slowly and clearly: Hey Daisy
+raw/neg/gem_0292.wav,0,adversarial,gemini,Despina,Say slowly and clearly: Hey Danny
+raw/neg/gem_0293.wav,0,adversarial,gemini,Despina,Halo
+raw/neg/gem_0294.wav,0,adversarial,gemini,Despina,Say casually: Ciao
+raw/neg/gem_0295.wav,0,sentence,gemini,Despina,"Hallo zusammen, schön dass ihr da seid."
+raw/neg/gem_0296.wav,0,sentence,gemini,Despina,Wir haben heute den ganzen Tag programmiert.
+raw/neg/gem_0297.wav,0,sentence,gemini,Despina,Can you help me with the payment terms?
+raw/neg/gem_0298.wav,0,sentence,gemini,Despina,"With Valo, employees find features faster."
+raw/neg/gem_0299.wav,0,sentence,gemini,Despina,How do I submit the offer for approval?
+raw/neg/gem_0310.wav,0,adversarial,gemini,Erinome,Say casually: Hey Teddy
+raw/neg/gem_0311.wav,0,adversarial,gemini,Erinome,Say slowly and clearly: Halloween
+raw/neg/gem_0312.wav,0,adversarial,gemini,Erinome,Say quickly: Hey buddy
+raw/neg/gem_0313.wav,0,adversarial,gemini,Erinome,Say quickly: Hey Siri
+raw/neg/gem_0314.wav,0,adversarial,gemini,Erinome,Halo
+raw/neg/gem_0315.wav,0,sentence,gemini,Erinome,Ich finde den Knopf zum Kündigen nicht.
+raw/neg/gem_0316.wav,0,sentence,gemini,Erinome,This is the demo of our hackathon project.
+raw/neg/gem_0317.wav,0,sentence,gemini,Erinome,The daily standup starts at nine.
+raw/neg/gem_0318.wav,0,sentence,gemini,Erinome,"Valo never clicks for you, it only points."
+raw/neg/gem_0319.wav,0,sentence,gemini,Erinome,Mein Papa hat gestern angerufen.
+raw/neg/gem_0330.wav,0,adversarial,gemini,Algenib,Hey you
+raw/neg/gem_0331.wav,0,adversarial,gemini,Algenib,Say slowly and clearly: Valo
+raw/neg/gem_0332.wav,0,adversarial,gemini,Algenib,Say slowly and clearly: Hey Siri
+raw/neg/gem_0333.wav,0,adversarial,gemini,Algenib,Say slowly and clearly: Hey Daniel
+raw/neg/gem_0334.wav,0,adversarial,gemini,Algenib,Say casually: Daddy
+raw/neg/gem_0335.wav,0,sentence,gemini,Algenib,"Okay, dann machen wir weiter mit der Demo."
+raw/neg/gem_0336.wav,0,sentence,gemini,Algenib,Wir haben heute den ganzen Tag programmiert.
+raw/neg/gem_0337.wav,0,sentence,gemini,Algenib,Please open the customer list and search for Müller.
+raw/neg/gem_0338.wav,0,sentence,gemini,Algenib,"Valo never clicks for you, it only points."
+raw/neg/gem_0339.wav,0,sentence,gemini,Algenib,How do I submit the offer for approval?
+raw/neg/gem_0350.wav,0,adversarial,gemini,Rasalgethi,Say slowly and clearly: Hey Siri
+raw/neg/gem_0351.wav,0,adversarial,gemini,Rasalgethi,Say casually: Daddy
+raw/neg/gem_0352.wav,0,adversarial,gemini,Rasalgethi,Hallo
+raw/neg/gem_0353.wav,0,adversarial,gemini,Rasalgethi,Say slowly and clearly: Hey Lara
+raw/neg/gem_0354.wav,0,adversarial,gemini,Rasalgethi,Say casually: Hey Waldo
+raw/neg/gem_0355.wav,0,sentence,gemini,Rasalgethi,"With Valo, employees find features faster."
+raw/neg/gem_0356.wav,0,sentence,gemini,Rasalgethi,Can you help me with the payment terms?
+raw/neg/gem_0357.wav,0,sentence,gemini,Rasalgethi,Our product Valo listens for a wake word.
+raw/neg/gem_0358.wav,0,sentence,gemini,Rasalgethi,This is the demo of our hackathon project.
+raw/neg/gem_0359.wav,0,sentence,gemini,Rasalgethi,Valo shows you where to click in web apps.
+raw/neg/gem_0370.wav,0,adversarial,gemini,Laomedeia,Say casually: Ciao
+raw/neg/gem_0371.wav,0,adversarial,gemini,Laomedeia,Hey Willow
+raw/neg/gem_0372.wav,0,adversarial,gemini,Laomedeia,Say casually: Hey Betty
+raw/neg/gem_0373.wav,0,adversarial,gemini,Laomedeia,Say casually: Vale
+raw/neg/gem_0374.wav,0,adversarial,gemini,Laomedeia,Say casually: Hey Paula
+raw/neg/gem_0375.wav,0,sentence,gemini,Laomedeia,Wir haben heute den ganzen Tag programmiert.
+raw/neg/gem_0376.wav,0,sentence,gemini,Laomedeia,This is the demo of our hackathon project.
+raw/neg/gem_0377.wav,0,sentence,gemini,Laomedeia,"Valo zeigt dir, wo du klicken musst."
+raw/neg/gem_0378.wav,0,sentence,gemini,Laomedeia,Ich finde den Knopf zum Kündigen nicht.
+raw/neg/gem_0379.wav,0,sentence,gemini,Laomedeia,The weather in Karlsruhe is quite nice today.
+raw/neg/gem_0390.wav,0,adversarial,gemini,Achernar,Hey you
+raw/neg/gem_0391.wav,0,adversarial,gemini,Achernar,Say casually: Hey Daniel
+raw/neg/gem_0392.wav,0,adversarial,gemini,Achernar,Vale
+raw/neg/gem_0393.wav,0,adversarial,gemini,Achernar,Say quickly: Hey buddy
+raw/neg/gem_0394.wav,0,adversarial,gemini,Achernar,Say slowly and clearly: Okay
+raw/neg/gem_0395.wav,0,sentence,gemini,Achernar,Our product Valo listens for a wake word.
+raw/neg/gem_0396.wav,0,sentence,gemini,Achernar,My dad always says the same thing.
+raw/neg/gem_0397.wav,0,sentence,gemini,Achernar,Let's look at the insights dashboard together.
+raw/neg/gem_0398.wav,0,sentence,gemini,Achernar,"Hallo zusammen, schön dass ihr da seid."
+raw/neg/gem_0399.wav,0,sentence,gemini,Achernar,"Valo never clicks for you, it only points."
+raw/neg/gem_0410.wav,0,adversarial,gemini,Alnilam,Say quickly: Hey Paula
+raw/neg/gem_0411.wav,0,adversarial,gemini,Alnilam,Valo
+raw/neg/gem_0412.wav,0,adversarial,gemini,Alnilam,Say casually: Hello
+raw/neg/gem_0413.wav,0,adversarial,gemini,Alnilam,Say slowly and clearly: Hallo
+raw/neg/gem_0414.wav,0,adversarial,gemini,Alnilam,Say quickly: Hey Willow
+raw/neg/gem_0415.wav,0,sentence,gemini,Alnilam,"Hey everyone, welcome to our pitch."
+raw/neg/gem_0416.wav,0,sentence,gemini,Alnilam,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/gem_0417.wav,0,sentence,gemini,Alnilam,This is the demo of our hackathon project.
+raw/neg/gem_0418.wav,0,sentence,gemini,Alnilam,The weather in Karlsruhe is quite nice today.
+raw/neg/gem_0419.wav,0,sentence,gemini,Alnilam,Can you help me with the payment terms?
+raw/neg/gem_0430.wav,0,adversarial,gemini,Schedar,Say casually: Alexa
+raw/neg/gem_0431.wav,0,adversarial,gemini,Schedar,Say casually: Hey you
+raw/neg/gem_0432.wav,0,adversarial,gemini,Schedar,Say quickly: Hallo
+raw/neg/gem_0433.wav,0,adversarial,gemini,Schedar,Say casually: Valo
+raw/neg/gem_0434.wav,0,adversarial,gemini,Schedar,Say quickly: Hey Daisy
+raw/neg/gem_0435.wav,0,sentence,gemini,Schedar,How do I submit the offer for approval?
+raw/neg/gem_0436.wav,0,sentence,gemini,Schedar,Valo shows you where to click in web apps.
+raw/neg/gem_0437.wav,0,sentence,gemini,Schedar,"With Valo, employees find features faster."
+raw/neg/gem_0438.wav,0,sentence,gemini,Schedar,This is the demo of our hackathon project.
+raw/neg/gem_0439.wav,0,sentence,gemini,Schedar,"Hallo zusammen, schön dass ihr da seid."
+raw/neg/gem_0450.wav,0,adversarial,gemini,Gacrux,Say casually: Halo
+raw/neg/gem_0451.wav,0,adversarial,gemini,Gacrux,Say casually: Hallo
+raw/neg/gem_0452.wav,0,adversarial,gemini,Gacrux,Say quickly: Hey Carlo
+raw/neg/gem_0453.wav,0,adversarial,gemini,Gacrux,Say casually: Hey Daisy
+raw/neg/gem_0454.wav,0,adversarial,gemini,Gacrux,Say casually: Halloween
+raw/neg/gem_0455.wav,0,sentence,gemini,Gacrux,Ich finde den Knopf zum Kündigen nicht.
+raw/neg/gem_0456.wav,0,sentence,gemini,Gacrux,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/gem_0457.wav,0,sentence,gemini,Gacrux,"Okay, dann machen wir weiter mit der Demo."
+raw/neg/gem_0458.wav,0,sentence,gemini,Gacrux,The daily standup starts at nine.
+raw/neg/gem_0459.wav,0,sentence,gemini,Gacrux,"Thanks a lot, that was really helpful."
+raw/neg/gem_0470.wav,0,adversarial,gemini,Pulcherrima,Say slowly and clearly: Hey you
+raw/neg/gem_0471.wav,0,adversarial,gemini,Pulcherrima,Say slowly and clearly: Hey Daniel
+raw/neg/gem_0472.wav,0,adversarial,gemini,Pulcherrima,Say slowly and clearly: Hey Paula
+raw/neg/gem_0473.wav,0,adversarial,gemini,Pulcherrima,Say casually: Hey Paolo
+raw/neg/gem_0474.wav,0,adversarial,gemini,Pulcherrima,Say quickly: Hey Waldo
+raw/neg/gem_0475.wav,0,sentence,gemini,Pulcherrima,How do I submit the offer for approval?
+raw/neg/gem_0476.wav,0,sentence,gemini,Pulcherrima,Mein Papa hat gestern angerufen.
+raw/neg/gem_0477.wav,0,sentence,gemini,Pulcherrima,"Valo, Valo, Valo."
+raw/neg/gem_0478.wav,0,sentence,gemini,Pulcherrima,Where can I change the bank details of a customer?
+raw/neg/gem_0479.wav,0,sentence,gemini,Pulcherrima,"Hey, did you push the latest changes?"
+raw/neg/gem_0490.wav,0,adversarial,gemini,Achird,Say quickly: Hey Willow
+raw/neg/gem_0491.wav,0,adversarial,gemini,Achird,Say slowly and clearly: Hey Teddy
+raw/neg/gem_0492.wav,0,adversarial,gemini,Achird,Hey Waldo
+raw/neg/gem_0493.wav,0,adversarial,gemini,Achird,Say quickly: Hey Google
+raw/neg/gem_0494.wav,0,adversarial,gemini,Achird,Say quickly: Hey Betty
+raw/neg/gem_0495.wav,0,sentence,gemini,Achird,How do I submit the offer for approval?
+raw/neg/gem_0496.wav,0,sentence,gemini,Achird,Mein Papa hat gestern angerufen.
+raw/neg/gem_0497.wav,0,sentence,gemini,Achird,Das Dashboard zeigt die wichtigsten Kennzahlen.
+raw/neg/gem_0498.wav,0,sentence,gemini,Achird,Wo kann ich die IBAN eines Kunden ändern?
+raw/neg/gem_0499.wav,0,sentence,gemini,Achird,"Hey, wie geht's dir?"
+raw/neg/gem_0510.wav,0,adversarial,gemini,Zubenelgenubi,Say quickly: Hey you
+raw/neg/gem_0511.wav,0,adversarial,gemini,Zubenelgenubi,Say casually: Hey Waldo
+raw/neg/gem_0512.wav,0,adversarial,gemini,Zubenelgenubi,Say quickly: Hey Paolo
+raw/neg/gem_0513.wav,0,adversarial,gemini,Zubenelgenubi,Hey there
+raw/neg/gem_0514.wav,0,adversarial,gemini,Zubenelgenubi,Vale
+raw/neg/gem_0515.wav,0,sentence,gemini,Zubenelgenubi,The daily standup starts at nine.
+raw/neg/gem_0516.wav,0,sentence,gemini,Zubenelgenubi,My dad always says the same thing.
+raw/neg/gem_0517.wav,0,sentence,gemini,Zubenelgenubi,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/gem_0518.wav,0,sentence,gemini,Zubenelgenubi,Where can I change the bank details of a customer?
+raw/neg/gem_0519.wav,0,sentence,gemini,Zubenelgenubi,Mein Papa hat gestern angerufen.
+raw/neg/gem_0530.wav,0,adversarial,gemini,Vindemiatrix,"Hey Vallo, no"
+raw/neg/gem_0531.wav,0,adversarial,gemini,Vindemiatrix,Say casually: Hey Teddy
+raw/neg/gem_0532.wav,0,adversarial,gemini,Vindemiatrix,Say slowly and clearly: Hey Lara
+raw/neg/gem_0533.wav,0,adversarial,gemini,Vindemiatrix,Say slowly and clearly: Valentina
+raw/neg/gem_0534.wav,0,adversarial,gemini,Vindemiatrix,Say slowly and clearly: Alexa
+raw/neg/gem_0535.wav,0,sentence,gemini,Vindemiatrix,The trainings are generated from employee questions.
+raw/neg/gem_0536.wav,0,sentence,gemini,Vindemiatrix,"Valo, Valo, Valo."
+raw/neg/gem_0537.wav,0,sentence,gemini,Vindemiatrix,Can you help me with the payment terms?
+raw/neg/gem_0538.wav,0,sentence,gemini,Vindemiatrix,Das Dashboard zeigt die wichtigsten Kennzahlen.
+raw/neg/gem_0539.wav,0,sentence,gemini,Vindemiatrix,Let's look at the insights dashboard together.
+raw/neg/gem_0550.wav,0,adversarial,gemini,Sadachbia,"Say slowly and clearly: Hey Vallo, no"
+raw/neg/gem_0551.wav,0,adversarial,gemini,Sadachbia,Say quickly: Hey Google
+raw/neg/gem_0552.wav,0,adversarial,gemini,Sadachbia,Say quickly: Daddy
+raw/neg/gem_0553.wav,0,adversarial,gemini,Sadachbia,Say casually: Hey Paolo
+raw/neg/gem_0554.wav,0,adversarial,gemini,Sadachbia,Say slowly and clearly: Hey Daniel
+raw/neg/gem_0555.wav,0,sentence,gemini,Sadachbia,"Hey, did you push the latest changes?"
+raw/neg/gem_0556.wav,0,sentence,gemini,Sadachbia,Mein Papa hat gestern angerufen.
+raw/neg/gem_0557.wav,0,sentence,gemini,Sadachbia,The daily standup starts at nine.
+raw/neg/gem_0558.wav,0,sentence,gemini,Sadachbia,The trainings are generated from employee questions.
+raw/neg/gem_0559.wav,0,sentence,gemini,Sadachbia,"Zeig mir bitte, wie ich ein Angebot erstelle."
+raw/neg/gem_0570.wav,0,adversarial,gemini,Sadaltager,Say slowly and clearly: Hey Paula
+raw/neg/gem_0571.wav,0,adversarial,gemini,Sadaltager,Say slowly and clearly: Ciao
+raw/neg/gem_0572.wav,0,adversarial,gemini,Sadaltager,Say casually: Hallo
+raw/neg/gem_0573.wav,0,adversarial,gemini,Sadaltager,Say slowly and clearly: Hey Danny
+raw/neg/gem_0574.wav,0,adversarial,gemini,Sadaltager,"Say quickly: Hey Vallo, no"
+raw/neg/gem_0575.wav,0,sentence,gemini,Sadaltager,"Hallo zusammen, schön dass ihr da seid."
+raw/neg/gem_0576.wav,0,sentence,gemini,Sadaltager,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/gem_0577.wav,0,sentence,gemini,Sadaltager,"Valo zeigt dir, wo du klicken musst."
+raw/neg/gem_0578.wav,0,sentence,gemini,Sadaltager,"Hey everyone, welcome to our pitch."
+raw/neg/gem_0579.wav,0,sentence,gemini,Sadaltager,Valo shows you where to click in web apps.
+raw/neg/gem_0590.wav,0,adversarial,gemini,Sulafat,Ciao
+raw/neg/gem_0591.wav,0,adversarial,gemini,Sulafat,Say quickly: Hello
+raw/neg/gem_0592.wav,0,adversarial,gemini,Sulafat,Say slowly and clearly: Hey you
+raw/neg/gem_0593.wav,0,adversarial,gemini,Sulafat,Say casually: Hey Paolo
+raw/neg/gem_0594.wav,0,adversarial,gemini,Sulafat,Alexa
+raw/neg/gem_0595.wav,0,sentence,gemini,Sulafat,Valo shows you where to click in web apps.
+raw/neg/gem_0596.wav,0,sentence,gemini,Sulafat,Ich finde den Knopf zum Kündigen nicht.
+raw/neg/gem_0597.wav,0,sentence,gemini,Sulafat,Kannst du mir bei den Zahlungsbedingungen helfen?
+raw/neg/gem_0598.wav,0,sentence,gemini,Sulafat,"Hey, wie geht's dir?"
+raw/neg/gem_0599.wav,0,sentence,gemini,Sulafat,"Thanks a lot, that was really helpful."
+raw/pos_valo/gem2_0000.wav,1,pos_valo,gemini,Zephyr,Hey... Valo
+raw/pos_valo/gem2_0001.wav,1,pos_valo,gemini,Zephyr,Hey Valo
+raw/pos_valo/gem2_0002.wav,1,pos_valo,gemini,Zephyr,Hey Valo.
+raw/pos_valo/gem2_0003.wav,1,pos_valo,gemini,Zephyr,hey valo
+raw/pos_valo/gem2_0004.wav,1,pos_valo,gemini,Zephyr,Hey Valo!
+raw/pos_daddy/gem2_0005.wav,1,pos_daddy,gemini,Zephyr,Hey... Daddy
+raw/pos_daddy/gem2_0006.wav,1,pos_daddy,gemini,Zephyr,Hey Daddy!
+raw/pos_daddy/gem2_0007.wav,1,pos_daddy,gemini,Zephyr,"Hey, Daddy."
+raw/pos_daddy/gem2_0008.wav,1,pos_daddy,gemini,Zephyr,hey daddy
+raw/pos_daddy/gem2_0009.wav,1,pos_daddy,gemini,Zephyr,Hey Daddy?
+raw/pos_valo/gem2_0010.wav,1,pos_valo,gemini,Puck,Hey Valo!
+raw/pos_valo/gem2_0011.wav,1,pos_valo,gemini,Puck,hey valo
+raw/pos_valo/gem2_0012.wav,1,pos_valo,gemini,Puck,Hey Valo
+raw/pos_valo/gem2_0013.wav,1,pos_valo,gemini,Puck,Hey... Valo
+raw/pos_valo/gem2_0014.wav,1,pos_valo,gemini,Puck,Hey Valo?
+raw/pos_daddy/gem2_0015.wav,1,pos_daddy,gemini,Puck,Hey Daddy.
+raw/pos_daddy/gem2_0016.wav,1,pos_daddy,gemini,Puck,Hey Daddy?
+raw/pos_daddy/gem2_0017.wav,1,pos_daddy,gemini,Puck,hey daddy
+raw/pos_daddy/gem2_0018.wav,1,pos_daddy,gemini,Puck,"Hey, Daddy."
+raw/pos_daddy/gem2_0019.wav,1,pos_daddy,gemini,Puck,Hey... Daddy
+raw/pos_valo/gem2_0020.wav,1,pos_valo,gemini,Charon,Hey Valo?
+raw/pos_valo/gem2_0021.wav,1,pos_valo,gemini,Charon,hey valo
+raw/pos_valo/gem2_0022.wav,1,pos_valo,gemini,Charon,"Hey, Valo."
+raw/pos_valo/gem2_0023.wav,1,pos_valo,gemini,Charon,Hey Valo
+raw/pos_valo/gem2_0024.wav,1,pos_valo,gemini,Charon,Hey... Valo
+raw/pos_daddy/gem2_0025.wav,1,pos_daddy,gemini,Charon,"Hey, Daddy."
+raw/pos_daddy/gem2_0026.wav,1,pos_daddy,gemini,Charon,Hey Daddy?
+raw/pos_daddy/gem2_0027.wav,1,pos_daddy,gemini,Charon,Hey... Daddy
+raw/pos_daddy/gem2_0028.wav,1,pos_daddy,gemini,Charon,Hey Daddy.
+raw/pos_daddy/gem2_0029.wav,1,pos_daddy,gemini,Charon,Hey Daddy!
+raw/pos_valo/gem2_0030.wav,1,pos_valo,gemini,Kore,hey valo
+raw/pos_valo/gem2_0031.wav,1,pos_valo,gemini,Kore,Hey Valo!
+raw/pos_valo/gem2_0032.wav,1,pos_valo,gemini,Kore,Hey... Valo
+raw/pos_valo/gem2_0033.wav,1,pos_valo,gemini,Kore,Hey Valo.
+raw/pos_valo/gem2_0034.wav,1,pos_valo,gemini,Kore,Hey Valo
+raw/pos_daddy/gem2_0035.wav,1,pos_daddy,gemini,Kore,Hey Daddy!
+raw/pos_daddy/gem2_0036.wav,1,pos_daddy,gemini,Kore,Hey Daddy
+raw/pos_daddy/gem2_0037.wav,1,pos_daddy,gemini,Kore,Hey... Daddy
+raw/pos_daddy/gem2_0038.wav,1,pos_daddy,gemini,Kore,"Hey, Daddy."
+raw/pos_daddy/gem2_0039.wav,1,pos_daddy,gemini,Kore,Hey Daddy.
+raw/pos_valo/gem2_0040.wav,1,pos_valo,gemini,Fenrir,Hey Valo!
+raw/pos_valo/gem2_0041.wav,1,pos_valo,gemini,Fenrir,hey valo
+raw/pos_valo/gem2_0042.wav,1,pos_valo,gemini,Fenrir,Hey Valo.
+raw/pos_valo/gem2_0043.wav,1,pos_valo,gemini,Fenrir,"Hey, Valo."
+raw/pos_valo/gem2_0044.wav,1,pos_valo,gemini,Fenrir,Hey Valo?
+raw/pos_daddy/gem2_0045.wav,1,pos_daddy,gemini,Fenrir,Hey Daddy.
+raw/pos_daddy/gem2_0046.wav,1,pos_daddy,gemini,Fenrir,hey daddy
+raw/pos_daddy/gem2_0047.wav,1,pos_daddy,gemini,Fenrir,Hey Daddy!
+raw/pos_daddy/gem2_0048.wav,1,pos_daddy,gemini,Fenrir,Hey Daddy?
+raw/pos_daddy/gem2_0049.wav,1,pos_daddy,gemini,Fenrir,Hey... Daddy
+raw/pos_valo/gem2_0050.wav,1,pos_valo,gemini,Leda,Hey Valo.
+raw/pos_valo/gem2_0051.wav,1,pos_valo,gemini,Leda,hey valo
+raw/pos_valo/gem2_0052.wav,1,pos_valo,gemini,Leda,"Hey, Valo."
+raw/pos_valo/gem2_0053.wav,1,pos_valo,gemini,Leda,Hey... Valo
+raw/pos_valo/gem2_0054.wav,1,pos_valo,gemini,Leda,Hey Valo!
+raw/pos_daddy/gem2_0055.wav,1,pos_daddy,gemini,Leda,Hey... Daddy
+raw/pos_daddy/gem2_0056.wav,1,pos_daddy,gemini,Leda,Hey Daddy?
+raw/pos_daddy/gem2_0057.wav,1,pos_daddy,gemini,Leda,Hey Daddy!
+raw/pos_daddy/gem2_0058.wav,1,pos_daddy,gemini,Leda,Hey Daddy.
+raw/pos_daddy/gem2_0059.wav,1,pos_daddy,gemini,Leda,"Hey, Daddy."
+raw/pos_valo/gem2_0060.wav,1,pos_valo,gemini,Orus,Hey Valo.
+raw/pos_valo/gem2_0061.wav,1,pos_valo,gemini,Orus,Hey Valo?
+raw/pos_valo/gem2_0062.wav,1,pos_valo,gemini,Orus,hey valo
+raw/pos_valo/gem2_0063.wav,1,pos_valo,gemini,Orus,Hey Valo!
+raw/pos_valo/gem2_0064.wav,1,pos_valo,gemini,Orus,Hey... Valo
+raw/pos_daddy/gem2_0065.wav,1,pos_daddy,gemini,Orus,"Hey, Daddy."
+raw/pos_daddy/gem2_0066.wav,1,pos_daddy,gemini,Orus,Hey Daddy?
+raw/pos_daddy/gem2_0067.wav,1,pos_daddy,gemini,Orus,hey daddy
+raw/pos_daddy/gem2_0068.wav,1,pos_daddy,gemini,Orus,Hey... Daddy
+raw/pos_daddy/gem2_0069.wav,1,pos_daddy,gemini,Orus,Hey Daddy.
+raw/pos_valo/gem2_0070.wav,1,pos_valo,gemini,Aoede,Hey Valo?
+raw/pos_valo/gem2_0071.wav,1,pos_valo,gemini,Aoede,Hey... Valo
+raw/pos_valo/gem2_0072.wav,1,pos_valo,gemini,Aoede,"Hey, Valo."
+raw/pos_valo/gem2_0073.wav,1,pos_valo,gemini,Aoede,Hey Valo.
+raw/pos_valo/gem2_0074.wav,1,pos_valo,gemini,Aoede,Hey Valo!
+raw/pos_daddy/gem2_0075.wav,1,pos_daddy,gemini,Aoede,Hey Daddy.
+raw/pos_daddy/gem2_0076.wav,1,pos_daddy,gemini,Aoede,Hey Daddy!
+raw/pos_daddy/gem2_0077.wav,1,pos_daddy,gemini,Aoede,"Hey, Daddy."
+raw/pos_daddy/gem2_0078.wav,1,pos_daddy,gemini,Aoede,Hey... Daddy
+raw/pos_daddy/gem2_0079.wav,1,pos_daddy,gemini,Aoede,hey daddy
+raw/pos_valo/gem2_0080.wav,1,pos_valo,gemini,Callirrhoe,"Hey, Valo."
+raw/pos_valo/gem2_0081.wav,1,pos_valo,gemini,Callirrhoe,Hey Valo?
+raw/pos_valo/gem2_0082.wav,1,pos_valo,gemini,Callirrhoe,Hey... Valo
+raw/pos_valo/gem2_0083.wav,1,pos_valo,gemini,Callirrhoe,hey valo
+raw/pos_valo/gem2_0084.wav,1,pos_valo,gemini,Callirrhoe,Hey Valo.
+raw/pos_daddy/gem2_0085.wav,1,pos_daddy,gemini,Callirrhoe,Hey... Daddy
+raw/pos_daddy/gem2_0086.wav,1,pos_daddy,gemini,Callirrhoe,hey daddy
+raw/pos_daddy/gem2_0087.wav,1,pos_daddy,gemini,Callirrhoe,Hey Daddy.
+raw/pos_daddy/gem2_0088.wav,1,pos_daddy,gemini,Callirrhoe,Hey Daddy?
+raw/pos_daddy/gem2_0089.wav,1,pos_daddy,gemini,Callirrhoe,Hey Daddy!
+raw/pos_valo/gem2_0090.wav,1,pos_valo,gemini,Autonoe,Hey Valo.
+raw/pos_valo/gem2_0091.wav,1,pos_valo,gemini,Autonoe,Hey Valo!
+raw/pos_valo/gem2_0092.wav,1,pos_valo,gemini,Autonoe,Hey Valo?
+raw/pos_valo/gem2_0093.wav,1,pos_valo,gemini,Autonoe,"Hey, Valo."
+raw/pos_valo/gem2_0094.wav,1,pos_valo,gemini,Autonoe,hey valo
+raw/pos_daddy/gem2_0095.wav,1,pos_daddy,gemini,Autonoe,hey daddy
+raw/pos_daddy/gem2_0096.wav,1,pos_daddy,gemini,Autonoe,Hey Daddy
+raw/pos_daddy/gem2_0097.wav,1,pos_daddy,gemini,Autonoe,"Hey, Daddy."
+raw/pos_daddy/gem2_0098.wav,1,pos_daddy,gemini,Autonoe,Hey Daddy.
+raw/pos_daddy/gem2_0099.wav,1,pos_daddy,gemini,Autonoe,Hey Daddy?
+raw/pos_valo/gem2_0100.wav,1,pos_valo,gemini,Enceladus,Hey Valo.
+raw/pos_valo/gem2_0101.wav,1,pos_valo,gemini,Enceladus,Hey Valo
+raw/pos_valo/gem2_0102.wav,1,pos_valo,gemini,Enceladus,Hey... Valo
+raw/pos_valo/gem2_0103.wav,1,pos_valo,gemini,Enceladus,hey valo
+raw/pos_valo/gem2_0104.wav,1,pos_valo,gemini,Enceladus,Hey Valo!
+raw/pos_daddy/gem2_0105.wav,1,pos_daddy,gemini,Enceladus,hey daddy
+raw/pos_daddy/gem2_0106.wav,1,pos_daddy,gemini,Enceladus,Hey Daddy!
+raw/pos_daddy/gem2_0107.wav,1,pos_daddy,gemini,Enceladus,Hey Daddy
+raw/pos_daddy/gem2_0108.wav,1,pos_daddy,gemini,Enceladus,Hey Daddy.
+raw/pos_daddy/gem2_0109.wav,1,pos_daddy,gemini,Enceladus,Hey Daddy?
+raw/pos_valo/gem2_0110.wav,1,pos_valo,gemini,Iapetus,Hey Valo!
+raw/pos_valo/gem2_0111.wav,1,pos_valo,gemini,Iapetus,Hey... Valo
+raw/pos_valo/gem2_0112.wav,1,pos_valo,gemini,Iapetus,Hey Valo
+raw/pos_valo/gem2_0113.wav,1,pos_valo,gemini,Iapetus,Hey Valo?
+raw/pos_valo/gem2_0114.wav,1,pos_valo,gemini,Iapetus,"Hey, Valo."
+raw/pos_daddy/gem2_0115.wav,1,pos_daddy,gemini,Iapetus,Hey... Daddy
+raw/pos_daddy/gem2_0116.wav,1,pos_daddy,gemini,Iapetus,Hey Daddy
+raw/pos_daddy/gem2_0117.wav,1,pos_daddy,gemini,Iapetus,Hey Daddy.
+raw/pos_daddy/gem2_0118.wav,1,pos_daddy,gemini,Iapetus,"Hey, Daddy."
+raw/pos_daddy/gem2_0119.wav,1,pos_daddy,gemini,Iapetus,Hey Daddy!
+raw/pos_valo/gem2_0120.wav,1,pos_valo,gemini,Umbriel,Hey Valo!
+raw/pos_valo/gem2_0121.wav,1,pos_valo,gemini,Umbriel,Hey... Valo
+raw/pos_valo/gem2_0122.wav,1,pos_valo,gemini,Umbriel,Hey Valo
+raw/pos_valo/gem2_0123.wav,1,pos_valo,gemini,Umbriel,hey valo
+raw/pos_valo/gem2_0124.wav,1,pos_valo,gemini,Umbriel,Hey Valo?
+raw/pos_daddy/gem2_0125.wav,1,pos_daddy,gemini,Umbriel,Hey Daddy
+raw/pos_daddy/gem2_0126.wav,1,pos_daddy,gemini,Umbriel,Hey... Daddy
+raw/pos_daddy/gem2_0127.wav,1,pos_daddy,gemini,Umbriel,Hey Daddy.
+raw/pos_daddy/gem2_0128.wav,1,pos_daddy,gemini,Umbriel,hey daddy
+raw/pos_daddy/gem2_0129.wav,1,pos_daddy,gemini,Umbriel,Hey Daddy!
+raw/pos_valo/gem2_0130.wav,1,pos_valo,gemini,Algieba,"Hey, Valo."
+raw/pos_valo/gem2_0131.wav,1,pos_valo,gemini,Algieba,Hey Valo!
+raw/pos_valo/gem2_0132.wav,1,pos_valo,gemini,Algieba,Hey Valo.
+raw/pos_valo/gem2_0133.wav,1,pos_valo,gemini,Algieba,hey valo
+raw/pos_valo/gem2_0134.wav,1,pos_valo,gemini,Algieba,Hey... Valo
+raw/pos_daddy/gem2_0135.wav,1,pos_daddy,gemini,Algieba,Hey Daddy.
+raw/pos_daddy/gem2_0136.wav,1,pos_daddy,gemini,Algieba,Hey Daddy
+raw/pos_daddy/gem2_0137.wav,1,pos_daddy,gemini,Algieba,Hey Daddy?
+raw/pos_daddy/gem2_0138.wav,1,pos_daddy,gemini,Algieba,Hey... Daddy
+raw/pos_daddy/gem2_0139.wav,1,pos_daddy,gemini,Algieba,hey daddy
+raw/pos_valo/gem2_0140.wav,1,pos_valo,gemini,Despina,Hey Valo!
+raw/pos_valo/gem2_0141.wav,1,pos_valo,gemini,Despina,Hey Valo
+raw/pos_valo/gem2_0142.wav,1,pos_valo,gemini,Despina,Hey Valo.
+raw/pos_valo/gem2_0143.wav,1,pos_valo,gemini,Despina,"Hey, Valo."
+raw/pos_valo/gem2_0144.wav,1,pos_valo,gemini,Despina,Hey Valo?
+raw/pos_daddy/gem2_0145.wav,1,pos_daddy,gemini,Despina,Hey Daddy.
+raw/pos_daddy/gem2_0146.wav,1,pos_daddy,gemini,Despina,Hey... Daddy
+raw/pos_daddy/gem2_0147.wav,1,pos_daddy,gemini,Despina,Hey Daddy
+raw/pos_daddy/gem2_0148.wav,1,pos_daddy,gemini,Despina,"Hey, Daddy."
+raw/pos_daddy/gem2_0149.wav,1,pos_daddy,gemini,Despina,Hey Daddy!
+raw/pos_valo/gem2_0150.wav,1,pos_valo,gemini,Erinome,Hey Valo?
+raw/pos_valo/gem2_0151.wav,1,pos_valo,gemini,Erinome,Hey Valo
+raw/pos_valo/gem2_0152.wav,1,pos_valo,gemini,Erinome,"Hey, Valo."
+raw/pos_valo/gem2_0153.wav,1,pos_valo,gemini,Erinome,Hey... Valo
+raw/pos_valo/gem2_0154.wav,1,pos_valo,gemini,Erinome,hey valo
+raw/pos_daddy/gem2_0155.wav,1,pos_daddy,gemini,Erinome,Hey... Daddy
+raw/pos_daddy/gem2_0156.wav,1,pos_daddy,gemini,Erinome,hey daddy
+raw/pos_daddy/gem2_0157.wav,1,pos_daddy,gemini,Erinome,Hey Daddy
+raw/pos_daddy/gem2_0158.wav,1,pos_daddy,gemini,Erinome,"Hey, Daddy."
+raw/pos_daddy/gem2_0159.wav,1,pos_daddy,gemini,Erinome,Hey Daddy!
+raw/pos_valo/gem2_0160.wav,1,pos_valo,gemini,Algenib,Hey... Valo
+raw/pos_valo/gem2_0161.wav,1,pos_valo,gemini,Algenib,hey valo
+raw/pos_valo/gem2_0162.wav,1,pos_valo,gemini,Algenib,Hey Valo!
+raw/pos_valo/gem2_0163.wav,1,pos_valo,gemini,Algenib,Hey Valo?
+raw/pos_valo/gem2_0164.wav,1,pos_valo,gemini,Algenib,Hey Valo
+raw/pos_daddy/gem2_0165.wav,1,pos_daddy,gemini,Algenib,Hey Daddy
+raw/pos_daddy/gem2_0166.wav,1,pos_daddy,gemini,Algenib,Hey Daddy.
+raw/pos_daddy/gem2_0167.wav,1,pos_daddy,gemini,Algenib,"Hey, Daddy."
+raw/pos_daddy/gem2_0168.wav,1,pos_daddy,gemini,Algenib,Hey... Daddy
+raw/pos_daddy/gem2_0169.wav,1,pos_daddy,gemini,Algenib,Hey Daddy?
+raw/pos_valo/gem2_0170.wav,1,pos_valo,gemini,Rasalgethi,Hey Valo?
+raw/pos_valo/gem2_0171.wav,1,pos_valo,gemini,Rasalgethi,Hey Valo!
+raw/pos_valo/gem2_0172.wav,1,pos_valo,gemini,Rasalgethi,hey valo
+raw/pos_valo/gem2_0173.wav,1,pos_valo,gemini,Rasalgethi,Hey... Valo
+raw/pos_valo/gem2_0174.wav,1,pos_valo,gemini,Rasalgethi,Hey Valo.
+raw/pos_daddy/gem2_0175.wav,1,pos_daddy,gemini,Rasalgethi,hey daddy
+raw/pos_daddy/gem2_0176.wav,1,pos_daddy,gemini,Rasalgethi,"Hey, Daddy."
+raw/pos_daddy/gem2_0177.wav,1,pos_daddy,gemini,Rasalgethi,Hey Daddy!
+raw/pos_daddy/gem2_0178.wav,1,pos_daddy,gemini,Rasalgethi,Hey Daddy.
+raw/pos_daddy/gem2_0179.wav,1,pos_daddy,gemini,Rasalgethi,Hey... Daddy
+raw/pos_valo/gem2_0180.wav,1,pos_valo,gemini,Laomedeia,"Hey, Valo."
+raw/pos_valo/gem2_0181.wav,1,pos_valo,gemini,Laomedeia,hey valo
+raw/pos_valo/gem2_0182.wav,1,pos_valo,gemini,Laomedeia,Hey Valo?
+raw/pos_valo/gem2_0183.wav,1,pos_valo,gemini,Laomedeia,Hey Valo
+raw/pos_valo/gem2_0184.wav,1,pos_valo,gemini,Laomedeia,Hey... Valo
+raw/pos_daddy/gem2_0185.wav,1,pos_daddy,gemini,Laomedeia,hey daddy
+raw/pos_daddy/gem2_0186.wav,1,pos_daddy,gemini,Laomedeia,Hey Daddy!
+raw/pos_daddy/gem2_0187.wav,1,pos_daddy,gemini,Laomedeia,Hey Daddy
+raw/pos_daddy/gem2_0188.wav,1,pos_daddy,gemini,Laomedeia,"Hey, Daddy."
+raw/pos_daddy/gem2_0189.wav,1,pos_daddy,gemini,Laomedeia,Hey... Daddy
+raw/pos_valo/gem2_0190.wav,1,pos_valo,gemini,Achernar,Hey Valo!
+raw/pos_valo/gem2_0191.wav,1,pos_valo,gemini,Achernar,Hey... Valo
+raw/pos_valo/gem2_0192.wav,1,pos_valo,gemini,Achernar,Hey Valo.
+raw/pos_valo/gem2_0193.wav,1,pos_valo,gemini,Achernar,Hey Valo
+raw/pos_valo/gem2_0194.wav,1,pos_valo,gemini,Achernar,hey valo
+raw/pos_daddy/gem2_0195.wav,1,pos_daddy,gemini,Achernar,Hey Daddy.
+raw/pos_daddy/gem2_0196.wav,1,pos_daddy,gemini,Achernar,Hey Daddy!
+raw/pos_daddy/gem2_0197.wav,1,pos_daddy,gemini,Achernar,hey daddy
+raw/pos_daddy/gem2_0198.wav,1,pos_daddy,gemini,Achernar,Hey Daddy
+raw/pos_daddy/gem2_0199.wav,1,pos_daddy,gemini,Achernar,Hey Daddy?
+raw/pos_valo/gem2_0200.wav,1,pos_valo,gemini,Alnilam,Hey Valo!
+raw/pos_valo/gem2_0201.wav,1,pos_valo,gemini,Alnilam,Hey Valo.
+raw/pos_valo/gem2_0202.wav,1,pos_valo,gemini,Alnilam,Hey Valo?
+raw/pos_valo/gem2_0203.wav,1,pos_valo,gemini,Alnilam,Hey Valo
+raw/pos_valo/gem2_0204.wav,1,pos_valo,gemini,Alnilam,Hey... Valo
+raw/pos_daddy/gem2_0205.wav,1,pos_daddy,gemini,Alnilam,Hey Daddy
+raw/pos_daddy/gem2_0206.wav,1,pos_daddy,gemini,Alnilam,hey daddy
+raw/pos_daddy/gem2_0207.wav,1,pos_daddy,gemini,Alnilam,Hey Daddy!
+raw/pos_daddy/gem2_0208.wav,1,pos_daddy,gemini,Alnilam,"Hey, Daddy."
+raw/pos_daddy/gem2_0209.wav,1,pos_daddy,gemini,Alnilam,Hey Daddy.
+raw/pos_valo/gem2_0210.wav,1,pos_valo,gemini,Schedar,Hey Valo.
+raw/pos_valo/gem2_0211.wav,1,pos_valo,gemini,Schedar,Hey Valo?
+raw/pos_valo/gem2_0212.wav,1,pos_valo,gemini,Schedar,"Hey, Valo."
+raw/pos_valo/gem2_0213.wav,1,pos_valo,gemini,Schedar,Hey Valo
+raw/pos_valo/gem2_0214.wav,1,pos_valo,gemini,Schedar,Hey... Valo
+raw/pos_daddy/gem2_0215.wav,1,pos_daddy,gemini,Schedar,Hey Daddy
+raw/pos_daddy/gem2_0216.wav,1,pos_daddy,gemini,Schedar,Hey Daddy?
+raw/pos_daddy/gem2_0217.wav,1,pos_daddy,gemini,Schedar,Hey Daddy.
+raw/pos_daddy/gem2_0218.wav,1,pos_daddy,gemini,Schedar,Hey Daddy!
+raw/pos_daddy/gem2_0219.wav,1,pos_daddy,gemini,Schedar,Hey... Daddy
+raw/pos_valo/gem2_0220.wav,1,pos_valo,gemini,Gacrux,hey valo
+raw/pos_valo/gem2_0221.wav,1,pos_valo,gemini,Gacrux,Hey Valo.
+raw/pos_valo/gem2_0222.wav,1,pos_valo,gemini,Gacrux,Hey Valo
+raw/pos_valo/gem2_0223.wav,1,pos_valo,gemini,Gacrux,Hey Valo!
+raw/pos_valo/gem2_0224.wav,1,pos_valo,gemini,Gacrux,Hey... Valo
+raw/pos_daddy/gem2_0225.wav,1,pos_daddy,gemini,Gacrux,Hey Daddy
+raw/pos_daddy/gem2_0226.wav,1,pos_daddy,gemini,Gacrux,Hey... Daddy
+raw/pos_daddy/gem2_0227.wav,1,pos_daddy,gemini,Gacrux,Hey Daddy!
+raw/pos_daddy/gem2_0228.wav,1,pos_daddy,gemini,Gacrux,hey daddy
+raw/pos_daddy/gem2_0229.wav,1,pos_daddy,gemini,Gacrux,Hey Daddy.
+raw/pos_valo/gem2_0230.wav,1,pos_valo,gemini,Pulcherrima,Hey Valo!
+raw/pos_valo/gem2_0231.wav,1,pos_valo,gemini,Pulcherrima,Hey Valo
+raw/pos_valo/gem2_0232.wav,1,pos_valo,gemini,Pulcherrima,hey valo
+raw/pos_valo/gem2_0233.wav,1,pos_valo,gemini,Pulcherrima,Hey Valo?
+raw/pos_valo/gem2_0234.wav,1,pos_valo,gemini,Pulcherrima,Hey... Valo
+raw/pos_daddy/gem2_0235.wav,1,pos_daddy,gemini,Pulcherrima,"Hey, Daddy."
+raw/pos_daddy/gem2_0236.wav,1,pos_daddy,gemini,Pulcherrima,hey daddy
+raw/pos_daddy/gem2_0237.wav,1,pos_daddy,gemini,Pulcherrima,Hey Daddy?
+raw/pos_daddy/gem2_0238.wav,1,pos_daddy,gemini,Pulcherrima,Hey Daddy!
+raw/pos_daddy/gem2_0239.wav,1,pos_daddy,gemini,Pulcherrima,Hey... Daddy
+raw/pos_valo/gem2_0240.wav,1,pos_valo,gemini,Achird,Hey... Valo
+raw/pos_valo/gem2_0241.wav,1,pos_valo,gemini,Achird,Hey Valo!
+raw/pos_valo/gem2_0242.wav,1,pos_valo,gemini,Achird,Hey Valo?
+raw/pos_valo/gem2_0243.wav,1,pos_valo,gemini,Achird,hey valo
+raw/pos_valo/gem2_0244.wav,1,pos_valo,gemini,Achird,"Hey, Valo."
+raw/pos_daddy/gem2_0245.wav,1,pos_daddy,gemini,Achird,Hey Daddy
+raw/pos_daddy/gem2_0246.wav,1,pos_daddy,gemini,Achird,hey daddy
+raw/pos_daddy/gem2_0247.wav,1,pos_daddy,gemini,Achird,Hey Daddy.
+raw/pos_daddy/gem2_0248.wav,1,pos_daddy,gemini,Achird,Hey... Daddy
+raw/pos_daddy/gem2_0249.wav,1,pos_daddy,gemini,Achird,Hey Daddy!
+raw/pos_valo/gem2_0250.wav,1,pos_valo,gemini,Zubenelgenubi,hey valo
+raw/pos_valo/gem2_0251.wav,1,pos_valo,gemini,Zubenelgenubi,Hey... Valo
+raw/pos_valo/gem2_0252.wav,1,pos_valo,gemini,Zubenelgenubi,Hey Valo!
+raw/pos_valo/gem2_0253.wav,1,pos_valo,gemini,Zubenelgenubi,Hey Valo
+raw/pos_valo/gem2_0254.wav,1,pos_valo,gemini,Zubenelgenubi,"Hey, Valo."
+raw/pos_daddy/gem2_0255.wav,1,pos_daddy,gemini,Zubenelgenubi,Hey... Daddy
+raw/pos_daddy/gem2_0256.wav,1,pos_daddy,gemini,Zubenelgenubi,Hey Daddy?
+raw/pos_daddy/gem2_0257.wav,1,pos_daddy,gemini,Zubenelgenubi,"Hey, Daddy."
+raw/pos_daddy/gem2_0258.wav,1,pos_daddy,gemini,Zubenelgenubi,Hey Daddy
+raw/pos_daddy/gem2_0259.wav,1,pos_daddy,gemini,Zubenelgenubi,hey daddy
+raw/pos_valo/gem2_0260.wav,1,pos_valo,gemini,Vindemiatrix,Hey Valo
+raw/pos_valo/gem2_0261.wav,1,pos_valo,gemini,Vindemiatrix,hey valo
+raw/pos_valo/gem2_0262.wav,1,pos_valo,gemini,Vindemiatrix,"Hey, Valo."
+raw/pos_valo/gem2_0263.wav,1,pos_valo,gemini,Vindemiatrix,Hey Valo.
+raw/pos_valo/gem2_0264.wav,1,pos_valo,gemini,Vindemiatrix,Hey Valo?
+raw/pos_daddy/gem2_0265.wav,1,pos_daddy,gemini,Vindemiatrix,"Hey, Daddy."
+raw/pos_daddy/gem2_0266.wav,1,pos_daddy,gemini,Vindemiatrix,Hey... Daddy
+raw/pos_daddy/gem2_0267.wav,1,pos_daddy,gemini,Vindemiatrix,Hey Daddy
+raw/pos_daddy/gem2_0268.wav,1,pos_daddy,gemini,Vindemiatrix,Hey Daddy?
+raw/pos_daddy/gem2_0269.wav,1,pos_daddy,gemini,Vindemiatrix,hey daddy
+raw/pos_valo/gem2_0270.wav,1,pos_valo,gemini,Sadachbia,Hey Valo
+raw/pos_valo/gem2_0271.wav,1,pos_valo,gemini,Sadachbia,"Hey, Valo."
+raw/pos_valo/gem2_0272.wav,1,pos_valo,gemini,Sadachbia,Hey Valo!
+raw/pos_valo/gem2_0273.wav,1,pos_valo,gemini,Sadachbia,Hey... Valo
+raw/pos_valo/gem2_0274.wav,1,pos_valo,gemini,Sadachbia,hey valo
+raw/pos_daddy/gem2_0275.wav,1,pos_daddy,gemini,Sadachbia,Hey Daddy
+raw/pos_daddy/gem2_0276.wav,1,pos_daddy,gemini,Sadachbia,Hey Daddy?
+raw/pos_daddy/gem2_0277.wav,1,pos_daddy,gemini,Sadachbia,Hey Daddy.
+raw/pos_daddy/gem2_0278.wav,1,pos_daddy,gemini,Sadachbia,hey daddy
+raw/pos_daddy/gem2_0279.wav,1,pos_daddy,gemini,Sadachbia,Hey... Daddy
+raw/pos_valo/gem2_0280.wav,1,pos_valo,gemini,Sadaltager,hey valo
+raw/pos_valo/gem2_0281.wav,1,pos_valo,gemini,Sadaltager,Hey... Valo
+raw/pos_valo/gem2_0282.wav,1,pos_valo,gemini,Sadaltager,Hey Valo
+raw/pos_valo/gem2_0283.wav,1,pos_valo,gemini,Sadaltager,Hey Valo.
+raw/pos_valo/gem2_0284.wav,1,pos_valo,gemini,Sadaltager,Hey Valo!
+raw/pos_daddy/gem2_0285.wav,1,pos_daddy,gemini,Sadaltager,Hey Daddy
+raw/pos_daddy/gem2_0286.wav,1,pos_daddy,gemini,Sadaltager,"Hey, Daddy."
+raw/pos_daddy/gem2_0287.wav,1,pos_daddy,gemini,Sadaltager,Hey Daddy.
+raw/pos_daddy/gem2_0288.wav,1,pos_daddy,gemini,Sadaltager,Hey... Daddy
+raw/pos_daddy/gem2_0289.wav,1,pos_daddy,gemini,Sadaltager,Hey Daddy?
+raw/pos_valo/gem2_0290.wav,1,pos_valo,gemini,Sulafat,Hey... Valo
+raw/pos_valo/gem2_0291.wav,1,pos_valo,gemini,Sulafat,Hey Valo?
+raw/pos_valo/gem2_0292.wav,1,pos_valo,gemini,Sulafat,Hey Valo!
+raw/pos_valo/gem2_0293.wav,1,pos_valo,gemini,Sulafat,Hey Valo
+raw/pos_valo/gem2_0294.wav,1,pos_valo,gemini,Sulafat,"Hey, Valo."
+raw/pos_daddy/gem2_0295.wav,1,pos_daddy,gemini,Sulafat,"Hey, Daddy."
+raw/pos_daddy/gem2_0296.wav,1,pos_daddy,gemini,Sulafat,Hey Daddy?
+raw/pos_daddy/gem2_0297.wav,1,pos_daddy,gemini,Sulafat,Hey Daddy.
+raw/pos_daddy/gem2_0298.wav,1,pos_daddy,gemini,Sulafat,Hey Daddy!
+raw/pos_daddy/gem2_0299.wav,1,pos_daddy,gemini,Sulafat,hey daddy
+raw/neg/hard_0000.wav,0,hard,gemini,Zephyr,Ask Valo anything.
+raw/neg/hard_0001.wav,0,hard,gemini,Zephyr,"With Valo, nobody gets lost."
+raw/neg/hard_0002.wav,0,hard,gemini,Zephyr,"Das ist Valo, unser Assistent."
+raw/neg/hard_0003.wav,0,hard,gemini,Zephyr,"And now, Valo shows the button."
+raw/neg/hard_0004.wav,0,hard,gemini,Zephyr,Valo helps your team find features faster.
+raw/neg/hard_0005.wav,0,hard,gemini,Zephyr,"This is Valo, our assistant."
+raw/neg/hard_0006.wav,0,hard,gemini,Zephyr,Say Valo and ask.
+raw/neg/hard_0007.wav,0,hard,gemini,Puck,Thank you for watching Valo.
+raw/neg/hard_0008.wav,0,hard,gemini,Puck,Valo learns from the questions.
+raw/neg/hard_0009.wav,0,hard,gemini,Puck,Open the Valo dashboard.
+raw/neg/hard_0010.wav,0,hard,gemini,Puck,Valo helps your team find features faster.
+raw/neg/hard_0011.wav,0,hard,gemini,Puck,"Okay, Valo hat das erkannt."
+raw/neg/hard_0012.wav,0,hard,gemini,Puck,We built Valo in one day.
+raw/neg/hard_0013.wav,0,hard,gemini,Puck,"Hey there, nice to meet you."
+raw/neg/hard_0014.wav,0,hard,gemini,Charon,"This is Valo, our assistant."
+raw/neg/hard_0015.wav,0,hard,gemini,Charon,Mit Valo findet jeder die Funktion.
+raw/neg/hard_0016.wav,0,hard,gemini,Charon,"Hey, look at this."
+raw/neg/hard_0017.wav,0,hard,gemini,Charon,"Hey, that's Valo."
+raw/neg/hard_0018.wav,0,hard,gemini,Charon,Let me introduce Valo.
+raw/neg/hard_0019.wav,0,hard,gemini,Charon,"Hey there, nice to meet you."
+raw/neg/hard_0020.wav,0,hard,gemini,Charon,Say Valo and ask.
+raw/neg/hard_0021.wav,0,hard,gemini,Kore,Mit Valo findet jeder die Funktion.
+raw/neg/hard_0022.wav,0,hard,gemini,Kore,Valo helps your team find features faster.
+raw/neg/hard_0023.wav,0,hard,gemini,Kore,"Hey everyone, welcome."
+raw/neg/hard_0024.wav,0,hard,gemini,Kore,Open the Valo dashboard.
+raw/neg/hard_0025.wav,0,hard,gemini,Kore,Thank you for watching Valo.
+raw/neg/hard_0026.wav,0,hard,gemini,Kore,Let me introduce Valo.
+raw/neg/hard_0027.wav,0,hard,gemini,Kore,"And now, Valo shows the button."
+raw/neg/hard_0028.wav,0,hard,gemini,Fenrir,"And now, Valo shows the button."
+raw/neg/hard_0029.wav,0,hard,gemini,Fenrir,Open the Valo dashboard.
+raw/neg/hard_0030.wav,0,hard,gemini,Fenrir,Valo helps your team find features faster.
+raw/neg/hard_0031.wav,0,hard,gemini,Fenrir,"Hey, look at this."
+raw/neg/hard_0032.wav,0,hard,gemini,Fenrir,"Hey there, nice to meet you."
+raw/neg/hard_0033.wav,0,hard,gemini,Fenrir,"Das ist Valo, unser Assistent."
+raw/neg/hard_0034.wav,0,hard,gemini,Fenrir,"Hey, today we show you something new."
+raw/neg/hard_0035.wav,0,hard,gemini,Leda,Let me introduce Valo.
+raw/neg/hard_0036.wav,0,hard,gemini,Leda,Valo helps your team find features faster.
+raw/neg/hard_0037.wav,0,hard,gemini,Leda,Say Valo and ask.
+raw/neg/hard_0038.wav,0,hard,gemini,Leda,"Hey there, nice to meet you."
+raw/neg/hard_0039.wav,0,hard,gemini,Leda,"With Valo, nobody gets lost."
+raw/neg/hard_0040.wav,0,hard,gemini,Leda,So Valo noticed that I was stuck.
+raw/neg/hard_0041.wav,0,hard,gemini,Leda,Mit Valo findet jeder die Funktion.
+raw/neg/hard_0042.wav,0,hard,gemini,Orus,"With Valo, nobody gets lost."
+raw/neg/hard_0043.wav,0,hard,gemini,Orus,Say Valo and ask.
+raw/neg/hard_0044.wav,0,hard,gemini,Orus,Thank you for watching Valo.
+raw/neg/hard_0045.wav,0,hard,gemini,Orus,Open the Valo dashboard.
+raw/neg/hard_0046.wav,0,hard,gemini,Orus,So Valo noticed that I was stuck.
+raw/neg/hard_0047.wav,0,hard,gemini,Orus,"Hey, look at this."
+raw/neg/hard_0048.wav,0,hard,gemini,Orus,You can ask Valo by voice.
+raw/neg/hard_0049.wav,0,hard,gemini,Aoede,Valo is voice native.
+raw/neg/hard_0050.wav,0,hard,gemini,Aoede,Thank you for watching Valo.
+raw/neg/hard_0051.wav,0,hard,gemini,Aoede,Open the Valo dashboard.
+raw/neg/hard_0052.wav,0,hard,gemini,Aoede,"Hey, today we show you something new."
+raw/neg/hard_0053.wav,0,hard,gemini,Aoede,"And now, Valo shows the button."
+raw/neg/hard_0054.wav,0,hard,gemini,Aoede,We built Valo in one day.
+raw/neg/hard_0055.wav,0,hard,gemini,Aoede,Valo learns from the questions.
+raw/neg/hard_0056.wav,0,hard,gemini,Callirrhoe,Thank you for watching Valo.
+raw/neg/hard_0057.wav,0,hard,gemini,Callirrhoe,Say Valo and ask.
+raw/neg/hard_0058.wav,0,hard,gemini,Callirrhoe,My daddy is here today.
+raw/neg/hard_0059.wav,0,hard,gemini,Callirrhoe,"This is Valo, our assistant."
+raw/neg/hard_0060.wav,0,hard,gemini,Callirrhoe,Open the Valo dashboard.
+raw/neg/hard_0061.wav,0,hard,gemini,Callirrhoe,Valo helps your team find features faster.
+raw/neg/hard_0062.wav,0,hard,gemini,Callirrhoe,Here you see Valo in action.
+raw/neg/hard_0063.wav,0,hard,gemini,Autonoe,We built Valo in one day.
+raw/neg/hard_0064.wav,0,hard,gemini,Autonoe,Wir zeigen euch heute Valo.
+raw/neg/hard_0065.wav,0,hard,gemini,Autonoe,You can ask Valo by voice.
+raw/neg/hard_0066.wav,0,hard,gemini,Autonoe,Say Valo and ask.
+raw/neg/hard_0067.wav,0,hard,gemini,Autonoe,Mit Valo findet jeder die Funktion.
+raw/neg/hard_0068.wav,0,hard,gemini,Autonoe,Daddy cool.
+raw/neg/hard_0069.wav,0,hard,gemini,Autonoe,Ask Valo anything.
+raw/neg/hard_0070.wav,0,hard,gemini,Enceladus,Valo hilft dir weiter.
+raw/neg/hard_0071.wav,0,hard,gemini,Enceladus,Open the Valo dashboard.
+raw/neg/hard_0072.wav,0,hard,gemini,Enceladus,"Hey, that's Valo."
+raw/neg/hard_0073.wav,0,hard,gemini,Enceladus,Valo learns from the questions.
+raw/neg/hard_0074.wav,0,hard,gemini,Enceladus,So Valo noticed that I was stuck.
+raw/neg/hard_0075.wav,0,hard,gemini,Enceladus,Let me introduce Valo.
+raw/neg/hard_0076.wav,0,hard,gemini,Enceladus,Valo is voice native.
+raw/neg/hard_0077.wav,0,hard,gemini,Iapetus,My daddy is here today.
+raw/neg/hard_0078.wav,0,hard,gemini,Iapetus,Daddy cool.
+raw/neg/hard_0079.wav,0,hard,gemini,Iapetus,Let me introduce Valo.
+raw/neg/hard_0080.wav,0,hard,gemini,Iapetus,"This is Valo, our assistant."
+raw/neg/hard_0081.wav,0,hard,gemini,Iapetus,Open the Valo dashboard.
+raw/neg/hard_0082.wav,0,hard,gemini,Iapetus,So Valo noticed that I was stuck.
+raw/neg/hard_0083.wav,0,hard,gemini,Iapetus,"Okay, Valo hat das erkannt."
+raw/neg/hard_0084.wav,0,hard,gemini,Umbriel,Wir zeigen euch heute Valo.
+raw/neg/hard_0085.wav,0,hard,gemini,Umbriel,"Hey, today we show you something new."
+raw/neg/hard_0086.wav,0,hard,gemini,Umbriel,Ask Valo anything.
+raw/neg/hard_0087.wav,0,hard,gemini,Umbriel,Who's your daddy?
+raw/neg/hard_0088.wav,0,hard,gemini,Umbriel,Valo hilft dir weiter.
+raw/neg/hard_0089.wav,0,hard,gemini,Umbriel,So Valo noticed that I was stuck.
+raw/neg/hard_0090.wav,0,hard,gemini,Umbriel,Here you see Valo in action.
+raw/neg/hard_0091.wav,0,hard,gemini,Algieba,"This is Valo, our assistant."
+raw/neg/hard_0092.wav,0,hard,gemini,Algieba,Thank you for watching Valo.
+raw/neg/hard_0093.wav,0,hard,gemini,Algieba,"Okay, Valo hat das erkannt."
+raw/neg/hard_0094.wav,0,hard,gemini,Algieba,Mit Valo findet jeder die Funktion.
+raw/neg/hard_0095.wav,0,hard,gemini,Algieba,Valo is voice native.
+raw/neg/hard_0096.wav,0,hard,gemini,Algieba,Daddy cool.
+raw/neg/hard_0097.wav,0,hard,gemini,Algieba,Ask Valo anything.
+raw/neg/hard_0098.wav,0,hard,gemini,Despina,"With Valo, nobody gets lost."
+raw/neg/hard_0099.wav,0,hard,gemini,Despina,"Hey, look at this."
+raw/neg/hard_0100.wav,0,hard,gemini,Despina,Wir zeigen euch heute Valo.
+raw/neg/hard_0101.wav,0,hard,gemini,Despina,Mit Valo findet jeder die Funktion.
+raw/neg/hard_0102.wav,0,hard,gemini,Despina,Valo helps your team find features faster.
+raw/neg/hard_0103.wav,0,hard,gemini,Despina,You can ask Valo by voice.
+raw/neg/hard_0104.wav,0,hard,gemini,Despina,"This is Valo, our assistant."
+raw/neg/hard_0105.wav,0,hard,gemini,Erinome,Daddy cool.
+raw/neg/hard_0106.wav,0,hard,gemini,Erinome,Say Valo and ask.
+raw/neg/hard_0107.wav,0,hard,gemini,Erinome,Open the Valo dashboard.
+raw/neg/hard_0108.wav,0,hard,gemini,Erinome,They said daddy.
+raw/neg/hard_0109.wav,0,hard,gemini,Erinome,"Hey everyone, welcome."
+raw/neg/hard_0110.wav,0,hard,gemini,Erinome,Ask Valo anything.
+raw/neg/hard_0111.wav,0,hard,gemini,Erinome,"Hey there, nice to meet you."
+raw/neg/hard_0112.wav,0,hard,gemini,Algenib,My daddy is here today.
+raw/neg/hard_0113.wav,0,hard,gemini,Algenib,Valo learns from the questions.
+raw/neg/hard_0114.wav,0,hard,gemini,Algenib,Here you see Valo in action.
+raw/neg/hard_0115.wav,0,hard,gemini,Algenib,Wir zeigen euch heute Valo.
+raw/neg/hard_0116.wav,0,hard,gemini,Algenib,Open the Valo dashboard.
+raw/neg/hard_0117.wav,0,hard,gemini,Algenib,They said daddy.
+raw/neg/hard_0118.wav,0,hard,gemini,Algenib,Valo hilft dir weiter.
+raw/neg/hard_0119.wav,0,hard,gemini,Rasalgethi,"This is Valo, our assistant."
+raw/neg/hard_0120.wav,0,hard,gemini,Rasalgethi,"Hey everyone, welcome."
+raw/neg/hard_0121.wav,0,hard,gemini,Rasalgethi,"Hey, that's Valo."
+raw/neg/hard_0122.wav,0,hard,gemini,Rasalgethi,"Valo points, it never clicks."
+raw/neg/hard_0123.wav,0,hard,gemini,Rasalgethi,Wir zeigen euch heute Valo.
+raw/neg/hard_0124.wav,0,hard,gemini,Rasalgethi,My daddy is here today.
+raw/neg/hard_0125.wav,0,hard,gemini,Rasalgethi,You can ask Valo by voice.
+raw/neg/hard_0126.wav,0,hard,gemini,Laomedeia,"This is Valo, our assistant."
+raw/neg/hard_0127.wav,0,hard,gemini,Laomedeia,Valo helps your team find features faster.
+raw/neg/hard_0128.wav,0,hard,gemini,Laomedeia,Who's your daddy?
+raw/neg/hard_0129.wav,0,hard,gemini,Laomedeia,My daddy is here today.
+raw/neg/hard_0130.wav,0,hard,gemini,Laomedeia,So Valo noticed that I was stuck.
+raw/neg/hard_0131.wav,0,hard,gemini,Laomedeia,"And now, Valo shows the button."
+raw/neg/hard_0132.wav,0,hard,gemini,Laomedeia,Open the Valo dashboard.
+raw/neg/hard_0133.wav,0,hard,gemini,Achernar,You can ask Valo by voice.
+raw/neg/hard_0134.wav,0,hard,gemini,Achernar,"Hey everyone, welcome."
+raw/neg/hard_0135.wav,0,hard,gemini,Achernar,Valo hilft dir weiter.
+raw/neg/hard_0136.wav,0,hard,gemini,Achernar,So Valo noticed that I was stuck.
+raw/neg/hard_0137.wav,0,hard,gemini,Achernar,My daddy is here today.
+raw/neg/hard_0138.wav,0,hard,gemini,Achernar,"Das ist Valo, unser Assistent."
+raw/neg/hard_0139.wav,0,hard,gemini,Achernar,"Hey, that's Valo."
+raw/neg/hard_0140.wav,0,hard,gemini,Alnilam,Valo learns from the questions.
+raw/neg/hard_0141.wav,0,hard,gemini,Alnilam,Today we show you Valo.
+raw/neg/hard_0142.wav,0,hard,gemini,Alnilam,Valo hilft dir weiter.
+raw/neg/hard_0143.wav,0,hard,gemini,Alnilam,"Hey, that's Valo."
+raw/neg/hard_0144.wav,0,hard,gemini,Alnilam,Valo is voice native.
+raw/neg/hard_0145.wav,0,hard,gemini,Alnilam,Here you see Valo in action.
+raw/neg/hard_0146.wav,0,hard,gemini,Alnilam,Thank you for watching Valo.
+raw/neg/hard_0147.wav,0,hard,gemini,Schedar,Wir zeigen euch heute Valo.
+raw/neg/hard_0148.wav,0,hard,gemini,Schedar,Valo helps your team find features faster.
+raw/neg/hard_0149.wav,0,hard,gemini,Schedar,We built Valo in one day.
+raw/neg/hard_0150.wav,0,hard,gemini,Schedar,Daddy cool.
+raw/neg/hard_0151.wav,0,hard,gemini,Schedar,So Valo noticed that I was stuck.
+raw/neg/hard_0152.wav,0,hard,gemini,Schedar,"With Valo, nobody gets lost."
+raw/neg/hard_0153.wav,0,hard,gemini,Schedar,Who's your daddy?
+raw/neg/hard_0154.wav,0,hard,gemini,Gacrux,Let me introduce Valo.
+raw/neg/hard_0155.wav,0,hard,gemini,Gacrux,"Das ist Valo, unser Assistent."
+raw/neg/hard_0156.wav,0,hard,gemini,Gacrux,"Hey, look at this."
+raw/neg/hard_0157.wav,0,hard,gemini,Gacrux,"Hey there, nice to meet you."
+raw/neg/hard_0158.wav,0,hard,gemini,Gacrux,Wir zeigen euch heute Valo.
+raw/neg/hard_0159.wav,0,hard,gemini,Gacrux,"This is Valo, our assistant."
+raw/neg/hard_0160.wav,0,hard,gemini,Gacrux,Valo is voice native.
+raw/neg/hard_0161.wav,0,hard,gemini,Pulcherrima,Valo hilft dir weiter.
+raw/neg/hard_0162.wav,0,hard,gemini,Pulcherrima,"Das ist Valo, unser Assistent."
+raw/neg/hard_0163.wav,0,hard,gemini,Pulcherrima,Say Valo and ask.
+raw/neg/hard_0164.wav,0,hard,gemini,Pulcherrima,"Valo points, it never clicks."
+raw/neg/hard_0165.wav,0,hard,gemini,Pulcherrima,"With Valo, nobody gets lost."
+raw/neg/hard_0166.wav,0,hard,gemini,Pulcherrima,Mit Valo findet jeder die Funktion.
+raw/neg/hard_0167.wav,0,hard,gemini,Pulcherrima,"Hey, today we show you something new."
+raw/neg/hard_0168.wav,0,hard,gemini,Achird,"Valo points, it never clicks."
+raw/neg/hard_0169.wav,0,hard,gemini,Achird,My daddy is here today.
+raw/neg/hard_0170.wav,0,hard,gemini,Achird,Mit Valo findet jeder die Funktion.
+raw/neg/hard_0171.wav,0,hard,gemini,Achird,Valo learns from the questions.
+raw/neg/hard_0172.wav,0,hard,gemini,Achird,You can ask Valo by voice.
+raw/neg/hard_0173.wav,0,hard,gemini,Achird,"Das ist Valo, unser Assistent."
+raw/neg/hard_0174.wav,0,hard,gemini,Achird,Let me introduce Valo.
+raw/neg/hard_0175.wav,0,hard,gemini,Zubenelgenubi,"With Valo, nobody gets lost."
+raw/neg/hard_0176.wav,0,hard,gemini,Zubenelgenubi,"This is Valo, our assistant."
+raw/neg/hard_0177.wav,0,hard,gemini,Zubenelgenubi,Valo is voice native.
+raw/neg/hard_0178.wav,0,hard,gemini,Zubenelgenubi,"Hey, that's Valo."
+raw/neg/hard_0179.wav,0,hard,gemini,Zubenelgenubi,Let me introduce Valo.
+raw/neg/hard_0180.wav,0,hard,gemini,Zubenelgenubi,You can ask Valo by voice.
+raw/neg/hard_0181.wav,0,hard,gemini,Zubenelgenubi,"Hey everyone, welcome."
+raw/neg/hard_0182.wav,0,hard,gemini,Vindemiatrix,Today we show you Valo.
+raw/neg/hard_0183.wav,0,hard,gemini,Vindemiatrix,Wir zeigen euch heute Valo.
+raw/neg/hard_0184.wav,0,hard,gemini,Vindemiatrix,"Hey everyone, welcome."
+raw/neg/hard_0185.wav,0,hard,gemini,Vindemiatrix,Open the Valo dashboard.
+raw/neg/hard_0186.wav,0,hard,gemini,Vindemiatrix,Valo is voice native.
+raw/neg/hard_0187.wav,0,hard,gemini,Vindemiatrix,"Valo points, it never clicks."
+raw/neg/hard_0188.wav,0,hard,gemini,Vindemiatrix,So Valo noticed that I was stuck.
+raw/neg/hard_0189.wav,0,hard,gemini,Sadachbia,Today we show you Valo.
+raw/neg/hard_0190.wav,0,hard,gemini,Sadachbia,"With Valo, nobody gets lost."
+raw/neg/hard_0191.wav,0,hard,gemini,Sadachbia,Mit Valo findet jeder die Funktion.
+raw/neg/hard_0192.wav,0,hard,gemini,Sadachbia,Say Valo and ask.
+raw/neg/hard_0193.wav,0,hard,gemini,Sadachbia,Valo learns from the questions.
+raw/neg/hard_0194.wav,0,hard,gemini,Sadachbia,Here you see Valo in action.
+raw/neg/hard_0195.wav,0,hard,gemini,Sadachbia,Open the Valo dashboard.
+raw/neg/hard_0196.wav,0,hard,gemini,Sadaltager,Ask Valo anything.
+raw/neg/hard_0197.wav,0,hard,gemini,Sadaltager,"With Valo, nobody gets lost."
+raw/neg/hard_0198.wav,0,hard,gemini,Sadaltager,My daddy is here today.
+raw/neg/hard_0199.wav,0,hard,gemini,Sadaltager,"Hey there, nice to meet you."
+raw/neg/hard_0200.wav,0,hard,gemini,Sadaltager,"Okay, Valo hat das erkannt."
+raw/neg/hard_0201.wav,0,hard,gemini,Sadaltager,Here you see Valo in action.
+raw/neg/hard_0202.wav,0,hard,gemini,Sadaltager,"And now, Valo shows the button."
+raw/neg/hard_0203.wav,0,hard,gemini,Sulafat,You can ask Valo by voice.
+raw/neg/hard_0204.wav,0,hard,gemini,Sulafat,Who's your daddy?
+raw/neg/hard_0205.wav,0,hard,gemini,Sulafat,Valo helps your team find features faster.
+raw/neg/hard_0206.wav,0,hard,gemini,Sulafat,Valo hilft dir weiter.
+raw/neg/hard_0207.wav,0,hard,gemini,Sulafat,Daddy cool.
+raw/neg/hard_0208.wav,0,hard,gemini,Sulafat,"Hey, that's Valo."
+raw/neg/hard_0209.wav,0,hard,gemini,Sulafat,Say Valo and ask.

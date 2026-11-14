@@ -1,0 +1,41 @@
+{
+  "threshold": 0.7,
+  "heldout_voices": [
+    "Sadachbia",
+    "Sadaltager",
+    "Shelley (English (UK))",
+    "Shelley (English (US))",
+    "Shelley (German (Germany))",
+    "Sulafat",
+    "Tara (English (India))",
+    "Tessa (English (South Africa))",
+    "Trinoids",
+    "Vindemiatrix",
+    "Whisper",
+    "Wobble",
+    "Zarvox",
+    "Zubenelgenubi"
+  ],
+  "positives": {
+    "clips": 72,
+    "detected": 68
+  },
+  "negatives": {
+    "clips": 188,
+    "false_triggers": 5,
+    "by_kind": {
+      "adversarial": {
+        "clips": 74,
+        "false_triggers": 5
+      },
+      "sentence": {
+        "clips": 79,
+        "false_triggers": 0
+      },
+      "hard": {
+        "clips": 35,
+        "false_triggers": 0
+      }
+    }
+  }
+}

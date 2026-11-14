@@ -1,0 +1,22 @@
+{
+  "params": 102849,
+  "train_windows": 305047,
+  "train_positive_windows": 18753,
+  "heldout_windows": {
+    "0.5": {
+      "recall": 0.908,
+      "false_windows": 557,
+      "negative_hours": 1.24
+    },
+    "0.7": {
+      "recall": 0.888,
+      "false_windows": 417,
+      "negative_hours": 1.24
+    },
+    "0.9": {
+      "recall": 0.856,
+      "false_windows": 274,
+      "negative_hours": 1.24
+    }
+  }
+}

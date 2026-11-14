@@ -72,21 +72,32 @@ We use the Vercel AI SDK only as the thin model-call layer. **Everything that ma
 
 ## Our own wake word — trained during the hackathon
 
-We started with openWakeWord's pre-trained **"Hey Jarvis"** (open weights, ONNX). It runs fully in the browser (ONNX Runtime Web in the extension's offscreen document), so no audio leaves the device before the trigger. There is no model for our own name, so we **trained our own keyword head for "Hey Valo" and "Hey Daddy"** — in about 30 minutes on a laptop, without a single recorded human voice:
+We started with openWakeWord's pre-trained **"Hey Jarvis"** (open weights, ONNX). There is no model for our own name, so we **trained our own keyword head for "Hey Valo" and "Hey Daddy"** — in about 30 minutes on a laptop, without a single recorded human voice. Pipeline, data manifest, metrics and samples: [`ml/wakeword`](ml/wakeword).
+
+**Privacy is the point:**
+- **No recordings of people.** All training audio is synthetic (Gemini TTS + local macOS voices) — no employee or customer voice was ever collected, so there is no personal data in the training set.
+- **The microphone never leaves the laptop until you say the word.** The 400 KB model scores the audio every 80 ms inside the browser (ONNX Runtime Web); only after "Hey Valo" does the question go to transcription.
+- **Our own weights**, not a CC BY-NC-licensed pre-trained model.
 
 ```mermaid
 flowchart LR
-  TTS["Synthetic speech<br/>30 Gemini TTS voices + 33 macOS voices, de/en"] --> AUG["Augmentation<br/>speed · reverb · band-limit · noise · babble"]
+  TTS["Synthetic speech<br/>30 Gemini TTS voices + 33 macOS voices, de/en"] --> AUG["Augmentation<br/>speed · reverb · mic EQ · noise · babble"]
   NEG["Hard negatives<br/>pitch sentences with 'Valo' but no 'hey',<br/>'Hey Danny', 'Daddy' alone"] --> AUG
   AUG --> FEAT["Same streaming features as the browser<br/>mel → openWakeWord embedding, 16 × 96"]
-  FEAT --> MLP["Tiny MLP head<br/>~100 k parameters, PyTorch"]
+  FEAT --> MLP["Tiny MLP head<br/>102,849 parameters, PyTorch"]
   MLP --> ONNX["ONNX, 400 KB<br/>hey_valo_daddy_v1.onnx"]
   ONNX --> EXT["Extension runs it next to 'Hey Jarvis'<br/>highest score wins"]
 ```
 
 ![Wake word score over 16 s of speech: our model fires only on “Hey Valo” and “Hey Daddy”, the pre-trained model only on “Hey Jarvis”; pitch sentences that mention Valo stay near 0](docs/img/wakeword-scores.png)
 
-On voices the model never heard, it catches ~97 % of "Hey Valo" / "Hey Daddy" clips, while pitch sentences that only mention "Valo" stay near 0 (chart above: real scores from the shipped model). Known weak spot: near-homophones like "Hey Danny". Model: [`public/wakeword/hey_valo_daddy_v1.onnx`](apps/extension/public/wakeword/hey_valo_daddy_v1.onnx) · detector: [`wakeword.ts`](apps/extension/utils/voice/wakeword.ts) · decision: [D-38](docs/decisions.md).
+| Held-out voices (never seen in training), threshold 0.7 | Clips | Fired |
+| --- | --- | --- |
+| "Hey Valo" / "Hey Daddy" | 72 | **94 %** |
+| Office and pitch sentences, incl. "Today we show you Valo." | 114 | **0 %** |
+| Near misses ("Hey Danny", "Hey Paolo" …) | 74 | 7 % |
+
+Model: [`hey_valo_daddy_v1.onnx`](apps/extension/public/wakeword/hey_valo_daddy_v1.onnx) · detector: [`wakeword.ts`](apps/extension/utils/voice/wakeword.ts) · training: [`ml/wakeword`](ml/wakeword) · decision: [D-38](docs/decisions.md).
 
 ## Why Valo
 
