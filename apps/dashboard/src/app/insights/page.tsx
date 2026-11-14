@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Shell } from "@/components/Shell";
-import { CompareBars, Footnote, IconLock, Notice, PRODUCT_NAME, VerdictBadge, cx, num, pct, toPct } from "@/components/ui";
+import { CompareBars, Footnote, IconLock, Notice, PRODUCT_NAME, Table, Td, Th, VerdictBadge, cx, num, pct, toPct } from "@/components/ui";
 import { VERDICT, VERDICTS, bewerte, prozent, type FeatureInsight, type InsightRow, type Verdict } from "@/lib/insights";
 import { getOrgContext } from "@/lib/org";
 
@@ -22,7 +22,7 @@ export default function ErkenntnissePage({ searchParams }: PageProps<"/insights"
 }
 
 async function Inhalt({ searchParams, appParam }: { searchParams: PageProps<"/insights">["searchParams"]; appParam: Promise<string | undefined> }) {
-  const [{ supabase, isAdmin }, sp, app] = await Promise.all([getOrgContext(), searchParams, appParam]);
+  const [{ supabase, isAdmin, orgId }, sp, app] = await Promise.all([getOrgContext(), searchParams, appParam]);
   if (!isAdmin) {
     return (
       <div role="status" className="flex max-w-[640px] items-start gap-3.5 rounded-lg border border-priv-line bg-priv-soft px-6 py-[22px] text-priv-strong">
@@ -35,10 +35,11 @@ async function Inhalt({ searchParams, appParam }: { searchParams: PageProps<"/in
     );
   }
 
-  const [{ data: rows }, { data: apps }, { data: trainings }] = await Promise.all([
+  const [{ data: rows }, { data: apps }, { data: trainings }, { data: angebote }] = await Promise.all([
     supabase.from("insights").select("app_id, feature, role, metric, value, persons"),
     supabase.from("apps").select("id, name").order("name"),
     supabase.from("training_catalog").select("title, topics"),
+    supabase.rpc("offer_helpfulness", { org: orgId }),
   ]);
   const alle = bewerte((rows ?? []) as InsightRow[]);
   const scoped = app ? alle.filter((f) => f.appId === app) : alle;
@@ -97,8 +98,59 @@ async function Inhalt({ searchParams, appParam }: { searchParams: PageProps<"/in
         })
       )}
 
+      <Angebote rows={((angebote ?? []) as Angebot[]).filter((r) => !app || r.app_id === app)} appName={new Map((apps ?? []).map((a) => [a.id as string, a.name as string]))} />
+
       <Footnote>Groups of fewer than 5 people stay hidden.</Footnote>
     </>
+  );
+}
+
+/** offer_helpfulness(): per app + intent, only groups of ≥ 5 people (enforced in SQL). Counts are offers. */
+type Angebot = { app_id: string; intent: string; persons: number; offers: number; up: number; down: number; declined: number };
+
+function Angebote({ rows, appName }: { rows: Angebot[]; appName: Map<string, string> }) {
+  const anteil = (n: number, of: number) => (of ? `${Math.round((n / of) * 100)} %` : "–");
+  const sorted = [...rows].sort((a, b) => b.down + b.declined - (a.down + a.declined) || b.offers - a.offers);
+  return (
+    <section className="grid gap-3">
+      <div>
+        <h2 className="m-0 text-xl font-semibold">Helpful offers per feature</h2>
+        <p className="mt-1 mb-0 text-muted">
+          When {PRODUCT_NAME} offers help on its own: how often people found it helpful, not helpful or declined it. Last 30 days, groups of at least 5 people only.
+        </p>
+      </div>
+      <Table>
+        <thead>
+          <tr>
+            <Th>Feature</Th>
+            <Th>App</Th>
+            <Th className="text-right">People</Th>
+            <Th className="text-right">Offers</Th>
+            <Th className="text-right">👍 Helpful</Th>
+            <Th className="text-right">👎 Not helpful</Th>
+            <Th className="text-right">Declined</Th>
+            <Th className="text-right">No rating</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.length === 0 && (
+            <tr><Td colSpan={8} className="text-center text-muted">No feature has offers from at least 5 people yet.</Td></tr>
+          )}
+          {sorted.map((r) => (
+            <tr key={`${r.app_id}|${r.intent}`} className="hover:bg-surface-hover">
+              <Td className="font-semibold">{r.intent}</Td>
+              <Td>{appName.get(r.app_id) ?? "–"}</Td>
+              <Td className="text-right tabular-nums">{r.persons}</Td>
+              <Td className="text-right tabular-nums">{r.offers}</Td>
+              <Td className="text-right font-semibold text-primary-text tabular-nums">{anteil(r.up, r.offers)}</Td>
+              <Td className="text-right tabular-nums">{anteil(r.down, r.offers)}</Td>
+              <Td className="text-right tabular-nums">{anteil(r.declined, r.offers)}</Td>
+              <Td className="text-right text-muted tabular-nums">{anteil(r.offers - r.up - r.down - r.declined, r.offers)}</Td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </section>
   );
 }
 
