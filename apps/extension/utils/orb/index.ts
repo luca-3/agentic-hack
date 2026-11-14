@@ -2,7 +2,7 @@
  * Status orb controller (content script, D-29). Shows Valo's state on org app pages: not connected, signed out, active,
  * paused (by the user or a blocked route), listening (wake word / hotkey / click), thinking, speaking, offer, error.
  * The service worker answers `lotse:orb-status` (utils/activation.ts) — polled every 1.5 s while the orb is visible —
- * and pushes `lotse:voice-state`, so the orb reacts to "Hey Jarvis" at once. Switches: `lotse:presence` (sync),
+ * and pushes `lotse:voice-state`, so the orb reacts to the wake word at once. Switches: `lotse:presence` (sync),
  * position + hidden hosts: `lotse:orb` (local).
  */
 import type { VoiceState } from "@lotse/shared";
@@ -46,7 +46,7 @@ export function setupOrb(options: Options = {}): { destroy(): void } {
     else if (mode === "listening") detail = "Ask your question. Click to finish.";
     else if (mode === "thinking") detail = "Valo is finding the next step.";
     else if (mode === "speaking") detail = "Click: ask a new question.";
-    const hint = current.voiceOn ? `Click: ask by voice (“Hey Jarvis”, ${shortcutLabels().listen}) · Right-click: menu` : "Voice is off · Right-click: menu";
+    const hint = current.voiceOn ? `Click: ask by voice (“Hey Valo”, ${shortcutLabels().listen}) · Right-click: menu` : "Voice is off · Right-click: menu";
     const menu: OrbMenuItem[] = [];
     if (current.base === "paused" || (current.base === "idle" && !current.autoActivate)) menu.push({ id: "resume", label: current.base === "paused" ? "Resume" : "Start Valo here" });
     else if (current.base === "active" || current.base === "blocked" || current.base === "idle") menu.push({ id: "pause", label: "Pause" });

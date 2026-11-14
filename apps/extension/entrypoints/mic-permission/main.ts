@@ -17,7 +17,7 @@ async function request(): Promise<void> {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     stream.getTracks().forEach((track) => track.stop()); // only the grant is needed here; capture happens offscreen
-    status.textContent = `Thanks! The microphone is allowed. Say “Hey Jarvis …” or press ${shortcutLabels().listen}. This tab will close in a moment.`;
+    status.textContent = `Thanks! The microphone is allowed. Say “Hey Valo …” or press ${shortcutLabels().listen}. This tab will close in a moment.`;
     notifyWorker({ type: "mic-granted" });
   } catch (error) {
     const name = (error as DOMException | null)?.name;
