@@ -13,6 +13,7 @@ const DAY = 86_400_000;
 const PAGE = 1000; // supabase/config.toml max_rows
 const MAX_ROWS = 50_000;
 const GENERAL_QUESTIONS = "General questions";
+const MIN_GAP_PERSONS = 5; // k-anonymity (D-12, D-28) – the lotse_suggestions RLS hides smaller gaps anyway
 
 type Db = ReturnType<typeof createAdminClient>;
 type Row = Record<string, unknown>;
@@ -218,6 +219,28 @@ function unknownFeatures(app: AppRow, events: Row[], suggestedLabels: Set<string
     }));
 }
 
+/**
+ * Knowledge gaps (D-28): /ask questions without an answer are stored by the memory pipeline as a pseudonymized topic
+ * in knowledge_gaps (never the question). Open gaps with ≥ 5 distinct persons become knowledge_gap suggestions.
+ */
+async function knowledgeGaps(db: Db, orgId: string, appId?: string): Promise<SuggestionInput[]> {
+  let q = db.from("knowledge_gaps").select("app_id, topic, topic_key, count, persons").eq("org_id", orgId).eq("status", "open").gte("persons", MIN_GAP_PERSONS);
+  if (appId) q = q.eq("app_id", appId);
+  const { data, error } = await q.order("persons", { ascending: false }).limit(200);
+  if (error) throw new Error(`knowledge_gaps read failed: ${error.message}`);
+  return (data ?? []).map((g) => ({
+    appId: (g.app_id as string | null) ?? null,
+    source: "learn" as const,
+    kind: "knowledge_gap" as const,
+    title: `Valo has no answer for: ${g.topic}`,
+    detail: `${g.persons} people asked about this topic and Valo found nothing in the knowledge base.`,
+    payload: { topic: String(g.topic) },
+    fingerprint: `knowledge_gap:${g.app_id ?? "all"}:${g.topic_key}`,
+    occurrences: Number(g.count) || 0,
+    persons: Number(g.persons) || 0,
+  }));
+}
+
 /** Runs all detectors for one org (optionally one app). Uses the admin client — callers check permissions. */
 export async function runLearn(orgId: string, appId?: string): Promise<LearnResponse> {
   const db = createAdminClient();
@@ -253,8 +276,7 @@ export async function runLearn(orgId: string, appId?: string): Promise<LearnResp
     insights += await refreshInsights(db, orgId, app, events, offers, usage.filter((r) => r.route === "ask"));
     items.push(...agentErrors(app, failures, downs), ...staleFeatures(app, events), ...unknownFeatures(app, events, suggestedLabels));
   }
-  // TODO knowledge_gap: needs a server-side log of unanswered /ask questions (e.g. lotse_unanswered: org_id, app_id, subject,
-  // pseudonymized topic from the classifier, created_at) — never the raw question. Then group topics, persons ≥ 5 → suggestion.
+  items.push(...(await knowledgeGaps(db, orgId, appId)));
   // Drafts (Gemini polish of learn feature drafts) are skipped for now → drafts: 0.
   const suggestions = await upsertSuggestions(orgId, items);
   return { suggestions, insights, drafts: 0 };
