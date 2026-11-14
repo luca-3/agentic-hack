@@ -19,7 +19,8 @@ Status: `open` · `in progress` · `done`.
 | R-OBS-4 | Events sent to runtime, stored per org under a pseudonymous user id | Demo | open |
 | **Decide** ||||
 | R-DEC-1 | Stuck rules in the browser (e.g. 3 searches without result, ping-pong between 2 pages, 30 s idle in a form, same error twice) | Demo | open |
-| R-DEC-2 | Decision API: lite model confirms "intervene?" + guessed intent | Demo | open |
+| R-DEC-2 | Google Decisions API (`gemini-decision-1`): Boolean "needs help?" with calibrated confidence + Choice "which feature?" (options = app feature list) in one call; lite model as fallback | Demo | in progress |
+| R-DEC-4 | Adaptive proactivity per user: intervene only if confidence ≥ the user's threshold (start 0.80, range 0.60–0.95); thumbs up/down and "Nein" on offers adjust it; manual override in settings | Demo | in progress |
 | R-DEC-3 | Main model gets snapshot + feature list + role and returns `{ elementNumber, sentence }`; never invents element numbers | Demo | open |
 | **Guide & act** ||||
 | R-UI-1 | Overlay: frame + arrow on the target element, follows scroll/resize, click-through | Demo | open |

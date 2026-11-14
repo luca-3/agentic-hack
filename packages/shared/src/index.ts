@@ -139,8 +139,36 @@ export const DecideResponseSchema = z.object({
   confidence: z.number().min(0).max(1),
   intent: z.string().optional(), // what the user probably wants, e.g. "IBAN eines Kunden ändern" → becomes the question for /ask
   offer: z.string().max(140).optional(), // short offer text, e.g. "Soll ich dir zeigen, wie du die IBAN änderst?"
+  offerId: z.string().optional(), // set when intervene=true; echo it in OfferFeedback
+  threshold: z.number().min(0).max(1).optional(), // the user's current proactive threshold that was applied
 });
 export type DecideResponse = z.infer<typeof DecideResponseSchema>;
+
+/**
+ * Adaptive proactivity (D-22): intervene only if decision = yes AND confidence ≥ the user's threshold.
+ * Threshold starts at PROACTIVE_THRESHOLD.initial and learns from feedback on offers (per pseudonymous user).
+ */
+export const PROACTIVE_THRESHOLD = {
+  initial: 0.8,
+  min: 0.6,
+  max: 0.95,
+  onThumbsDown: +0.05, // offer was annoying/unhelpful → fewer offers
+  onThumbsUp: -0.02, // offer helped → slightly more offers
+  onDeclined: +0.02, // user clicked "Nein" on the offer
+} as const;
+
+/** POST /api/lotse/feedback — thumbs up/down on a proactive offer (or "declined" when the user said no). → ProactivePrefs */
+export const OfferFeedbackRequestSchema = z.object({
+  offerId: z.string(),
+  feedback: z.enum(["up", "down", "declined"]),
+});
+export type OfferFeedbackRequest = z.infer<typeof OfferFeedbackRequestSchema>;
+
+/** GET/PUT /api/lotse/prefs — the user's proactive threshold (PUT = manual override, clamped to min/max). */
+export const ProactivePrefsSchema = z.object({
+  proactiveThreshold: z.number().min(0).max(1),
+});
+export type ProactivePrefs = z.infer<typeof ProactivePrefsSchema>;
 
 // ---------------------------------------------------------------------------
 // Guidance (question → streamed guidance events)
@@ -258,6 +286,7 @@ export type ExtensionMessage =
   | { type: "lotse:stuck"; trigger: StuckTrigger; events: LotseEvent[] }
   | { type: "lotse:events"; events: LotseEvent[] }
   | { type: "lotse:accept-offer"; intent: string }
+  | { type: "lotse:offer-feedback"; offerId: string; feedback: "up" | "down" | "declined" }
   // side panel / voice → background
   | { type: "lotse:ask"; question: string; source?: "text" | "voice" | "proactive" };
 
