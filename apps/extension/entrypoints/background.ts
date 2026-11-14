@@ -1074,12 +1074,29 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
 
   const initialKey = normalizeExploreRoute(startUrl, startOrigin, blockedRoutes) ?? "/";
   visitedRoutes.add(initialKey);
-  const queue: Array<{ url: string; key: string; reachedVia: string[] }> = [{ url: startUrl, key: initialKey, reachedVia: [] }];
+
+  // Two-level Breadth-First Search (BFS):
+  //  1. `pageQueue` (shallow pass): visits all reachable pages across the breadth of the app first, ordered by shortest click depth
+  //     (with primary nav links ahead of deep record links at equal depth).
+  //  2. `deepQueue` (deep pass): only after all discovered pages are visited, inspects tabs, local menus and dialogs in BFS order.
+  type QueueEntry = { url: string; key: string; reachedVia: string[]; isNavLink: boolean };
+  const pageQueue: QueueEntry[] = [{ url: startUrl, key: initialKey, reachedVia: [], isNavLink: true }];
+  const deepQueue: QueueEntry[] = [];
+  const enqueuePageBfs = (entry: QueueEntry) => {
+    const rank = (e: QueueEntry) => e.reachedVia.length * 2 + (e.isNavLink ? 0 : 1);
+    const targetRank = rank(entry);
+    const idx = pageQueue.findIndex((existing) => rank(existing) > targetRank);
+    if (idx === -1) pageQueue.push(entry);
+    else pageQueue.splice(idx, 0, entry);
+  };
+
   let currentUrl = startUrl;
 
   try {
-    while (queue.length > 0 && pages.length < EXPLORE_LIMITS.maxPages && Date.now() < deadlineAt && !exploreAborted) {
-      const next = queue.shift()!;
+    while ((pageQueue.length > 0 || deepQueue.length > 0) && pages.length < EXPLORE_LIMITS.maxPages && Date.now() < deadlineAt && !exploreAborted) {
+      const mode: "shallow" | "deep" = pageQueue.length > 0 ? "shallow" : "deep";
+      const next = mode === "shallow" ? pageQueue.shift()! : deepQueue.shift()!;
+
       if (next.url !== currentUrl) {
         const navigated = await navigateExploreTab(tabId, next.url, compact, deadlineAt);
         if (!navigated || exploreAborted) continue;
@@ -1089,12 +1106,13 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
       const activeTab = await browser.tabs.get(tabId).catch(() => null);
       if (!activeTab?.url || new URL(activeTab.url).origin !== startOrigin || routeBlocked(locationOf(activeTab.url), blockedRoutes)) continue;
 
-      const shownCount = Math.min(pages.length + 1, EXPLORE_LIMITS.maxPages);
+      const shownCount = Math.min(Math.max(pages.length + (mode === "shallow" ? 1 : 0), 1), EXPLORE_LIMITS.maxPages);
       exploreStatus = { ...exploreStatus, currentRoute: next.key, summary: `Page ${shownCount} of up to ${EXPLORE_LIMITS.maxPages}` };
       await sendTab(tabId, { type: "lotse:explore-chip", text: `🔍 Exploring: page ${shownCount} of up to ${EXPLORE_LIMITS.maxPages}` });
 
       const stepResponse = (await sendTab(tabId, {
         type: "lotse:explore-run",
+        mode,
         reachedVia: next.reachedVia,
         maxRemaining: EXPLORE_LIMITS.maxPages - pages.length,
         deadlineAt,
@@ -1118,6 +1136,10 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
         pages.push(exploredPage);
       }
 
+      if (mode === "shallow" && stepResponse.hasSubViews) {
+        deepQueue.push(next);
+      }
+
       exploreStatus = {
         ...exploreStatus,
         pageCount: pages.length,
@@ -1128,15 +1150,17 @@ async function runExploration(tabId: number, startUrl: string, blockedRoutes: st
         const key = normalizeExploreRoute(link.url, startOrigin, blockedRoutes);
         if (!key) continue;
         if (visitedRoutes.has(key)) {
-          const queued = queue.find((item) => item.key === key);
-          if (queued && !queued.url.includes("?") && link.url.includes("?")) {
-            queued.url = link.url;
-            queued.reachedVia = link.reachedVia;
+          for (const q of [pageQueue, deepQueue]) {
+            const queued = q.find((item) => item.key === key);
+            if (queued && !queued.url.includes("?") && link.url.includes("?")) {
+              queued.url = link.url;
+              queued.reachedVia = link.reachedVia;
+            }
           }
           continue;
         }
         visitedRoutes.add(key);
-        queue.push({ url: link.url, key, reachedVia: link.reachedVia });
+        enqueuePageBfs({ url: link.url, key, reachedVia: link.reachedVia, isNavLink: link.isNavLink === true });
       }
     }
 

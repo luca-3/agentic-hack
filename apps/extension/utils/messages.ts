@@ -27,7 +27,7 @@ export type ContentCommand =
   | { type: "lotse:plan-control"; action: PlanCommand }
   | { type: "lotse:show-offer"; offerId: string; offer: string }
   | { type: "lotse:hide-offer" }
-  | { type: "lotse:explore-run"; reachedVia: string[]; maxRemaining: number; deadlineAt: number; seenGlobalKeys: string[]; startOrigin: string; blockedRoutes: string[] }
+  | { type: "lotse:explore-run"; mode: "shallow" | "deep"; reachedVia: string[]; maxRemaining: number; deadlineAt: number; seenGlobalKeys: string[]; startOrigin: string; blockedRoutes: string[] }
   | { type: "lotse:explore-abort" }
   | { type: "lotse:explore-chip"; text: string };
 

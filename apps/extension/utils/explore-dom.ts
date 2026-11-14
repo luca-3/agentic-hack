@@ -24,9 +24,11 @@ export type DiscoveredLink = {
   url: string;
   label: string;
   reachedVia: string[];
+  isNavLink?: boolean;
 };
 
 export type ExploreStepOptions = {
+  mode: "shallow" | "deep";
   reachedVia: string[];
   maxRemaining: number;
   deadlineAt: number;
@@ -41,6 +43,7 @@ export type ExploreStepResult = {
   links: DiscoveredLink[];
   seenGlobalKeys: string[];
   privacyTerms: PrivacyTerm[];
+  hasSubViews: boolean;
 };
 
 const INTERACTIVE =
@@ -121,26 +124,44 @@ export async function exploreCurrentPage(options: ExploreStepOptions): Promise<E
       if (seenLinks.has(cleanUrl)) continue;
       seenLinks.add(cleanUrl);
       const label = cleanLabel(accessibleName(anchor)) || resolved.pathname;
-      links.push({ url: cleanUrl, label, reachedVia: [...via, label].slice(0, 12) });
+      const isNavLink = Boolean(anchor.closest('nav, header, .sidebar, .topbar, [role="navigation"], [role="banner"]'));
+      links.push({ url: cleanUrl, label, reachedVia: [...via, label].slice(0, 12), isNavLink });
     }
   };
 
+  let hasSubViews = false;
+
   try {
-    // 1. Base page
-    addPage("page", document, options.reachedVia);
-    harvestLinks(document, options.reachedVia);
-    if (stopped()) return { pages, links, seenGlobalKeys: [...seenGlobal], privacyTerms: [...termsMap.values()] };
+    if (options.mode === "shallow") {
+      // Pass 1 (Breadth): capture the base page, open only unseen global nav menus to discover routes, and check if sub-views exist.
+      addPage("page", document, options.reachedVia);
+      harvestLinks(document, options.reachedVia);
 
-    // 2. Menus, disclosures and dialogs in the initial view
-    await exploreMenusAndDialogs(document, options.reachedVia);
-    if (stopped()) return { pages, links, seenGlobalKeys: [...seenGlobal], privacyTerms: [...termsMap.values()] };
+      if (!stopped()) {
+        await exploreGlobalNavMenusOnly(options.reachedVia);
+      }
 
-    // 3. Tabs (role="tab") — inspect each unselected tab + any menus/disclosures/dialogs inside its panel
+      const unselectedTabs = [...document.querySelectorAll<HTMLElement>('[role="tab"]')].filter(
+        (tab) => isVisible(tab, options.hostId) && tab.getAttribute("aria-selected") !== "true" && isSafeToClick(tab, options.hostId),
+      );
+      const localMenus = findMenuTriggers(document, options.hostId).filter(
+        (el) => !globalTriggerKey(el, cleanLabel(accessibleName(el))) && isSafeToClick(el, options.hostId),
+      );
+      const localDialogs = findDialogTriggers(document, options.hostId).filter(
+        (el) => isSafeToClick(el, options.hostId) && (!globalTriggerKey(el, cleanLabel(accessibleName(el))) || !seenGlobal.has(globalTriggerKey(el, cleanLabel(accessibleName(el)))!)),
+      );
+      hasSubViews = unselectedTabs.length > 0 || localMenus.length > 0 || localDialogs.length > 0;
+      return { pages, links, seenGlobalKeys: [...seenGlobal], privacyTerms: [...termsMap.values()], hasSubViews };
+    }
+
+    // Pass 2 (Depth, still breadth-first within the page: all tabs first, then menus/dialogs, then nested tab menus/dialogs):
     const tabs = [...document.querySelectorAll<HTMLElement>('[role="tab"]')].filter(
       (tab) => isVisible(tab, options.hostId) && isSafeToClick(tab, options.hostId),
     );
     const initialTabs = tabs.filter((tab) => tab.getAttribute("aria-selected") === "true");
+    const visitedTabPanels: Array<{ tab: HTMLElement; panel: HTMLElement; tabVia: string[] }> = [];
 
+    // 2a. Breadth across all unselected tabs first
     for (const tab of tabs) {
       if (stopped()) break;
       if (!tab.isConnected || !isVisible(tab, options.hostId) || tab.getAttribute("aria-selected") === "true") continue;
@@ -150,16 +171,38 @@ export async function exploreCurrentPage(options: ExploreStepOptions): Promise<E
       clickedElements.add(tab);
 
       safeClick(tab);
-      await wait(120);
+      await wait(110);
       if (stopped()) break;
 
       if (routeBlocked(location.pathname + location.search + location.hash, options.blockedRoutes)) continue;
       const panelId = tab.getAttribute("aria-controls");
-      const panel = (panelId ? document.getElementById(panelId) : null) ?? document;
+      const panelEl = panelId ? document.getElementById(panelId) : null;
       const tabVia = [...options.reachedVia, tabLabel].slice(0, 12);
       addPage("tab", document, tabVia, tabLabel);
-      harvestLinks(panel, tabVia);
-      if (!stopped() && panel !== document) {
+      harvestLinks(panelEl ?? document, tabVia);
+      if (panelEl) visitedTabPanels.push({ tab, panel: panelEl, tabVia });
+    }
+
+    // Restore initial tab before inspecting base-view menus & dialogs
+    for (const initial of initialTabs) {
+      if (initial.isConnected && isVisible(initial, options.hostId) && initial.getAttribute("aria-selected") !== "true") {
+        safeClick(initial);
+        await wait(50);
+      }
+    }
+
+    // 2b. Menus, disclosures and dialogs on the initial tab/page view
+    if (!stopped()) {
+      await exploreMenusAndDialogs(document, options.reachedVia);
+    }
+
+    // 2c. Nested menus, disclosures and dialogs inside each tab panel
+    for (const { tab, panel, tabVia } of visitedTabPanels) {
+      if (stopped()) break;
+      if (!tab.isConnected || !isVisible(tab, options.hostId)) continue;
+      safeClick(tab);
+      await wait(90);
+      if (!stopped() && panel.isConnected) {
         await exploreMenusAndDialogs(panel, tabVia);
       }
     }
@@ -179,7 +222,42 @@ export async function exploreCurrentPage(options: ExploreStepOptions): Promise<E
     } catch { /* ignore */ }
   }
 
-  return { pages, links, seenGlobalKeys: [...seenGlobal], privacyTerms: [...termsMap.values()] };
+  return { pages, links, seenGlobalKeys: [...seenGlobal], privacyTerms: [...termsMap.values()], hasSubViews };
+
+  async function exploreGlobalNavMenusOnly(via: string[]) {
+    const navMenus = findMenuTriggers(document, options.hostId).filter((trigger) => {
+      const label = cleanLabel(accessibleName(trigger));
+      const gKey = label ? globalTriggerKey(trigger, label) : null;
+      return Boolean(gKey && !seenGlobal.has(gKey));
+    });
+    for (const trigger of navMenus) {
+      if (stopped()) return;
+      if (!trigger.isConnected || !isVisible(trigger, options.hostId) || !isSafeToClick(trigger, options.hostId)) continue;
+      const label = cleanLabel(accessibleName(trigger));
+      const gKey = label ? globalTriggerKey(trigger, label) : null;
+      if (!label || !gKey || seenGlobal.has(gKey)) continue;
+      if (trigger.getAttribute("aria-expanded") === "true") continue;
+      seenGlobal.add(gKey);
+      clickedElements.add(trigger);
+
+      safeClick(trigger);
+      await wait(90);
+      if (stopped()) return;
+
+      const menuVia = [...via, label].slice(0, 12);
+      const controlledId = trigger.getAttribute("aria-controls");
+      const menuScope = (controlledId ? document.getElementById(controlledId) : null) ?? document;
+      harvestLinks(menuScope, menuVia);
+      addPage("menu", document, menuVia, label);
+
+      pressEscape();
+      await wait(40);
+      if (trigger.isConnected && trigger.getAttribute("aria-expanded") === "true" && !trigger.closest("nav, .sidebar")) {
+        safeClick(trigger);
+        await wait(30);
+      }
+    }
+  }
 
   async function exploreMenusAndDialogs(scope: ParentNode, via: string[]) {
     // 2a. Menus & collapsible disclosures (<summary>, aria-haspopup, aria-expanded="false")

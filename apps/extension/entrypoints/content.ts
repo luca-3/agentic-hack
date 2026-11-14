@@ -88,6 +88,7 @@ export default defineContentScript({
         case "lotse:explore-run":
           if (blocked) { sendResponse(refuse); break; }
           exploreCurrentPage({
+            mode: message.mode,
             reachedVia: message.reachedVia,
             maxRemaining: message.maxRemaining,
             deadlineAt: message.deadlineAt,
