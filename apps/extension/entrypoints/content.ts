@@ -10,7 +10,8 @@ import { collectPagePrivacy, type WithPrivacy } from "../utils/pseudonymize";
 const INTERACTIVE = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [contenteditable="true"]';
 const SIGNAL_ELEMENTS = '[role="alert"], [role="status"], .field-error, .error-message, .alert-error, .empty-state, .search-empty, .no-results, [data-empty-state], [aria-invalid="true"]';
 const EMPTY_RESULTS = /keine?\s+(?:such)?(?:ergebnisse|treffer)|nichts\s+gefunden|no\s+(?:search\s+)?results|nothing\s+found/i;
-const ERROR_MESSAGE = /fehler|ungültig|ungultig|erforderlich|fehlgeschlagen|invalid|error|failed|required/i;
+const ERROR_MESSAGE = /fehler|ungültig|ungultig|erforderlich|fehlgeschlagen|keine\s+berechtigung|zugriff\s+verweigert|nicht\s+berechtigt|invalid|error|failed|required|permission\s+denied|access\s+denied|forbidden/i;
+const PERMISSION_ERROR = /keine\s+berechtigung|zugriff\s+verweigert|nicht\s+berechtigt|nur\s+für\s+die\s+rolle|permission\s+denied|access\s+denied|forbidden/i;
 const SEARCH_LABEL = /such|search|filtern|filter/i;
 const CLICK_INPUT_TYPES = new Set(["button", "submit", "reset", "checkbox", "radio", "image", "file", "color", "range"]);
 const HOST_ID = "lotse-overlay-host";
@@ -21,10 +22,13 @@ let currentFingerprint = "";
 let recording = false;
 let previousRoute = "";
 let lastUserActivity = Date.now();
+let lastProblemAt = 0;
 let idleSent = false;
 let previousErrors = new Set<string>();
 let previousEmpty = false;
 let lastSearchAt = 0;
+let hoverTimer: ReturnType<typeof setTimeout> | undefined;
+let hoveredDisabledHint: { text: string; until: number } | null = null;
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
 let stateTimer: ReturnType<typeof setTimeout> | undefined;
 const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
@@ -136,14 +140,33 @@ export default defineContentScript({
       if (element) sendObservation(makeEvent("click", element), buildSnapshot());
       scheduleState();
     });
-    // Explicit trigger (D-30): ≥ 5 presses on the same spot within 20 s — e.g. a disabled button that "does nothing".
-    // pointerdown, because Chrome dispatches no click event on disabled form controls.
+    // Explicit trigger (D-30 + extended): greyed-out/disabled controls (≥ 2 presses, plus 1st press logged),
+    // rapid rage clicks (≥ 4 in 5 s), dead clicks where UI state does not change (≥ 3 in 15 s), or ≥ 5 presses in 20 s.
     listen(document, "pointerdown", (event) => {
       if (!observeUserEvent(event)) return;
-      const hit = repeatedClick(event as PointerEvent);
-      if (!hit) return;
-      sendObservation({ ...makeEvent("repeated_click", hit.element), detail: hit.detail }, buildSnapshot());
+      const pe = event as PointerEvent;
+      if (pe.button !== 0) return;
+      const outcome = analyzePointerPress(pe);
+      if (!outcome) return;
+      if (outcome.disabledAttempt) lastProblemAt = Date.now();
+      sendObservation({ ...makeEvent(outcome.type, outcome.element), detail: outcome.detail }, buildSnapshot());
       scheduleState();
+    });
+    listen(document, "pointerover", (event) => {
+      if (!recording || !event.isTrusted || paused() || isLotseEvent(event)) return;
+      clearTimeout(hoverTimer);
+      const element = resolveControlFromEvent(event as PointerEvent);
+      if (!element || !isControlDisabled(element)) return;
+      hoverTimer = setTimeout(() => {
+        if (!recording || paused() || !element.isConnected) return;
+        const reason = disabledReason(element);
+        const label = accessibleName(element);
+        if (label && reason) {
+          hoveredDisabledHint = { text: `Locked (${label}): ${reason}`.slice(0, 160), until: Date.now() + 12_000 };
+          lastProblemAt = Date.now();
+          scheduleState();
+        }
+      }, 1_800);
     });
     listen(document, "focusin", (event) => {
       if (!observeUserEvent(event)) return;
@@ -228,10 +251,17 @@ export default defineContentScript({
         sendObservation(makeEvent("route"), buildSnapshot());
         scheduleState();
       }
-      const focusedForm = document.activeElement instanceof HTMLElement && document.activeElement.closest("form");
-      if (!idleSent && focusedForm && Date.now() - lastUserActivity >= 30_000) {
+      const activeEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      const inFormOrDialog = Boolean(
+        activeEl && (activeEl.closest('form, dialog[open], [role="dialog"]') || isEntry(activeEl)),
+      );
+      const idleMs = Date.now() - lastUserActivity;
+      if (!idleSent && inFormOrDialog && idleMs >= 18_000) {
         idleSent = true;
-        sendObservation(makeEvent("idle", undefined, "Form idle"), buildSnapshot());
+        sendObservation({ ...makeEvent("idle", undefined, "Form idle"), detail: `idleSec=${Math.round(idleMs / 1000)}` }, buildSnapshot());
+      } else if (!idleSent && lastProblemAt > 0 && Date.now() - lastProblemAt <= 45_000 && idleMs >= 20_000) {
+        idleSent = true;
+        sendObservation({ ...makeEvent("idle", undefined, "Stuck hesitation"), detail: `idleSec=${Math.round(idleMs / 1000)};afterProblem=true` }, buildSnapshot());
       }
     }, 500);
 
@@ -351,35 +381,118 @@ function isSearch(element: HTMLElement) {
     Boolean(element.closest('[role="search"]')) || SEARCH_LABEL.test(accessibleName(element));
 }
 
-const REPEATED_CLICKS = { count: 5, windowMs: 20_000, cell: 24 } as const;
-let pointerHits: Array<{ key: string; ts: number }> = [];
+const REPEATED_CLICKS = { count: 5, disabledCount: 2, deadCount: 3, rageCount: 4, windowMs: 20_000, rageWindowMs: 5_000, cell: 24 } as const;
+let pointerHits: Array<{ key: string; ts: number; snapshotId: string | undefined }> = [];
 const repeatedClickFired = new Map<string, number>();
 
-/** Counts presses per element (role + label + route) or per 24-px screen cell; fires once per spot and window. */
-function repeatedClick(event: PointerEvent): { element?: HTMLElement; detail: string } | null {
-  if (event.button !== 0) return null;
+function isControlDisabled(element: HTMLElement): boolean {
+  return element.matches(":disabled") || element.getAttribute("aria-disabled") === "true";
+}
+
+/** Finds an interactive control even when `:disabled` suppresses hit-testing or a `.tooltip-wrap` catches the pointer. */
+function resolveControlFromEvent(event: PointerEvent): HTMLElement | undefined {
   const target = event.target instanceof Element ? event.target : document.elementFromPoint(event.clientX, event.clientY);
-  const element = target?.closest<HTMLElement>(INTERACTIVE) ?? undefined;
+  const direct = target?.closest<HTMLElement>(INTERACTIVE);
+  if (direct) return direct;
+  const wrapped = target?.querySelector<HTMLElement>('button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disabled="true"]');
+  if (wrapped && isVisible(wrapped)) return wrapped;
+  for (const el of numbered) {
+    if (!el.isConnected || !isControlDisabled(el)) continue;
+    const r = el.getBoundingClientRect();
+    if (event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom) return el;
+  }
+  return undefined;
+}
+
+/**
+ * Classifies pointer presses:
+ *  - Native `:disabled` controls fire no DOM `click`, so press #1 records a semantic `click` (`disabled=true;reason=…`),
+ *    and press #2 within 20 s already fires `repeated_click`!
+ *  - ≥ 4 rapid presses within 5 s → `rage_click`.
+ *  - ≥ 3 presses within 15 s on an enabled non-input control where the UI state never changed → `repeated_click` (`deadClick=true`).
+ *  - ≥ 5 presses within 20 s on any spot → `repeated_click` (D-30).
+ */
+function analyzePointerPress(event: PointerEvent): { type: "click" | "repeated_click" | "rage_click"; element?: HTMLElement; detail: string; disabledAttempt?: boolean } | null {
+  const element = resolveControlFromEvent(event);
   const spot = element
     ? `${roleOf(element)}:${accessibleName(element)}`
     : `pt:${Math.round(event.clientX / REPEATED_CLICKS.cell)},${Math.round(event.clientY / REPEATED_CLICKS.cell)}`;
   const key = `${route()}|${spot}`;
   const now = Date.now();
+  const snapId = currentSnapshot?.id;
   pointerHits = pointerHits.filter((hit) => now - hit.ts <= REPEATED_CLICKS.windowMs);
-  pointerHits.push({ key, ts: now });
-  const count = pointerHits.filter((hit) => hit.key === key).length;
-  if (count < REPEATED_CLICKS.count || now - (repeatedClickFired.get(key) ?? 0) < REPEATED_CLICKS.windowMs) return null;
-  repeatedClickFired.set(key, now);
-  const disabled = Boolean(element && (element.matches(":disabled") || element.getAttribute("aria-disabled") === "true"));
-  const reason = element ? disabledReason(element) : "";
-  return { element, detail: [`clicks=${count}`, `disabled=${disabled}`, reason ? `reason=${reason}` : ""].filter(Boolean).join(";") };
+  pointerHits.push({ key, ts: now, snapshotId: snapId });
+
+  const hits = pointerHits.filter((hit) => hit.key === key);
+  const count = hits.length;
+  const disabled = Boolean(element && isControlDisabled(element));
+  const reason = element && disabled ? disabledReason(element) : "";
+  if (disabled && reason && element) {
+    hoveredDisabledHint = { text: `Locked (${accessibleName(element)}): ${reason}`.slice(0, 160), until: now + 15_000 };
+  }
+
+  const cooldownMs = disabled ? 10_000 : REPEATED_CLICKS.windowMs;
+  const recentlyFired = now - (repeatedClickFired.get(key) ?? 0) < cooldownMs;
+
+  if (disabled && count >= REPEATED_CLICKS.disabledCount && !recentlyFired) {
+    repeatedClickFired.set(key, now);
+    return {
+      type: "repeated_click",
+      element,
+      disabledAttempt: true,
+      detail: [`clicks=${count}`, "disabled=true", reason ? `reason=${reason}` : ""].filter(Boolean).join(";"),
+    };
+  }
+
+  // Native `:disabled` elements never fire a `click` event — emit press #1 so `/state` and `/intent` see the attempt immediately.
+  if (disabled && element?.matches(":disabled") && count === 1) {
+    return {
+      type: "click",
+      element,
+      disabledAttempt: true,
+      detail: ["disabled=true", reason ? `reason=${reason}` : ""].filter(Boolean).join(";"),
+    };
+  }
+
+  const rageHits = hits.filter((hit) => now - hit.ts <= REPEATED_CLICKS.rageWindowMs);
+  if (rageHits.length >= REPEATED_CLICKS.rageCount && !recentlyFired) {
+    repeatedClickFired.set(key, now);
+    return {
+      type: "rage_click",
+      element,
+      detail: [`clicks=${rageHits.length}`, `disabled=${disabled}`, reason ? `reason=${reason}` : ""].filter(Boolean).join(";"),
+    };
+  }
+
+  const recentDead = hits.filter((hit) => now - hit.ts <= 15_000);
+  const unchangedState = Boolean(snapId && recentDead.length >= REPEATED_CLICKS.deadCount && recentDead.every((hit) => hit.snapshotId === snapId));
+  if (element && !disabled && !isEntry(element) && roleOf(element) !== "tab" && unchangedState && !recentlyFired) {
+    repeatedClickFired.set(key, now);
+    return {
+      type: "repeated_click",
+      element,
+      detail: `clicks=${recentDead.length};disabled=false;deadClick=true`,
+    };
+  }
+
+  if (count >= REPEATED_CLICKS.count && !recentlyFired) {
+    repeatedClickFired.set(key, now);
+    return {
+      type: "repeated_click",
+      element,
+      disabledAttempt: disabled,
+      detail: [`clicks=${count}`, `disabled=${disabled}`, reason ? `reason=${reason}` : ""].filter(Boolean).join(";"),
+    };
+  }
+  return null;
 }
 
-/** Visible explanation of why a control is locked: title, aria-describedby text, a tooltip attribute, or an ancestor's title. */
+/** Visible explanation of why a control is locked: title, aria-describedby text, sibling tooltip, or an ancestor's title. */
 function disabledReason(element: HTMLElement): string {
   const describedBy = element.getAttribute("aria-describedby");
   const described = describedBy ? describedBy.split(/\s+/).map((id) => document.getElementById(id)?.textContent ?? "").join(" ") : "";
-  const text = element.getAttribute("title") || described || element.getAttribute("data-tooltip") || element.closest("[title]")?.getAttribute("title") || "";
+  const siblingTip = element.parentElement?.querySelector('[role="tooltip"], .tooltip')?.textContent ?? "";
+  const text = element.getAttribute("title") || described || siblingTip || element.getAttribute("data-tooltip") || element.closest("[title]")?.getAttribute("title") || "";
   return text.replace(/\s+/g, " ").replace(/;/g, ",").trim().slice(0, 120);
 }
 
@@ -418,6 +531,7 @@ function after(delay: number, action: () => void) {
 }
 
 function clearPendingTimers() {
+  clearTimeout(hoverTimer);
   clearTimeout(searchTimer);
   clearTimeout(stateTimer);
   for (const timer of pendingTimers) clearTimeout(timer);
@@ -433,8 +547,12 @@ function recordSearch(element: HTMLElement) {
   clearTimeout(searchTimer);
   if (!recording || paused() || Date.now() - lastSearchAt < 400) return;
   lastSearchAt = Date.now();
-  sendObservation(makeEvent("search", element), buildSnapshot());
-  after(500, () => captureState(false, true));
+  const valueLen = element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement ? element.value.trim().length : 0;
+  const searchEvent = makeEvent("search", element);
+  if (valueLen > 0) searchEvent.detail = `searchLength=${valueLen}`;
+  sendObservation(searchEvent, buildSnapshot());
+  after(400, () => captureState(false, true));
+  after(900, () => captureState(false, true));
 }
 
 function captureState(repeatErrors = false, repeatEmpty = false) {
@@ -447,35 +565,50 @@ function captureState(repeatErrors = false, repeatEmpty = false) {
 }
 
 function signals() {
-  const errors = new Set<string>();
+  const errors = new Map<string, string>();
   const messages = new Set<string>();
   let empty = false;
   const candidates = [...document.querySelectorAll<HTMLElement>(SIGNAL_ELEMENTS), ...document.querySelectorAll<HTMLElement>("p")].slice(0, 350);
   for (const element of candidates) {
     if (!isVisible(element)) continue;
     const text = uiText(element.innerText);
+    const rect = element.getBoundingClientRect();
+    const offscreen = rect.bottom < 0 || rect.top > innerHeight;
     if (EMPTY_RESULTS.test(text)) {
       empty = true;
       messages.add("Keine Ergebnisse");
     } else if (element.getAttribute("aria-invalid") === "true") {
       const label = "Form validation error: " + accessibleName(element);
-      errors.add(label);
+      errors.set(label, offscreen ? "offscreen=true" : "");
       messages.add(label.slice(0, 160));
     } else if (text && (ERROR_MESSAGE.test(text) || element.matches(".field-error, .error-message, .alert-error"))) {
-      errors.add(text);
-      messages.add(text);
+      const flags = [
+        PERMISSION_ERROR.test(text) ? "permission=true" : "",
+        offscreen ? "offscreen=true" : "",
+      ].filter(Boolean).join(";");
+      errors.set(text, flags);
+      messages.add(offscreen ? `${text.slice(0, 138)} (outside viewport)` : text);
     } else if (text && element.matches('[role="status"], [role="alert"]')) messages.add(text);
   }
+  if (hoveredDisabledHint && hoveredDisabledHint.until > Date.now()) messages.add(hoveredDisabledHint.text);
   return { errors, messages: [...messages].slice(0, 20), empty };
 }
 
 function emitSignals(repeatErrors = false, repeatEmpty = false) {
   const state = signals();
-  for (const error of state.errors) {
-    if (repeatErrors || !previousErrors.has(error)) sendObservation(makeEvent("error", undefined, error), currentSnapshot ?? undefined);
+  for (const [error, detail] of state.errors) {
+    if (repeatErrors || !previousErrors.has(error)) {
+      lastProblemAt = Date.now();
+      const ev = makeEvent("error", undefined, error);
+      if (detail) ev.detail = detail;
+      sendObservation(ev, currentSnapshot ?? undefined);
+    }
   }
-  if (state.empty && (repeatEmpty || !previousEmpty)) sendObservation(makeEvent("empty_results", undefined, "Keine Ergebnisse"), currentSnapshot ?? undefined);
-  previousErrors = state.errors;
+  if (state.empty && (repeatEmpty || !previousEmpty)) {
+    lastProblemAt = Date.now();
+    sendObservation({ ...makeEvent("empty_results", undefined, "Keine Ergebnisse"), detail: "results=0" }, currentSnapshot ?? undefined);
+  }
+  previousErrors = new Set(state.errors.keys());
   previousEmpty = state.empty;
 }
 

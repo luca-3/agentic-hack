@@ -71,7 +71,8 @@ const HANDLED = new Set<string>([
   "lotse:prefs", "lotse:snooze", "lotse:listen", "lotse:get-policy", "lotse:paused", "lotse:login", "lotse:logout",
   "lotse:explore-start", "lotse:explore-stop", "lotse:debug-dump",
 ]);
-const ANALYTICS_TYPES = new Set<LotseEvent["type"]>(["click", "route", "search", "error", "idle", "submit", "empty_results", "rage_click"]);
+const ANALYTICS_TYPES = new Set<LotseEvent["type"]>(["click", "route", "search", "error", "idle", "submit", "empty_results", "rage_click", "repeated_click"]);
+const URGENT_EVENTS = new Set<LotseEvent["type"]>(["repeated_click", "rage_click", "error", "empty_results", "idle"]);
 const OFFER_COOLDOWN_MS = 120_000; // D-20: at most one proactive offer per two minutes
 const SNOOZE_MS = 10 * 60_000; // "Nein" → ten minutes of quiet
 const OFFER_TTL_MS = 75_000;
@@ -94,6 +95,7 @@ let message = "Ready. Open your app and start observing.";
 let screenshotMessage = "";
 let lastCaptureAt = 0;
 let capturing = false;
+let trailingCaptureTimer: ReturnType<typeof setTimeout> | undefined;
 let lastDecisionAt = 0;
 let generation = 0;
 let requestController: AbortController | null = null;
@@ -263,7 +265,7 @@ async function handle(incoming: LotseMessage, senderTab?: number, senderUrl?: st
       if (oldWorkflow && oldWorkflow !== buffer.workflow?.id) { decision = null; inference = null; }
       schedulePersistence();
       if (snapshot) void captureFrame(senderTab!, snapshot).catch(() => undefined);
-      queueInference();
+      queueInference(event && URGENT_EVENTS.has(event.type) ? 350 : 1_000);
       break;
     }
     case "lotse:ask":
@@ -408,6 +410,7 @@ function pauseForPolicy() {
   generation++; requestController?.abort();
   busyOwner++; busy = false; busyMode = null; inferencePending = false;
   clearTimeout(inferenceTimer);
+  clearTimeout(trailingCaptureTimer);
   dropOffer(true);
   message = PAUSED_TEXT + " Nothing is observed, recorded or sent here.";
   schedulePersistence();
@@ -475,6 +478,7 @@ async function stop() {
   generation++; requestController?.abort();
   busyOwner++; busy = false; busyMode = null; inferencePending = false;
   clearTimeout(inferenceTimer);
+  clearTimeout(trailingCaptureTimer);
   dropOffer(true);
   void flushAnalytics();
   const oldTab = recordingTab;
@@ -501,7 +505,24 @@ async function periodicCapture() {
 }
 
 async function captureFrame(tabId: number, expected: ObservationSnapshot, targetBuffer = buffer) {
-  if (!settings.screenshots || capturing || Date.now() - lastCaptureAt < 1_000) return;
+  if (!settings.screenshots) return;
+  const sinceLast = Date.now() - lastCaptureAt;
+  if (capturing || sinceLast < 1_000) {
+    // Schedule one trailing capture so state transitions (errors, empty results, tab switches) within <1s still get a frame.
+    if (targetBuffer === buffer && recording && recordingTab === tabId) {
+      clearTimeout(trailingCaptureTimer);
+      trailingCaptureTimer = setTimeout(() => {
+        trailingCaptureTimer = undefined;
+        if (!recording || recordingTab !== tabId) return;
+        void snapshotOf(tabId).then((fresh) => {
+          buffer.record({ snapshot: fresh });
+          return captureFrame(tabId, fresh);
+        }).catch(() => undefined);
+      }, Math.max(250, 1_050 - sinceLast));
+    }
+    return;
+  }
+  clearTimeout(trailingCaptureTimer);
   capturing = true;
   const epoch = generation;
   try {
@@ -530,10 +551,10 @@ async function captureFrame(tabId: number, expected: ObservationSnapshot, target
   } finally { capturing = false; }
 }
 
-function queueInference() {
+function queueInference(delayMs = 1_000) {
   inferencePending = true;
   clearTimeout(inferenceTimer);
-  inferenceTimer = setTimeout(() => { void maybeIntervene().catch((error: unknown) => { message = errorText(error); }); }, 1_000);
+  inferenceTimer = setTimeout(() => { void maybeIntervene().catch((error: unknown) => { message = errorText(error); }); }, delayMs);
 }
 
 /** User controls (D-20/D-22): switch, snooze, one open offer, cooldown, no offers during a guided plan. */
@@ -558,7 +579,7 @@ async function maybeIntervene() {
   const current = () => epoch === generation && recording && recordingTab === tabId;
   inferencePending = false;
   try {
-    const snapshot = await snapshotOf(tabId);
+    let snapshot = await snapshotOf(tabId);
     if (!current()) return;
     buffer.record({ snapshot });
     const context = buffer.getContext({ includeScreenshots: false });
@@ -574,7 +595,12 @@ async function maybeIntervene() {
     schedulePersistence();
     const stateSnapshot = await snapshotOf(tabId);
     if (!current()) return;
-    if (stateSnapshot.id !== snapshot.id) { queueInference(); return; }
+    if (stateSnapshot.id !== snapshot.id) {
+      buffer.record({ snapshot: stateSnapshot });
+      // When no stuck pattern is active, let the user keep working undisturbed; when stuck, keep going so hunting never starves `/decide`.
+      if (!findStuckSignal(buffer.getContext({ includeScreenshots: false }))) { queueInference(); return; }
+      snapshot = stateSnapshot;
+    }
     const textContext = buffer.getContext({ includeScreenshots: false });
     if (!textContext?.states?.length) return;
     message = "Valo is identifying the workflow and goal …";
@@ -584,16 +610,27 @@ async function maybeIntervene() {
     inference = understood;
     const intentSnapshot = await snapshotOf(tabId);
     if (!current()) return;
-    if (intentSnapshot.id !== snapshot.id) { queueInference(); return; }
+    if (intentSnapshot.id !== snapshot.id) {
+      buffer.record({ snapshot: intentSnapshot });
+      if (!findStuckSignal(buffer.getContext({ includeScreenshots: false }))) { queueInference(); return; }
+      snapshot = intentSnapshot;
+    }
     const hold = proactiveHold();
     if (hold) { message = hold; lastInferenceKey = key; return; }
     message = "Valo is checking whether help makes sense …";
-    const signal = findStuckSignal(textContext);
-    const trigger = signal?.type === "unsuccessful_searches" ? "repeated_search" :
-      signal?.type === "route_ping_pong" ? "page_pingpong" : signal?.type ?? "workflow_update";
+    const decideContext = buffer.getContext({ includeScreenshots: false }) ?? textContext;
+    const signal = findStuckSignal(decideContext);
+    const hasRage = decideContext.workflow.events.slice(-10).some((e) => e.type === "rage_click");
+    const trigger = signal?.type === "unsuccessful_searches"
+      ? "repeated_search"
+      : signal?.type === "route_ping_pong"
+        ? "page_pingpong"
+        : signal?.type === "repeated_click" && hasRage
+          ? "rage_click"
+          : signal?.type ?? "workflow_update";
     const body = DecideRequestSchema.parse({
-      trigger, triggerReason: signal?.reason, events: textContext.workflow.events.slice(-50), snapshot,
-      context: textContext, inference: understood, ...appContext(),
+      trigger, triggerReason: signal?.reason, events: decideContext.workflow.events.slice(-50), snapshot,
+      context: decideContext, inference: understood, ...appContext(),
     });
     const result = DecideResponseSchema.parse(await callRuntime("decide", { body }));
     if (!current()) return;
@@ -606,8 +643,6 @@ async function maybeIntervene() {
     if (buffer.workflow?.id !== context.workflow.id) { queueInference(); return; }
     const latest = await snapshotOf(tabId);
     if (!current()) return;
-    if (buffer.events.at(-1)?.id !== context.workflow.events.at(-1)?.id) { queueInference(); return; }
-    if (latest.id !== snapshot.id) { queueInference(); return; }
     buffer.record({ snapshot: latest });
 
     // Offer first; the guidance is prefetched meanwhile and only shown after "Ja".
