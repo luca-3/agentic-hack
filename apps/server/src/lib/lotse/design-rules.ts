@@ -1,6 +1,6 @@
 import type { DesignFinding, ExploredPage } from "@lotse/shared";
 
-/** One design finding plus the German texts for the suggestion card (D-25). Pure, no LLM. */
+/** One design finding plus the English texts for the suggestion card (D-25). Pure, no LLM. */
 export interface DesignResult {
   finding: DesignFinding;
   title: string;
@@ -13,8 +13,8 @@ const CLOSE_LABELS = /^(schließen|abbrechen|close|cancel|×|x|✕)$/i;
 const NAV_ROLES = new Set(["link", "button", "tab", "menuitem", "option", "treeitem"]);
 const RANK = { high: 0, medium: 1, low: 2 } as const;
 
-const de = (n: number, digits = 1) => n.toLocaleString("de-DE", { maximumFractionDigits: digits });
-const quote = (label: string) => (label ? `„${label}“` : "ohne Namen");
+const fmt = (n: number, digits = 1) => n.toLocaleString("en-US", { maximumFractionDigits: digits });
+const quote = (label: string) => (label ? `“${label}”` : "an unnamed element");
 
 export function designFindings(pages: ExploredPage[]): DesignResult[] {
   const out: DesignResult[] = [];
@@ -22,7 +22,7 @@ export function designFindings(pages: ExploredPage[]): DesignResult[] {
 
   for (const page of pages) {
     const { route } = page;
-    const where = `auf ${route}`;
+    const where = `on ${route}`;
     const active = page.elements.filter((e) => !e.disabled);
     const labelCount = new Map<string, number>();
 
@@ -32,28 +32,28 @@ export function designFindings(pages: ExploredPage[]): DesignResult[] {
 
       if (s.contrast !== undefined && s.contrast < 4.5 && label) {
         add(
-          { rule: "contrast", route, elementLabel: label, severity: s.contrast < 3 ? "high" : "medium", measured: `${de(s.contrast)}:1` },
-          `Schwacher Kontrast bei ${quote(label)}`,
-          `Kontrast ${de(s.contrast)}:1 ${where}, nötig sind mindestens 4,5:1.`,
+          { rule: "contrast", route, elementLabel: label, severity: s.contrast < 3 ? "high" : "medium", measured: `${fmt(s.contrast)}:1` },
+          `Low contrast on ${quote(label)}`,
+          `Contrast ${fmt(s.contrast)}:1 ${where}; at least 4.5:1 is required.`,
         );
       }
 
       const sizes = [s.width, s.height].filter((v): v is number => v !== undefined);
       const min = sizes.length ? Math.min(...sizes) : undefined;
       if (min !== undefined && min < 40) {
-        const measured = `${de(s.width ?? min, 0)} × ${de(s.height ?? min, 0)} px`;
+        const measured = `${fmt(s.width ?? min, 0)} × ${fmt(s.height ?? min, 0)} px`;
         add(
           { rule: "target_size", route, elementLabel: label, severity: min < 24 ? "medium" : "low", measured },
-          `Kleine Klickfläche bei ${quote(label)}`,
-          `${measured} ${where}; empfohlen sind mindestens 40 × 40 px (24 px absolute Untergrenze).`,
+          `Small click target on ${quote(label)}`,
+          `${measured} ${where}; at least 40 × 40 px is recommended (24 px absolute minimum).`,
         );
       }
 
       if (s.iconOnly && GENERIC_LABELS.has(label.toLowerCase())) {
         add(
           { rule: "unlabeled_icon", route, elementLabel: label, severity: "high" },
-          `Symbol-Knopf ohne verständlichen Namen ${where}`,
-          `Ein Knopf zeigt nur ein Symbol und heißt ${quote(label)} — Screenreader und Valo wissen nicht, was er tut.`,
+          `Icon button without a meaningful name ${where}`,
+          `A button shows only an icon ${label ? `and is labeled ${quote(label)}` : "and has no label"} — screen readers and Valo can't tell what it does.`,
         );
       }
 
@@ -65,25 +65,25 @@ export function designFindings(pages: ExploredPage[]): DesignResult[] {
       const label = active.find((e) => e.label.trim().toLowerCase() === key)!.label.trim();
       add(
         { rule: "duplicate_label", route, elementLabel: label, severity: "low", measured: `${n}×` },
-        `${quote(label)} kommt ${n}-mal vor`,
-        `${n} verschiedene Bedienelemente ${where} heißen gleich — Nutzer können sie nicht unterscheiden.`,
+        `${quote(label)} appears ${n} times`,
+        `${n} different controls ${where} have the same name — users can't tell them apart.`,
       );
     }
 
     const clicks = page.reachedVia.length;
     if (clicks > 4) {
       add(
-        { rule: "deep_path", route, elementLabel: page.title, severity: "medium", measured: `${clicks} Klicks` },
-        `${page.title || route} liegt ${clicks} Klicks tief`,
-        `Weg: ${page.reachedVia.join(" → ")}. Mehr als 4 Klicks bis zum Ziel sind schwer zu finden.`,
+        { rule: "deep_path", route, elementLabel: page.title, severity: "medium", measured: `${clicks} clicks` },
+        `${page.title || route} is ${clicks} clicks deep`,
+        `Path: ${page.reachedVia.join(" → ")}. Targets more than 4 clicks away are hard to find.`,
       );
     }
 
     if (page.elements.length > 60) {
       add(
-        { rule: "overloaded", route, elementLabel: page.title, severity: "medium", measured: `${page.elements.length} Bedienelemente` },
-        `${page.title || route} ist überladen`,
-        `${page.elements.length} Bedienelemente ${where} — mehr als 60 überfordern neue Nutzer.`,
+        { rule: "overloaded", route, elementLabel: page.title, severity: "medium", measured: `${page.elements.length} controls` },
+        `${page.title || route} is overloaded`,
+        `${page.elements.length} controls ${where} — more than 60 overwhelm new users.`,
       );
     }
 
@@ -91,8 +91,8 @@ export function designFindings(pages: ExploredPage[]): DesignResult[] {
     if ((page.kind === "page" || page.kind === "dialog") && !active.some((e) => NAV_ROLES.has(e.role) && !CLOSE_LABELS.test(e.label.trim()))) {
       add(
         { rule: "dead_end", route, elementLabel: page.title, severity: "low" },
-        `Sackgasse: ${page.title || route}`,
-        `${page.kind === "dialog" ? "Der Dialog" : "Die Seite"} ${where} bietet keinen Weg weiter außer Schließen.`,
+        `Dead end: ${page.title || route}`,
+        `${page.kind === "dialog" ? "The dialog" : "The page"} ${where} offers no way forward except closing.`,
       );
     }
   }

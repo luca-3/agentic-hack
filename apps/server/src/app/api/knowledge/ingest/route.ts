@@ -14,7 +14,7 @@ export const OPTIONS = preflight;
 export async function POST(request: Request) {
   const headers = corsHeaders(request.headers.get("origin"));
   const auth = await userFromRequest(request);
-  if (!auth) return Response.json({ error: "Nicht angemeldet." }, { status: 401, headers });
+  if (!auth) return Response.json({ error: "Not signed in." }, { status: 401, headers });
 
   const parsed = KnowledgeIngestRequestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
@@ -28,10 +28,10 @@ export async function POST(request: Request) {
     .select("id, org_id, app_id, title, chars, chunks")
     .eq("id", sourceId)
     .maybeSingle();
-  if (!source) return Response.json({ error: "Quelle nicht gefunden." }, { status: 404, headers });
+  if (!source) return Response.json({ error: "Source not found." }, { status: 404, headers });
 
   const { data: isAdmin } = await auth.supabase.rpc("is_org_admin", { org: source.org_id });
-  if (isAdmin !== true) return Response.json({ error: "Nur Org-Admins dürfen Wissen speichern." }, { status: 403, headers });
+  if (isAdmin !== true) return Response.json({ error: "Only org admins can save knowledge." }, { status: 403, headers });
 
   try {
     const ids = await addDocuments(
@@ -51,6 +51,6 @@ export async function POST(request: Request) {
     return Response.json({ inserted: ids.length } satisfies KnowledgeIngestResponse, { headers });
   } catch (error) {
     console.error("knowledge ingest failed", error);
-    return Response.json({ error: "Wissen konnte nicht gespeichert werden." }, { status: 500, headers });
+    return Response.json({ error: "Knowledge could not be saved." }, { status: 500, headers });
   }
 }

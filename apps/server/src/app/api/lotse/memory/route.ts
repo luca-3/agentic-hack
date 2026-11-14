@@ -65,17 +65,17 @@ async function adminScope(request: Request, appRef: string | undefined): Promise
   const ref = appRef?.trim() || (auth ? undefined : DEV_APP);
   if (ref) {
     const app = await findApp(ref);
-    if (!app) throw new GuardError("bad_request", "App nicht gefunden.", 404);
+    if (!app) throw new GuardError("bad_request", "App not found.", 404);
     [orgId, appId] = [app.org_id, app.id];
   } else if (auth) {
     const { data: rows } = await auth.supabase.from("org_members").select("org_id, is_admin").eq("user_id", auth.user.id);
     orgId = ((rows ?? []).find((r) => r.is_admin) ?? rows?.[0])?.org_id as string | undefined;
   }
-  if (!orgId) throw new GuardError("bad_request", "Keine Organisation gefunden.", 403);
+  if (!orgId) throw new GuardError("bad_request", "No organization found.", 403);
 
   if (auth) {
     const { data: isAdmin } = await auth.supabase.rpc("is_org_admin", { org: orgId });
-    if (isAdmin !== true) throw new GuardError("unauthorized", "Nur Org-Admins dürfen das Agent-Gedächtnis verwalten.", 403);
+    if (isAdmin !== true) throw new GuardError("unauthorized", "Only org admins can manage the agent memory.", 403);
   }
   return { orgId, appId, userId: auth?.user.id ?? null };
 }
@@ -122,7 +122,7 @@ const PostSchema = z.union([
 ]);
 
 const STATUS_OF = { approve: "active", reject: "rejected", expire: "expired" } as const;
-const notFound = () => new GuardError("bad_request", "Nicht gefunden.", 404);
+const notFound = () => new GuardError("bad_request", "Not found.", 404);
 
 export async function POST(request: Request) {
   const headers = { ...corsHeaders(request.headers.get("origin")), "Cache-Control": "no-store" };

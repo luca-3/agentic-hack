@@ -94,13 +94,13 @@ export async function resolvePolicy(appParam: string, caller: Caller): Promise<P
   let reason: string | undefined;
   if (process.env.LOTSE_DISABLED === "1") {
     allowed = false;
-    reason = "Valo ist gerade deaktiviert.";
+    reason = "Valo is currently disabled.";
   } else if (!known && !allowUnknownApps()) {
     allowed = false;
-    reason = "Diese App ist für Valo nicht freigegeben.";
+    reason = "This app is not enabled for Valo.";
   } else if (known && !member && !devAuthAllowed()) {
     allowed = false;
-    reason = "Melde dich mit einem Konto dieser Organisation an.";
+    reason = "Sign in with an account of this organization.";
   }
 
   // D-29: start observing without a click on the apps of the caller's org; in dev also on apps the runtime knows

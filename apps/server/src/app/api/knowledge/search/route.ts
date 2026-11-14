@@ -13,7 +13,7 @@ export const OPTIONS = preflight;
 export async function POST(request: Request) {
   const headers = corsHeaders(request.headers.get("origin"));
   const auth = await userFromRequest(request);
-  if (!auth) return Response.json({ error: "Nicht angemeldet." }, { status: 401, headers });
+  if (!auth) return Response.json({ error: "Not signed in." }, { status: 401, headers });
 
   const parsed = KnowledgeSearchRequestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     .eq("user_id", auth.user.id)
     .limit(1)
     .maybeSingle();
-  if (!member) return Response.json({ error: "Keine Organisation gefunden." }, { status: 403, headers });
+  if (!member) return Response.json({ error: "No organization found." }, { status: 403, headers });
 
   try {
     const rows = await searchDocuments(query, { orgId: member.org_id, appId, limit: limit ?? 5, minSimilarity: 0.3 });
@@ -36,6 +36,6 @@ export async function POST(request: Request) {
     return Response.json({ hits } satisfies KnowledgeSearchResponse, { headers });
   } catch (error) {
     console.error("knowledge search failed", error);
-    return Response.json({ error: "Wissen konnte nicht durchsucht werden." }, { status: 500, headers });
+    return Response.json({ error: "Knowledge could not be searched." }, { status: 500, headers });
   }
 }

@@ -39,7 +39,7 @@ export interface AgentMemory {
   orgId: string;
   appId: string | null; // dashboard apps.id, null = org-wide
   kind: MemoryKind;
-  topic: string; // neutral label, e.g. "IBAN ändern"
+  topic: string; // neutral label, e.g. "change IBAN"
   feature: string | null; // app_features.name it refers to
   content: string; // short, neutral hint
   source: MemorySource;
@@ -233,7 +233,7 @@ export async function adminCreateMemory(input: {
   const topic = neutralTopic(input.topic);
   const content = neutralContent(input.content, 400);
   if (!topic || !content) {
-    throw new GuardError("bad_request", "Thema und Inhalt dürfen nicht leer sein und keine personenbezogenen Daten enthalten.", 400);
+    throw new GuardError("bad_request", "Topic and content must not be empty and must not contain personal data.", 400);
   }
   const db = createAdminClient();
   const { data, error } = await db.rpc("propose_agent_memory", {
@@ -414,7 +414,7 @@ export function memoryLines(hints: MemoryHint[]): string[] {
   return hints.map(
     (h) =>
       `[${h.kind}] ${cleanText(h.topic, 60)}${h.feature ? ` → ${cleanText(h.feature, 80)}` : ""}: ${cleanText(h.content, 300)}` +
-      (h.admin ? " (vom Admin bestätigt)" : ` (${h.persons} Personen)`),
+      (h.admin ? " (confirmed by an admin)" : ` (${h.persons} people)`),
   );
 }
 

@@ -19,7 +19,7 @@ export const SCHULUNG_AB = 0.3;
 const ROLE_DIFF = 0.15;
 const PAGE = 1000; // PostgREST max_rows (supabase/config.toml)
 const MAX_ROWS = 50_000;
-export const UNCLEAR_INTENT = "(unklar)";
+export const UNCLEAR_INTENT = "(unclear)";
 
 export type Verdict = "app" | "schulung" | "ok";
 export type SignalType = "rage_click" | "error" | "empty_results" | "idle" | "repeated_search" | "offer";
@@ -61,7 +61,7 @@ export interface FeatureAggregate {
   declined: number;
   thumbsUp: number;
   thumbsDown: number;
-  /** Help offers on this feature that were not declined ("Fragen an Valo"). */
+  /** Help offers on this feature that were not declined ("questions to Valo"). */
   questions: number;
   questionPersons: number;
   /** Persons who got a (not declined) hint on this feature. */
@@ -80,7 +80,7 @@ export interface InsightAggregates {
   minGroupSize: number;
   totals: { persons: number; events: number; offers: number; suppressedGroups: number };
   features: FeatureAggregate[];
-  /** Offer intents (feature names, or "(unklar)") — no raw question text exists anywhere. Only groups ≥ MIN_GROUP. */
+  /** Offer intents (feature names, or "(unclear)") — no raw question text exists anywhere. Only groups ≥ MIN_GROUP. */
   frequentIntents: { intent: string; count: number; persons: number }[];
 }
 

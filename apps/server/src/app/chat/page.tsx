@@ -6,10 +6,10 @@ import { useState } from "react";
 import type { HackAgentUIMessage } from "@/lib/ai/agent";
 
 const EXAMPLES = [
-  "Was gibt es Neues zu Gemini? Nutze Google Search.",
-  "Speichere eine Notiz: Demo um 20:00 vorbereiten",
-  "Merke dir: Unser Projekt heißt Agentic Hack und nutzt Gemini + Supabase.",
-  "Wie heißt unser Projekt? Schau in der Wissensbasis nach.",
+  "What's new with Gemini? Use Google Search.",
+  "Save a note: prepare the demo at 20:00",
+  "Remember: our project is called Agentic Hack and uses Gemini + Supabase.",
+  "What is our project called? Check the knowledge base.",
 ];
 
 export default function ChatPage() {
@@ -90,8 +90,8 @@ export default function ChatPage() {
             })}
           </div>
         ))}
-        {status === "submitted" && <p className="text-sm text-zinc-500">Denkt nach…</p>}
-        {error && <p className="text-sm text-red-600">Fehler: {error.message}</p>}
+        {status === "submitted" && <p className="text-sm text-zinc-500">Thinking…</p>}
+        {error && <p className="text-sm text-red-600">Error: {error.message}</p>}
       </div>
 
       <form
@@ -104,7 +104,7 @@ export default function ChatPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.currentTarget.value)}
-          placeholder="Frag den Agenten…"
+          placeholder="Ask the agent…"
           className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950"
         />
         {busy ? (
@@ -113,7 +113,7 @@ export default function ChatPage() {
           </button>
         ) : (
           <button type="submit" className="rounded-xl bg-zinc-900 px-4 text-white dark:bg-zinc-100 dark:text-zinc-900">
-            Senden
+            Send
           </button>
         )}
       </form>

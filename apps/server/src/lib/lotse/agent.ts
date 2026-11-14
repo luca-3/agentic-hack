@@ -64,7 +64,7 @@ type Checked = { ok: true; event: GuidanceEvent } | { ok: false; error: string }
 
 const PointInput = z.object({
   elementNumber: z.number().int().describe("Number of the element in <page_elements> (current page only)."),
-  hint: z.string().optional().describe("Optional very short on-screen text (≤ 120 chars), e.g. 'Hier die IBAN eintragen'."),
+  hint: z.string().optional().describe("Optional very short on-screen text (≤ 120 chars), e.g. 'Enter the IBAN here'."),
 });
 const PlanInput = z.object({
   steps: z
@@ -182,7 +182,7 @@ function buildTools(
         if (hits.length === 0) return "No matching feature.";
         return `<features>\n${hits
           .map((f) => {
-            const roles = cleanText(f.requiredRole?.join(", ") || "alle", 100);
+            const roles = cleanText(f.requiredRole?.join(", ") || "all", 100);
             if (input.role && !roleAllowed(f, input.role)) return `${cleanText(f.name, 120)} | roles: ${roles} | NOT ALLOWED for ${cleanText(input.role, 40)}`;
             return `${cleanText(f.name, 120)} | route ${cleanText(f.route, 100)} | path: ${f.clickPath.map((l) => cleanText(l, 60)).join(" → ")} | roles: ${roles}`;
           })

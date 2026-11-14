@@ -39,7 +39,7 @@ const emptyCounts = () => Object.fromEntries(MY_DATA_TABLES.map((t) => [t, 0])) 
 
 async function signedIn(request: Request): Promise<string> {
   const caller = await guard(request, "me");
-  if (!caller.userId) throw new GuardError("unauthorized", "Bitte anmelden, um deine Valo-Daten zu sehen oder zu löschen.", 401);
+  if (!caller.userId) throw new GuardError("unauthorized", "Please sign in to view or delete your Valo data.", 401);
   return caller.userId;
 }
 
@@ -53,11 +53,11 @@ export async function GET(request: Request) {
     for (const table of MY_DATA_TABLES) {
       const { column, value } = COLUMN[table];
       const { count, error } = await db.from(table).select("*", { count: "exact", head: true }).eq(column, value(ids));
-      if (error) throw new GuardError("internal", `Zählen in ${table} fehlgeschlagen.`, 500);
+      if (error) throw new GuardError("internal", `Counting in ${table} failed.`, 500);
       counts[table] = count ?? 0;
     }
     const { data: prefs, error } = await db.from("lotse_user_prefs").select("proactive_threshold").eq("subject_id", ids.key).maybeSingle();
-    if (error) throw new GuardError("internal", "Lesen der eigenen Schwelle fehlgeschlagen.", 500);
+    if (error) throw new GuardError("internal", "Reading your own threshold failed.", 500);
     const body: MyData = MyDataSchema.parse({ userId: ids.sub, counts, proactiveThreshold: prefs ? Number(prefs.proactive_threshold) : null });
     return Response.json(body, { headers: noStore(cors) });
   } catch (e) {
@@ -74,14 +74,14 @@ export async function DELETE(request: Request) {
     const db = createAdminClient();
     let sub = callerId;
     if (target && target !== callerId) {
-      if (!UUID.test(target)) throw new GuardError("bad_request", "userId muss eine UUID sein.", 400);
+      if (!UUID.test(target)) throw new GuardError("bad_request", "userId must be a UUID.", 400);
       const { data: adminOrgs, error: e1 } = await db.from("org_members").select("org_id").eq("user_id", callerId).eq("is_admin", true);
-      if (e1) throw new GuardError("internal", "Prüfung der Admin-Rechte fehlgeschlagen.", 500);
+      if (e1) throw new GuardError("internal", "Checking admin rights failed.", 500);
       const orgIds = (adminOrgs ?? []).map((r) => r.org_id as string);
-      if (!orgIds.length) throw new GuardError("unauthorized", "Nur Org-Admins dürfen Daten anderer Personen löschen.", 403);
+      if (!orgIds.length) throw new GuardError("unauthorized", "Only org admins can delete other people's data.", 403);
       const { count, error: e2 } = await db.from("org_members").select("*", { count: "exact", head: true }).eq("user_id", target).in("org_id", orgIds);
-      if (e2) throw new GuardError("internal", "Prüfung der Mitgliedschaft fehlgeschlagen.", 500);
-      if (!count) throw new GuardError("unauthorized", "Diese Person ist kein Mitglied einer Organisation, die du verwaltest.", 403);
+      if (e2) throw new GuardError("internal", "Checking membership failed.", 500);
+      if (!count) throw new GuardError("unauthorized", "This person is not a member of an organization you manage.", 403);
       sub = target;
     }
     const ids = idsFor(sub);
@@ -89,7 +89,7 @@ export async function DELETE(request: Request) {
     // Collect the aggregates this person contributed to, so their person counters can be recounted afterwards.
     const { data: ev, error: e3 } = await db.from("agent_memory_evidence").select("memory_id").eq("subject_hash", ids.hash);
     const { data: gs, error: e4 } = await db.from("knowledge_gap_subjects").select("gap_id").eq("subject_hash", ids.hash);
-    if (e3 || e4) throw new GuardError("internal", "Lesen der betroffenen Gedächtnis-/Lücken-Einträge fehlgeschlagen.", 500);
+    if (e3 || e4) throw new GuardError("internal", "Reading the affected memory/gap entries failed.", 500);
     const memoryIds = [...new Set((ev ?? []).map((r) => Number(r.memory_id)))];
     const gapIds = [...new Set((gs ?? []).map((r) => Number(r.gap_id)))];
 
@@ -99,7 +99,7 @@ export async function DELETE(request: Request) {
       const { column, value } = COLUMN[table];
       const { count, error } = await db.from(table).delete({ count: "exact" }).eq(column, value(ids));
       if (error) {
-        throw new GuardError("internal", `Löschen in ${table} fehlgeschlagen. Bereits gelöscht: ${done.length ? done.join(", ") : "nichts"}.`, 500);
+        throw new GuardError("internal", `Deleting in ${table} failed. Already deleted: ${done.length ? done.join(", ") : "nothing"}.`, 500);
       }
       deleted[table] = count ?? 0;
       done.push(table);
@@ -109,15 +109,15 @@ export async function DELETE(request: Request) {
     for (const id of memoryIds) {
       const support = await db.from("agent_memory_evidence").select("*", { count: "exact", head: true }).eq("memory_id", id).eq("polarity", "support");
       const negative = await db.from("agent_memory_evidence").select("*", { count: "exact", head: true }).eq("memory_id", id).eq("polarity", "negative");
-      if (support.error || negative.error) throw new GuardError("internal", `Neuzählen von agent_memory ${id} fehlgeschlagen. Gelöscht: ${done.join(", ")}.`, 500);
+      if (support.error || negative.error) throw new GuardError("internal", `Recounting agent_memory ${id} failed. Deleted: ${done.join(", ")}.`, 500);
       const { error } = await db.from("agent_memory").update({ persons: support.count ?? 0, negatives: negative.count ?? 0 }).eq("id", id);
-      if (error) throw new GuardError("internal", `Aktualisieren von agent_memory ${id} fehlgeschlagen. Gelöscht: ${done.join(", ")}.`, 500);
+      if (error) throw new GuardError("internal", `Updating agent_memory ${id} failed. Deleted: ${done.join(", ")}.`, 500);
     }
     for (const id of gapIds) {
       const remaining = await db.from("knowledge_gap_subjects").select("*", { count: "exact", head: true }).eq("gap_id", id);
-      if (remaining.error) throw new GuardError("internal", `Neuzählen von knowledge_gaps ${id} fehlgeschlagen. Gelöscht: ${done.join(", ")}.`, 500);
+      if (remaining.error) throw new GuardError("internal", `Recounting knowledge_gaps ${id} failed. Deleted: ${done.join(", ")}.`, 500);
       const { error } = await db.from("knowledge_gaps").update({ persons: remaining.count ?? 0 }).eq("id", id);
-      if (error) throw new GuardError("internal", `Aktualisieren von knowledge_gaps ${id} fehlgeschlagen. Gelöscht: ${done.join(", ")}.`, 500);
+      if (error) throw new GuardError("internal", `Updating knowledge_gaps ${id} failed. Deleted: ${done.join(", ")}.`, 500);
     }
 
     const body: DeleteMyDataResponse = DeleteMyDataResponseSchema.parse({

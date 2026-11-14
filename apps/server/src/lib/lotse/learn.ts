@@ -12,7 +12,7 @@ import { upsertSuggestions, type SuggestionInput } from "./suggestions";
 const DAY = 86_400_000;
 const PAGE = 1000; // supabase/config.toml max_rows
 const MAX_ROWS = 50_000;
-const GENERAL_QUESTIONS = "Fragen allgemein";
+const GENERAL_QUESTIONS = "General questions";
 
 type Db = ReturnType<typeof createAdminClient>;
 type Row = Record<string, unknown>;
@@ -39,10 +39,10 @@ const distinct = (rows: Row[], pick: (r: Row) => string | null) => new Set(rows.
 function safeError(e: unknown): string | undefined {
   if (!e) return undefined;
   return String(e)
-    .replace(/Bearer\s+\S+/gi, "Bearer [entfernt]")
-    .replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]*/g, "[entfernt]")
-    .replace(/\b(AIza[\w-]{10,}|sk[-_][\w-]{10,}|sb_(secret|publishable)_[\w-]+)/g, "[entfernt]")
-    .replace(/([?&](key|token|api_key)=)[^&\s]+/gi, "$1[entfernt]")
+    .replace(/Bearer\s+\S+/gi, "Bearer [removed]")
+    .replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]*/g, "[removed]")
+    .replace(/\b(AIza[\w-]{10,}|sk[-_][\w-]{10,}|sb_(secret|publishable)_[\w-]+)/g, "[removed]")
+    .replace(/([?&](key|token|api_key)=)[^&\s]+/gi, "$1[removed]")
     .slice(0, 200);
 }
 
@@ -136,8 +136,8 @@ function agentErrors(app: AppRow, failures: Row[], downs: Row[]): SuggestionInpu
       appId: app.id,
       source: "learn",
       kind: "agent_error",
-      title: status === "timeout" ? `Valo antwortet zu langsam (${route})` : `Valo-Fehler bei ${route}`,
-      detail: `${list.length}× ${status === "timeout" ? "Zeitüberschreitung" : "Fehler"} in den letzten 24 Stunden.`,
+      title: status === "timeout" ? `Valo answers too slowly (${route})` : `Valo errors on ${route}`,
+      detail: `${list.length}× ${status === "timeout" ? "timeout" : "error"} in the last 24 hours.`,
       payload: { route, status, lastError: safeError(last.error) },
       fingerprint: `agent_error:${app.id}:${route}:${status}`,
       occurrences: list.length,
@@ -156,8 +156,8 @@ function agentErrors(app: AppRow, failures: Row[], downs: Row[]): SuggestionInpu
       appId: app.id,
       source: "learn",
       kind: "agent_error",
-      title: `Hinweis zu ‚${intent}‘ wird oft abgelehnt`,
-      detail: `${list.length}× mit 👎 bewertet in den letzten 7 Tagen.`,
+      title: `Hint for “${intent}” is often rejected`,
+      detail: `${list.length}× rated 👎 in the last 7 days.`,
       payload: { status: "down", intent },
       fingerprint: `agent_error:${app.id}:down:${lc(intent)}`,
       occurrences: list.length,
@@ -180,8 +180,8 @@ function staleFeatures(app: AppRow, events: Row[]): SuggestionInput[] {
       appId: app.id,
       source: "learn",
       kind: "stale_feature",
-      title: `Klickweg zu ‚${f.name}‘ evtl. veraltet`,
-      detail: `„${missingLabel}“ wurde in den letzten 3 Tagen nicht mehr angeklickt — vielleicht wurde der Knopf umbenannt oder verschoben.`,
+      title: `Click path to “${f.name}” may be outdated`,
+      detail: `“${missingLabel}” hasn't been clicked in the last 3 days — maybe the button was renamed or moved.`,
       payload: { feature: f.name, missingLabel },
       fingerprint: `stale_feature:${app.id}:${lc(f.name)}`,
     });
@@ -211,7 +211,7 @@ function unknownFeatures(app: AppRow, events: Row[], suggestedLabels: Set<string
       source: "learn" as const,
       kind: "feature" as const,
       title: label,
-      detail: `${subjects.size} Personen klicken auf ${route} „${label}“ — das ist noch keine bekannte Funktion.`,
+      detail: `${subjects.size} people click “${label}” on ${route} — that's not a known feature yet.`,
       payload: { name: label, description: "", route, clickPath: [label], requiredRole: null } satisfies Feature,
       fingerprint: `feature:${route}:${lc(label)}`,
       persons: subjects.size,

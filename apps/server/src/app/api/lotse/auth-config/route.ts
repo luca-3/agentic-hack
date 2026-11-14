@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const cors = corsHeaders(request.headers.get("origin"));
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!supabaseUrl || !publishableKey) return errorJson(new GuardError("internal", "Supabase ist auf dem Server nicht konfiguriert.", 503), cors);
+  if (!supabaseUrl || !publishableKey) return errorJson(new GuardError("internal", "Supabase is not configured on the server.", 503), cors);
   const body: AuthConfigResponse = { supabaseUrl, publishableKey };
   return Response.json(body, { headers: { ...cors, "Cache-Control": "no-store" } });
 }

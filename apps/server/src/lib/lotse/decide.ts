@@ -73,21 +73,21 @@ function offerFor(feature: Feature | undefined, req: DecideRequest): { intent: s
     const pressed = req.events.filter((e) => e.type === "repeated_click").pop();
     const label = pressed?.elementLabel ? cleanText(pressed.elementLabel, 60) : "";
     if (label && pressed?.detail?.includes("disabled=true")) {
-      return { intent: `Warum ist „${label}“ gesperrt und was muss ich vorher tun?`, offer: `„${label}“ ist gerade gesperrt – soll ich dir zeigen, warum?` };
+      return { intent: `Why is “${label}” locked and what do I need to do first?`, offer: `“${label}” is locked right now — want me to show you why?` };
     }
-    if (label) return { intent: `Wie nutze ich „${label}“?`, offer: `„${label}“ reagiert nicht wie erwartet? Soll ich dir helfen?` };
+    if (label) return { intent: `How do I use “${label}”?`, offer: `“${label}” isn't responding as expected? Want me to help?` };
   }
   if (feature) {
-    const offer = `Soll ich dir zeigen, wo du „${feature.name}“ findest?`;
-    return { intent: feature.name, offer: offer.length <= 140 ? offer : "Soll ich dir zeigen, wo du das findest?" };
+    const offer = `Want me to show you where to find “${feature.name}”?`;
+    return { intent: feature.name, offer: offer.length <= 140 ? offer : "Want me to show you where to find it?" };
   }
   // No feature matched: use the goal from /intent when it is reasonably sure.
   const goal = req.inference && req.inference.intent.confidence >= 0.5 ? cleanText(req.inference.intent.goal, 200) : "";
   if (goal) {
-    const offer = `Soll ich dir helfen: „${goal}“?`;
-    return { intent: goal, offer: offer.length <= 140 ? offer : "Soll ich dir beim nächsten Schritt helfen?" };
+    const offer = `Want me to help you with “${goal}”?`;
+    return { intent: goal, offer: offer.length <= 140 ? offer : "Want me to help you with the next step?" };
   }
-  return { intent: "Wie komme ich auf dieser Seite weiter?", offer: "Kommst du nicht weiter? Ich kann dir zeigen, wo es weitergeht." };
+  return { intent: "How do I continue on this page?", offer: "Stuck? I can show you where to go next." };
 }
 
 type Ctx = { caller: Caller; appId: string; orgId: string | null; /** memoryLines() of ranked active agent memory */ memory?: string[] };

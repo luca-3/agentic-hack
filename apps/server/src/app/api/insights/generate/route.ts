@@ -32,18 +32,18 @@ const fail = (code: string, message: string, status: number, headers: Record<str
  */
 export async function POST(request: Request) {
   const headers = corsHeaders(request.headers.get("origin"));
-  if (process.env.LOTSE_DISABLED === "1") return fail("disabled", "Valo ist gerade deaktiviert.", 503, headers);
+  if (process.env.LOTSE_DISABLED === "1") return fail("disabled", "Valo is currently disabled.", 503, headers);
 
   const hasToken = /^Bearer\s+\S+/i.test(request.headers.get("authorization") ?? "");
   const auth = hasToken ? await userFromRequest(request) : null;
   if (hasToken && !auth) return fail("unauthorized", "Invalid or expired token.", 401, headers);
-  if (!auth && !devAuthAllowed()) return fail("unauthorized", "Nur Org-Admins (Authorization: Bearer <token>).", 401, headers);
+  if (!auth && !devAuthAllowed()) return fail("unauthorized", "Org admins only (Authorization: Bearer <token>).", 401, headers);
 
   const now = Date.now();
   while (recent.length && now - recent[0] > 60_000) recent.shift();
   if (recent.length >= PER_MIN) {
     const retry = Math.max(1, Math.ceil((recent[0] + 60_000 - now) / 1000));
-    return fail("rate_limited", "Zu viele Auswertungen — bitte kurz warten.", 429, { ...headers, "Retry-After": String(retry) });
+    return fail("rate_limited", "Too many analysis runs — please wait a moment.", 429, { ...headers, "Retry-After": String(retry) });
   }
 
   const text = await request.text();
@@ -59,10 +59,10 @@ export async function POST(request: Request) {
 
   try {
     const app = await resolveApp(body.appId ?? DEFAULT_APP, body.orgId);
-    if (!app) return fail("bad_request", "App nicht gefunden.", 404, headers);
+    if (!app) return fail("bad_request", "App not found.", 404, headers);
     if (auth) {
       const { data: isAdmin } = await auth.supabase.rpc("is_org_admin", { org: app.orgId });
-      if (isAdmin !== true) return fail("forbidden", "Nur Org-Admins dürfen Erkenntnisse erzeugen.", 403, headers);
+      if (isAdmin !== true) return fail("forbidden", "Only org admins can generate insights.", 403, headers);
     }
     recent.push(now);
     const report = await generateInsights(app, {
@@ -74,6 +74,6 @@ export async function POST(request: Request) {
     return Response.json(report, { headers });
   } catch (e) {
     console.error("[insights] generate failed:", e instanceof Error ? e.message : e);
-    return fail("internal", "Erkenntnisse konnten nicht erzeugt werden.", 500, headers);
+    return fail("internal", "Insights could not be generated.", 500, headers);
   }
 }

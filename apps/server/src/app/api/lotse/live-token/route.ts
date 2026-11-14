@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   } catch (e) {
     const g = toGuardError(e);
     const h = g.retryAfterSec ? { ...headers, "Retry-After": String(g.retryAfterSec) } : headers;
-    const message = g.code === "rate_limited" ? "Zu viele Sprachanfragen — kurz warten." : g.message;
+    const message = g.code === "rate_limited" ? "Too many voice requests — please wait a moment." : g.message;
     return Response.json({ error: g.code, message }, { status: g.status, headers: h });
   }
 
@@ -33,6 +33,6 @@ export async function POST(request: Request) {
     return Response.json(body, { headers });
   } catch (error) {
     console.error("[live-token] mint failed:", error instanceof Error ? error.message : error);
-    return Response.json({ error: "internal", message: "Sprach-Token konnte nicht erstellt werden." }, { status: 502, headers });
+    return Response.json({ error: "internal", message: "Voice token could not be created." }, { status: 502, headers });
   }
 }

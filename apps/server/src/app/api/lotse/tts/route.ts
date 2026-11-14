@@ -9,7 +9,7 @@ export const OPTIONS = preflight;
 const TtsRequestSchema = z.object({ text: z.string().max(2_000) });
 
 /**
- * POST /api/lotse/tts { text } → `audio/wav` (Gemini TTS, German, ≤ 2 sentences) · 204 when there is nothing to say.
+ * POST /api/lotse/tts { text } → `audio/wav` (Gemini TTS in the text's language, ≤ 2 sentences) · 204 when there is nothing to say.
  * Called by the extension's offscreen document (apps/extension/VOICE.md). Shared runtime guard (auth, kill switch,
  * rate limit + daily budget of the "ask" tier — one spoken answer belongs to one question).
  */
